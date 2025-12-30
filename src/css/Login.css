@@ -1,0 +1,170 @@
+/* 1. RESET & PAGE LAYOUT */
+/* min-height: 100vh prevents the "weird white space" at the bottom */
+.login-page {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-color: #ffffff; /* This is the bottom half color */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* 2. THE GREEN BLOCK (Top half) */
+/* You can adjust the height: 45vh to make this block bigger or smaller */
+.login-header-block {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 48vh; 
+  background-color: #6b9080; /* The exact green from your image */
+  z-index: 0;
+}
+
+/* 3. LOGIN CARD CONTAINER */
+.login-container {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 30px; /* High rounding for that soft look */
+  padding: 50px 40px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* 4. TEXT ALIGNMENT (Centered like the image) */
+.login-title {
+  font-size: 2.2rem;
+  text-align: center;
+  color: #2d3748;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: #718096;
+  margin-bottom: 40px;
+  font-size: 1rem;
+}
+
+/* 5. FORM & INPUTS */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #2d3748;
+  font-size: 0.95rem;
+  text-align: left; /* Label stays left, but content inside is centered */
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Exact SVG Icon Placement from image */
+.input-icon {
+  position: absolute;
+  left: 16px;
+  color: #718096;
+  pointer-events: none;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px 14px 48px; /* Extra left padding for the icon */
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #6b9080;
+  box-shadow: 0 0 0 3px rgba(107, 144, 128, 0.1);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* 6. BUTTONS & LINKS (Centered) */
+.form-footer {
+  text-align: right; 
+  margin-top: -12px;
+}
+
+.btn-primary {
+  background-color: #6b9080;
+  color: white;
+  border: none;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  width: 100%; /* Spans the full width of the card */
+  transition:  0.2s ease;
+  margin-top: 10px;
+}
+
+.btn-primary:hover {
+  background-color: #5a7a6d;
+}
+
+.auth-switch {
+  text-align: center; /* Centers the "Don't have an account? Sign Up" text */
+  color: #718096;
+  margin-top: 10px;
+}
+
+/* 7. ERROR STYLES */
+.error-message-box {
+  background-color: #fff5f5;
+  color: #c53030;
+  padding: 12px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centers the error text */
+  gap: 8px;
+  border: 1px solid #feb2b2;
+  font-size: 0.9rem;
+}
+
+.error-message {
+  color: #e53e3e;
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
