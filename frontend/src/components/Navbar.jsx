@@ -3,7 +3,7 @@ import '../css/Navbar.css';
 
 const Navbar = () => {
   const location = useLocation();
-  const user = localStorage.getItem('user'); // Simple user check
+  const user = localStorage.getItem('user');
 
   return (
     <nav className="navbar">

@@ -1,13 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const {
+import express from 'express';
+import {
   getDashboardStats,
   getUserPosts,
   createPetPost,
   updatePetPost,
   deletePetPost
-} = require('../../controller/user/userController');
-const authenticateToken = require('../../middleware/token-middleware');
+} from '../../controller/user/userController.js';
+import authenticateToken from '../../middleware/token-middleware.js';
+
+const router = express.Router();
 
 // All routes are protected
 router.use(authenticateToken);
@@ -21,4 +22,4 @@ router.post('/pets', createPetPost);
 router.put('/pets/:id', updatePetPost);
 router.delete('/pets/:id', deletePetPost);
 
-module.exports = router;
+export default router;

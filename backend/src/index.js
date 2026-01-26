@@ -1,15 +1,23 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+
+// ES6 way to get __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Import routes
-const authRoutes = require('./route/auth/authRoute');
-const userRoutes = require('./route/user/userRoute');
-const uploadRoutes = require('./route/uploadRoute');
+import authRoutes from './route/auth/authRoute.js';
+import userRoutes from './route/user/userRoute.js';
+import uploadRoutes from './route/uploadRoute.js';
 
 // Middleware
 app.use(cors({
@@ -64,5 +72,5 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📡 API available at http://localhost:${PORT}/api`);
+  console.log(`🔡 API available at http://localhost:${PORT}/api`);
 });

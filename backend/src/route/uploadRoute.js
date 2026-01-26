@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import upload from '../middleware/multerConfig.js';
+import authenticateToken from '../middleware/token-middleware.js';
+
 const router = express.Router();
-const upload = require('../middleware/multerConfig');
-const authenticateToken = require('../middleware/token-middleware');
 
 // Upload single image
 router.post('/image', authenticateToken, upload.single('image'), (req, res) => {
@@ -32,4 +33,4 @@ router.post('/image', authenticateToken, upload.single('image'), (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

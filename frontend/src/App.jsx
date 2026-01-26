@@ -1,44 +1,45 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import PrivateRoute from './routes/privateRoute';
+import PublicRoute from './routes/publicRoute';
+
+// Layout Components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Adopt from './pages/Adopt';
-import Missing from './pages/Missing';
-import About from './pages/About';
-import Dashboard from './pages/Dashboard';
-import './css/App.css'
 
-function AppContent() {
-  const location = useLocation();
-  const noFooterRoutes = ["/login", "/register"]; // pages without footer
+// Public Pages
+import Login from './pages/public/Login';
+import Register from './pages/public/Register';
+import About from './pages/public/About';
 
-  return (
-    <div className="App">
-      <Navbar />
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/adopt" element={<Adopt />} />
-          <Route path="/missing" element={<Missing />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
-      </main>
-      {!noFooterRoutes.includes(location.pathname) && <Footer />}
-    </div>
-  )
-}
+// Private Pages
+import Dashboard from './pages/private/Dashboard';
+import Adopt from './pages/private/Adopt';
+import Home from './pages/private/Home';
 
 function App() {
   return (
     <Router>
-      <AppContent />
+      <Navbar />
+      <Routes>
+        {/* Public Routes */}
+        <Route element={<PublicRoute />}>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/about" element={<About />} />
+        </Route>
+
+        {/* Private Routes */}
+        <Route element={<PrivateRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/adopt" element={<Adopt />} />
+          <Route path="/home" element={<Home />} />
+        </Route>
+
+        <Route path="/" element={<Navigate to="/login" />} />
+      </Routes>
+      <Footer />
     </Router>
-  )
+  );
 }
 
 export default App;

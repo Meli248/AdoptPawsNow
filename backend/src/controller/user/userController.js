@@ -1,8 +1,35 @@
-const pool = require('../../database');
-const { petSchema, updatePetSchema } = require('../../validation/schemas');
+import pool from '../../database/index.js';
+import { z } from 'zod';
+
+// Define validation schemas inline (since we're using ES6 modules)
+const petSchema = z.object({
+  name: z.string().min(1, 'Pet name is required'),
+  breed: z.string().optional(),
+  type: z.enum(['adoption', 'missing'], {
+    required_error: 'Type must be either adoption or missing'
+  }),
+  petType: z.string().optional(), // dog, cat, etc.
+  age: z.number().int().positive().optional(),
+  location: z.string().min(1, 'Location is required'),
+  description: z.string().optional(),
+  status: z.enum(['available', 'adopted', 'pending']).default('available'),
+  image: z.string().url().optional().or(z.literal(''))
+});
+
+const updatePetSchema = z.object({
+  name: z.string().min(1).optional(),
+  breed: z.string().optional(),
+  type: z.enum(['adoption', 'missing']).optional(),
+  petType: z.string().optional(),
+  age: z.number().int().positive().optional(),
+  location: z.string().min(1).optional(),
+  description: z.string().optional(),
+  status: z.enum(['available', 'adopted', 'pending']).optional(),
+  image: z.string().url().optional().or(z.literal(''))
+});
 
 // Get User Dashboard Stats
-const getDashboardStats = async (req, res) => {
+export const getDashboardStats = async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -45,7 +72,7 @@ const getDashboardStats = async (req, res) => {
 };
 
 // Get User Posts
-const getUserPosts = async (req, res) => {
+export const getUserPosts = async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -72,7 +99,7 @@ const getUserPosts = async (req, res) => {
 };
 
 // Create Pet Post
-const createPetPost = async (req, res) => {
+export const createPetPost = async (req, res) => {
   try {
     const validatedData = petSchema.parse(req.body);
     const userId = req.user.userId;
@@ -118,7 +145,7 @@ const createPetPost = async (req, res) => {
 };
 
 // Update Pet Post
-const updatePetPost = async (req, res) => {
+export const updatePetPost = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
@@ -181,7 +208,7 @@ const updatePetPost = async (req, res) => {
 };
 
 // Delete Pet Post
-const deletePetPost = async (req, res) => {
+export const deletePetPost = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.userId;
@@ -209,12 +236,4 @@ const deletePetPost = async (req, res) => {
       message: 'Internal server error'
     });
   }
-};
-
-module.exports = {
-  getDashboardStats,
-  getUserPosts,
-  createPetPost,
-  updatePetPost,
-  deletePetPost
 };
