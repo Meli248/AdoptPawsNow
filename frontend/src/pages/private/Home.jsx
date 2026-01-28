@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
   AlertTriangle, 
@@ -10,11 +11,17 @@ import {
   ArrowRight, 
   Search, 
   MessageSquare, 
-  Home as HomeIcon 
+  Home as HomeIcon,
+  Plus
 } from 'lucide-react';
+import CreatePostModal from '../../components/Createpost';
 import '../../css/Home.css';
 
 const Home = () => {
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const navigate = useNavigate();
+  const isAuthenticated = localStorage.getItem('access_token');
+
   const featuredPets = [
     {
       id: 1,
@@ -76,6 +83,30 @@ const Home = () => {
     }
   ];
 
+  // Handle Create Post button click
+  const handleCreatePostClick = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    setShowCreatePostModal(true);
+  };
+
+  // Handle navigation to protected routes
+  const handleProtectedNavigation = (path) => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    navigate(path);
+  };
+
+  const handleCreatePost = (postData) => {
+    console.log('Post created:', postData);
+    // Here you would typically make an API call to save the post
+    // Example: await api.createPost(postData);
+  };
+
   return (
     <div className="home-page">
       {/* Hero Section */}
@@ -107,14 +138,29 @@ const Home = () => {
               reunite families with their beloved companions.
             </p>
             <div className="hero-actions">
-              <Link to="/adopt" className="btn btn-primary">
-                <Heart size={20} />
-                Adopt a Pet
-              </Link>
-              <Link to="/missing" className="btn btn-secondary">
-                <AlertTriangle size={20} />
-                Report Missing Pet
-              </Link>
+              <button 
+                onClick={handleCreatePostClick}
+                className="btn btn-primary btn-hero-large"
+              >
+                <Plus size={20} />
+                Create New Post
+              </button>
+              <div className="hero-actions-secondary">
+                <button 
+                  onClick={() => handleProtectedNavigation('/adopt')}
+                  className="btn btn-secondary"
+                >
+                  <Heart size={20} />
+                  Adopt a Pet
+                </button>
+                <button 
+                  onClick={() => handleProtectedNavigation('/missing')}
+                  className="btn btn-secondary"
+                >
+                  <AlertTriangle size={20} />
+                  Missing Pet
+                </button>
+              </div>
             </div>
           </div>
 
@@ -123,13 +169,18 @@ const Home = () => {
               <img src="https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=600&h=600&fit=crop" alt="Cats" />
             </div>
             <div className="hero-image-overlay">
-              <span className="overlay-badge">Get New</span>
+              <button 
+                onClick={() => handleProtectedNavigation('/adopt')}
+                className="overlay-badge"
+              >
+                Get New
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
+ {/* Stats Section */}
       <section className="stats-section">
         <div className="container">
           <div className="stats-grid">
@@ -179,7 +230,10 @@ const Home = () => {
                       <span>{pet.age}</span>
                     </div>
                   </div>
-                  <button className="btn btn-primary btn-adopt">
+                  <button 
+                    onClick={() => handleProtectedNavigation('/adopt')}
+                    className="btn btn-primary btn-adopt"
+                  >
                     Adopt {pet.name}
                   </button>
                 </div>
@@ -188,10 +242,13 @@ const Home = () => {
           </div>
 
           <div className="view-all-container">
-            <Link to="/adopt" className="btn btn-secondary">
+            <button 
+              onClick={() => handleProtectedNavigation('/adopt')}
+              className="btn btn-secondary"
+            >
               View All Pets
               <ArrowRight size={20} />
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -230,16 +287,31 @@ const Home = () => {
               can make a difference today.
             </p>
             <div className="cta-actions">
-              <Link to="/adopt" className="btn btn-secondary">
+              <button 
+                onClick={() => handleProtectedNavigation('/adopt')}
+                className="btn btn-secondary"
+              >
                 Adopt a Pet
-              </Link>
-              <Link to="/missing" className="btn btn-orange">
+              </button>
+              <button 
+                onClick={() => handleProtectedNavigation('/missing')}
+                className="btn btn-orange"
+              >
                 Report Missing Pet
-              </Link>
+              </button>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Create Post Modal - Only shown if authenticated */}
+      {isAuthenticated && (
+        <CreatePostModal
+          isOpen={showCreatePostModal}
+          onClose={() => setShowCreatePostModal(false)}
+          onSubmit={handleCreatePost}
+        />
+      )}
     </div>
   );
 };

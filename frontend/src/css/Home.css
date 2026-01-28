@@ -25,11 +25,6 @@
   font-size: 60px;
   opacity: 0.3;
   animation: float 6s ease-in-out infinite;
-  /* Updated for lucide-react icons */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary-color);
 }
 
 .paw-pattern:nth-child(1) {
@@ -124,8 +119,26 @@
 
 .hero-actions {
   display: flex;
+  flex-direction: column;
   gap: 16px;
-  flex-wrap: wrap;
+  width: 100%;
+  max-width: 500px;
+}
+
+.btn-hero-large {
+  width: 100%;
+  justify-content: center;
+}
+
+.hero-actions-secondary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.hero-actions-secondary .btn {
+  width: 100%;
+  justify-content: center;
 }
 
 .hero-images {
@@ -165,6 +178,17 @@
 .overlay-badge {
   font-weight: 600;
   color: var(--primary-color);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.overlay-badge:hover {
+  color: #5a7a6b;
 }
 
 /* Stats Section */
@@ -212,6 +236,8 @@
   color: var(--text-light);
   font-weight: 500;
 }
+
+
 
 /* Featured Pets Section */
 .featured-section {
@@ -383,27 +409,9 @@
   font-size: 1.2rem;
 }
 
-/* Updated for lucide-react icons */
-.step-icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  margin: 20px auto;
-  background: linear-gradient(135deg, var(--primary-color) 0%, #5a7a6b 100%);
-  border-radius: 20px;
-  color: white;
-  transition: all 0.3s ease;
-}
-
-.step-card:hover .step-icon-wrapper {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 8px 20px rgba(107, 144, 128, 0.3);
-}
-
-.step-icon-wrapper svg {
-  stroke-width: 1.5;
+.step-icon {
+  font-size: 3.5rem;
+  margin: 20px 0;
 }
 
 .step-title {
@@ -495,6 +503,10 @@
   .steps-grid {
     grid-template-columns: 1fr;
   }
+
+  .hero-actions-secondary {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
@@ -511,12 +523,12 @@
   }
 
   .hero-actions {
-    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
   }
 
-  .hero-actions .btn {
-    width: 100%;
-    justify-content: center;
+  .hero-actions-secondary {
+    grid-template-columns: 1fr;
   }
 
   .cta-actions {
