@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom';
+import { PawPrint, Heart, Users, Shield, Target } from 'lucide-react';
 import '../../css/About.css';
 
 const About = () => {
   const stats = [
-    { icon: '❤️', value: '1000+', label: 'Happy Adoptions' },
-    { icon: '👥', value: '500+', label: 'Active Users' },
-    { icon: '🛡️', value: '50+', label: 'Pets Reunited' },
-    { icon: '🎯', value: '100%', label: 'Dedicated Support' }
+    { icon: <Heart size={32} />, value: '1000+', label: 'Happy Adoptions' },
+    { icon: <Users size={32} />, value: '500+', label: 'Active Users' },
+    { icon: <Shield size={32} />, value: '50+', label: 'Pets Reunited' },
+    { icon: <Target size={32} />, value: '100%', label: 'Dedicated Support' }
   ];
 
   const values = [
@@ -31,11 +32,7 @@ const About = () => {
         <div className="container">
           <div className="about-hero-content fade-in">
             <div className="hero-icon">
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C10.9 2 10 2.9 10 4C10 4.7 10.4 5.4 11 5.7V7C11 8.1 10.1 9 9 9H7.2C6.9 8.4 6.3 8 5.5 8C4.7 8 4 8.7 4 9.5C4 10.3 4.7 11 5.5 11C6.3 11 6.9 10.6 7.2 10H9C10.9 10 12.5 8.7 12.9 7H14C16.2 7 18 8.8 18 11V12.3C17.4 12.6 17 13.3 17 14C17 15.1 17.9 16 19 16C20.1 16 21 15.1 21 14C21 13.3 20.6 12.6 20 12.3V11C20 7.7 17.3 5 14 5H12.9C12.5 3.3 10.9 2 12 2Z" fill="currentColor"/>
-                <circle cx="8" cy="16" r="2" fill="currentColor"/>
-                <circle cx="16" cy="16" r="2" fill="currentColor"/>
-              </svg>
+              <PawPrint size={80} />
             </div>
             <h1 className="about-title">About AdoptPawsNow</h1>
             <p className="about-subtitle">

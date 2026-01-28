@@ -1,4 +1,3 @@
-
 .home-page {
   overflow-x: hidden;
 }
@@ -26,6 +25,11 @@
   font-size: 60px;
   opacity: 0.3;
   animation: float 6s ease-in-out infinite;
+  /* Updated for lucide-react icons */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
 }
 
 .paw-pattern:nth-child(1) {
@@ -190,6 +194,11 @@
 .stat-icon {
   font-size: 3rem;
   margin-bottom: 15px;
+  /* Updated for lucide-react icons */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
 }
 
 .stat-number {
@@ -282,6 +291,8 @@
   box-shadow: var(--shadow);
   transition: transform 0.3s ease;
   color: var(--text-light);
+  border: none;
+  cursor: pointer;
 }
 
 .favorite-btn:hover {
@@ -372,9 +383,27 @@
   font-size: 1.2rem;
 }
 
-.step-icon {
-  font-size: 3.5rem;
-  margin: 20px 0;
+/* Updated for lucide-react icons */
+.step-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  margin: 20px auto;
+  background: linear-gradient(135deg, var(--primary-color) 0%, #5a7a6b 100%);
+  border-radius: 20px;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.step-card:hover .step-icon-wrapper {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 8px 20px rgba(107, 144, 128, 0.3);
+}
+
+.step-icon-wrapper svg {
+  stroke-width: 1.5;
 }
 
 .step-title {

@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import '../../css/Login.css';
-
 
 const Login = () => {
   const navigate = useNavigate();
@@ -30,12 +30,15 @@ const Login = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // FIXED: Using localStorage instead of sessionStorage
+        // Store authentication data in localStorage
         localStorage.setItem('access_token', result.data.access_token);
         localStorage.setItem('user', result.data.user.username);
         
-        window.dispatchEvent(new Event('storage')); // Notify Navbar
-        navigate('/dashboard');
+        // Notify other components (like Navbar) about the login
+        window.dispatchEvent(new Event('storage'));
+        
+        // Redirect to home page (private route)
+        navigate('/home');
       } else {
         setLoginError(result.message || 'Login failed');
       }
@@ -56,21 +59,49 @@ const Login = () => {
             {loginError && <div className="error-message-box">{loginError}</div>}
             
             <div className="form-group">
-              <label className="form-label">Email</label>
-              <input type="email" className="form-input" {...register('email')} />
+              <label className="form-label">
+                <Mail size={18} />
+                Email
+              </label>
+              <input 
+                type="email" 
+                className="form-input" 
+                {...register('email')} 
+                placeholder="Enter your email"
+              />
               {errors.email && <span className="error-text">{errors.email.message}</span>}
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
-              <input type={showPassword ? 'text' : 'password'} className="form-input" {...register('password')} />
+              <label className="form-label">
+                <Lock size={18} />
+                Password
+              </label>
+              <div className="password-input-wrapper">
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  className="form-input" 
+                  {...register('password')}
+                  placeholder="Enter your password"
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               {errors.password && <span className="error-text">{errors.password.message}</span>}
             </div>
 
             <button type="submit" className="btn btn-primary" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Log In'}
             </button>
-            <p className="auth-switch">Don't have an account? <Link to="/register">Sign Up</Link></p>
+            
+            <p className="auth-switch">
+              Don't have an account? <Link to="/register">Sign Up</Link>
+            </p>
           </form>
         </div>
       </div>

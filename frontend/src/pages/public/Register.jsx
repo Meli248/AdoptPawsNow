@@ -2,15 +2,14 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import '../../css/Register.css';
 import { registerSchema } from './schema/authschema.js'; 
-
-
 
 const Register = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [regError, setRegError] = useState('');
 
@@ -57,26 +56,76 @@ const Register = () => {
           
           <form onSubmit={handleSubmit(onSubmit)} className="register-form">
             <div className="form-group">
-              <label className="form-label">Full Name</label>
-              <input type="text" className={`form-input ${errors.fullName ? 'error' : ''}`} {...register('fullName')} />
+              <label className="form-label">
+                <User size={18} />
+                Full Name
+              </label>
+              <input 
+                type="text" 
+                className={`form-input ${errors.fullName ? 'error' : ''}`} 
+                {...register('fullName')} 
+                placeholder="Enter your full name"
+              />
               {errors.fullName && <span className="error-message">{errors.fullName.message}</span>}
             </div>
 
             <div className="form-group">
-              <label className="form-label">Email</label>
-              <input type="email" className={`form-input ${errors.email ? 'error' : ''}`} {...register('email')} />
+              <label className="form-label">
+                <Mail size={18} />
+                Email
+              </label>
+              <input 
+                type="email" 
+                className={`form-input ${errors.email ? 'error' : ''}`} 
+                {...register('email')} 
+                placeholder="Enter your email"
+              />
               {errors.email && <span className="error-message">{errors.email.message}</span>}
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
-              <input type={showPassword ? 'text' : 'password'} className="form-input" {...register('password')} />
+              <label className="form-label">
+                <Lock size={18} />
+                Password
+              </label>
+              <div className="password-input-wrapper">
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  className="form-input" 
+                  {...register('password')} 
+                  placeholder="Enter your password"
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               {errors.password && <span className="error-message">{errors.password.message}</span>}
             </div>
 
             <div className="form-group">
-              <label className="form-label">Confirm Password</label>
-              <input type="password" className="form-input" {...register('confirmPassword')} />
+              <label className="form-label">
+                <Lock size={18} />
+                Confirm Password
+              </label>
+              <div className="password-input-wrapper">
+                <input 
+                  type={showConfirmPassword ? 'text' : 'password'} 
+                  className="form-input" 
+                  {...register('confirmPassword')} 
+                  placeholder="Confirm your password"
+                />
+                <button 
+                  type="button" 
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               {errors.confirmPassword && <span className="error-message">{errors.confirmPassword.message}</span>}
             </div>
 
