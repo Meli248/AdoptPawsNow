@@ -22,4 +22,13 @@ pool.on('error', (err) => {
   process.exit(-1);
 });
 
+// Test query on startup
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('❌ Database connection test failed:', err);
+  } else {
+    console.log('✅ Database connected successfully at:', res.rows[0].now);
+  }
+});
+
 export default pool;
