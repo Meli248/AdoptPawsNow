@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { adoptionAPI, missingAPI } from '../services/api';
 import '../css/Createpost.css';
+import { getImageUrl } from '../utils/imageHelper';
 
 const CreatePost = ({ isOpen, onClose, onSuccess }) => {
   const [postType, setPostType] = useState('adoption');
@@ -323,7 +324,7 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
             ) : (
               <div className="image-preview-container">
                 <img 
-                  src={imagePreview} 
+src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
                   alt="Preview" 
                   className="image-preview" 
                 />

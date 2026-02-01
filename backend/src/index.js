@@ -29,8 +29,11 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded images
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded images - MUST BE BEFORE ROUTES
+// This serves files from backend/uploads at the /uploads URL
+const uploadsPath = path.join(__dirname, '..', 'uploads');
+app.use('/uploads', express.static(uploadsPath));
+console.log('📁 Serving static files from:', uploadsPath);
 
 // ============================================
 // DATABASE CONNECTION
@@ -56,10 +59,13 @@ pool.connect((err, client, release) => {
 // ============================================
 // FILE UPLOAD CONFIGURATION
 // ============================================
-const uploadsDir = path.join(__dirname, process.env.UPLOAD_DIR || 'uploads');
+// FIXED: Save to backend/uploads (same place where we serve from)
+const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('📁 Created uploads directory');
+  console.log('📁 Created uploads directory at:', uploadsDir);
+} else {
+  console.log('✅ Uploads directory exists at:', uploadsDir);
 }
 
 const storage = multer.diskStorage({
@@ -281,7 +287,7 @@ app.put('/api/pets/:id', upload.single('image'), async (req, res) => {
     const result = await pool.query(query, values);
     res.json({
       success: true,
-      message: 'Pet updated successfully!',
+      message: 'Pet updated successfully',
       data: result.rows[0]
     });
   } catch (error) {
@@ -293,8 +299,8 @@ app.put('/api/pets/:id', upload.single('image'), async (req, res) => {
 app.delete('/api/pets/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    // Get pet to delete image file
+
+    // Get pet info to delete image file
     const pet = await pool.query('SELECT image_url FROM pets WHERE pet_id = $1', [id]);
     
     if (pet.rows.length === 0) {
@@ -564,7 +570,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
+// 404 handler - MUST BE LAST
 app.use((req, res) => {
   res.status(404).json({ 
     success: false, 

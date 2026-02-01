@@ -195,10 +195,10 @@ const Adopt = () => {
               <div key={pet.pet_id} className="pet-card fade-in">
                 <div className="pet-image-wrapper">
                   <img 
-                    src={pet.image_url || 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop'} 
-                    alt={pet.name} 
-                    className="pet-image" 
-                  />
+                  src={pet.image_url ? `http://localhost:5000${pet.image_url}` : 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop'} 
+                   alt={pet.name} 
+                   className="pet-image" 
+                   />
                   <div className="pet-status available">
                     {pet.status || 'Available'}
                   </div>

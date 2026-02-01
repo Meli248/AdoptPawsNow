@@ -227,7 +227,7 @@ const Missing = () => {
               <div key={pet.missing_id} className="pet-card missing-card fade-in">
                 <div className="pet-image-wrapper">
                   <img 
-                    src={pet.image_url || 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop'} 
+           src={pet.image_url ? `http://localhost:5000${pet.image_url}` : 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&h=400&fit=crop'}
                     alt={pet.pet_name} 
                     className="pet-image" 
                   />
