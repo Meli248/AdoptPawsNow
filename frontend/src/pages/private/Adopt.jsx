@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, PawPrint, Dog, Cat, MapPin, Heart } from 'lucide-react';
+import { Search, Filter, PawPrint, Dog, Cat, MapPin, Heart, User, Mail, Phone } from 'lucide-react';
 import { adoptionAPI } from '../../services/api';
 import '../../css/Adopt.css';
 
@@ -218,6 +218,66 @@ const Adopt = () => {
                   <p className="pet-description">
                     {pet.description || 'A wonderful pet looking for a loving home.'}
                   </p>
+
+                  {/* NEW: Contact Information */}
+                  {pet.contact_name && (
+                    <div className="pet-contact-info" style={{
+                      marginTop: '12px',
+                      padding: '12px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef'
+                    }}>
+                      <p style={{ 
+                        fontSize: '0.85rem', 
+                        fontWeight: '600', 
+                        color: '#6c757d',
+                        marginBottom: '8px' 
+                      }}>
+                        Contact for Adoption:
+                      </p>
+                      <p style={{ 
+                        fontSize: '0.9rem', 
+                        color: '#495057',
+                        margin: '4px 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <User size={14} />
+                        <strong>{pet.contact_name}</strong>
+                        {pet.contact_type === 'shelter' && ' (Shelter/Rescue)'}
+                        {pet.contact_type === 'community' && ' (Community Member)'}
+                      </p>
+                      {pet.contact_email && (
+                        <p style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#6c757d',
+                          margin: '4px 0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <Mail size={14} />
+                          {pet.contact_email}
+                        </p>
+                      )}
+                      {pet.contact_phone && (
+                        <p style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#6c757d',
+                          margin: '4px 0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <Phone size={14} />
+                          {pet.contact_phone}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <button 
                     className="btn btn-primary btn-adopt"
                     onClick={() => handleAdoptClick(pet)}

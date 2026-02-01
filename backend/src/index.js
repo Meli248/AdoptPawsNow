@@ -172,6 +172,7 @@ app.get('/api/pets/:id', async (req, res) => {
   }
 });
 
+
 // POST create new pet for adoption
 app.post('/api/pets', upload.single('image'), async (req, res) => {
   try {
@@ -186,7 +187,12 @@ app.post('/api/pets', upload.single('image'), async (req, res) => {
       description,
       vaccinated,
       neutered,
-      status
+      status,
+      // NEW: Contact fields
+      contact_name,
+      contact_email,
+      contact_phone,
+      contact_type
     } = req.body;
 
     // Validation
@@ -197,13 +203,22 @@ app.post('/api/pets', upload.single('image'), async (req, res) => {
       });
     }
 
+    // NEW: Validate contact information
+    if (!contact_name || !contact_email || !contact_phone) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Contact name, email, and phone are required' 
+      });
+    }
+
     // Get image URL
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const query = `
       INSERT INTO pets (name, species, breed, age, gender, size, color, description, 
-                       vaccinated, neutered, status, image_url, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+                       vaccinated, neutered, status, image_url, 
+                       contact_name, contact_email, contact_phone, contact_type, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW())
       RETURNING *
     `;
 
@@ -219,7 +234,12 @@ app.post('/api/pets', upload.single('image'), async (req, res) => {
       vaccinated === 'true' || vaccinated === true,
       neutered === 'true' || neutered === true,
       status || 'Available',
-      imageUrl
+      imageUrl,
+      // NEW: Contact values
+      contact_name,
+      contact_email,
+      contact_phone,
+      contact_type || 'individual'
     ];
 
     const result = await pool.query(query, values);

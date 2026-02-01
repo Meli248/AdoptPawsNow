@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { adoptionAPI, missingAPI } from '../services/api';
 import '../css/Createpost.css';
-import { getImageUrl } from '../utils/imageHelper';
 
 const CreatePost = ({ isOpen, onClose, onSuccess }) => {
   const [postType, setPostType] = useState('adoption');
@@ -25,6 +24,12 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
     color: '',
     vaccinated: true,
     neutered: false,
+    // Contact information for adoption pets
+    contactName: '',
+    contactEmail: '',
+    contactPhone: '',
+    contactType: 'individual', // 'individual', 'shelter', 'community'
+    // Missing pet fields
     lastSeenLocation: '',
     lastSeenDate: '',
     ownerName: '',
@@ -83,6 +88,7 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
       const formDataToSend = new FormData();
 
       if (postType === 'adoption') {
+        // Pet details
         formDataToSend.append('name', formData.name);
         formDataToSend.append('species', formData.species);
         formDataToSend.append('breed', formData.breed || 'Mixed');
@@ -94,24 +100,25 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
         formDataToSend.append('vaccinated', formData.vaccinated);
         formDataToSend.append('neutered', formData.neutered);
         formDataToSend.append('status', 'Available');
+        
+        // Contact information
+        formDataToSend.append('contact_name', formData.contactName);
+        formDataToSend.append('contact_email', formData.contactEmail);
+        formDataToSend.append('contact_phone', formData.contactPhone);
+        formDataToSend.append('contact_type', formData.contactType);
+        
         formDataToSend.append('image', imageFile);
 
         const response = await adoptionAPI.createPet(formDataToSend);
         console.log('Adoption response:', response);
-        alert(response.message || 'Pet posted successfully!');
         
+        alert(response.message || 'Pet posted for adoption successfully!');
       } else {
-        // Missing pet - age must be integer or null
+        // Missing pet
         formDataToSend.append('pet_name', formData.name);
         formDataToSend.append('species', formData.species);
         formDataToSend.append('breed', formData.breed || 'Unknown');
-        
-        // Convert age to number or send null
-        if (formData.age && !isNaN(formData.age)) {
-          formDataToSend.append('age', parseInt(formData.age));
-        }
-        // If age is empty or not a number, don't send it
-        
+        formDataToSend.append('age', formData.age || 'Unknown');
         formDataToSend.append('gender', formData.gender);
         formDataToSend.append('description', formData.description);
         formDataToSend.append('last_seen_location', formData.lastSeenLocation);
@@ -119,78 +126,63 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
         formDataToSend.append('owner_name', formData.ownerName);
         formDataToSend.append('owner_email', formData.ownerEmail);
         formDataToSend.append('owner_phone', formData.ownerPhone || '');
-        
-        if (formData.reward) {
-          formDataToSend.append('reward', formData.reward);
-        }
-        
+        formDataToSend.append('reward', formData.reward || '');
         formDataToSend.append('status', 'Missing');
         formDataToSend.append('image', imageFile);
 
         const response = await missingAPI.createMissingPet(formDataToSend);
         console.log('Missing pet response:', response);
-        alert(response.message || 'Missing pet reported!');
+        
+        alert(response.message || 'Missing pet report submitted successfully!');
       }
 
-      resetForm();
+      // Reset form
+      setFormData({
+        name: '',
+        species: 'Dog',
+        breed: '',
+        age: '',
+        gender: 'Male',
+        size: 'Medium',
+        description: '',
+        color: '',
+        vaccinated: true,
+        neutered: false,
+        contactName: '',
+        contactEmail: '',
+        contactPhone: '',
+        contactType: 'individual',
+        lastSeenLocation: '',
+        lastSeenDate: '',
+        ownerName: '',
+        ownerEmail: '',
+        ownerPhone: '',
+        reward: ''
+      });
+      setImageFile(null);
+      setImagePreview(null);
+
+      if (onSuccess) onSuccess();
       onClose();
-      
-      if (onSuccess) {
-        onSuccess();
-      }
-
-    } catch (err) {
-      console.error('Error submitting post:', err);
-      console.error('Error details:', err.response?.data);
-      const msg = err.response?.data?.message 
-        || err.response?.data?.error
-        || err.message 
-        || 'Failed to create post';
-      alert(msg);
+    } catch (error) {
+      console.error('Error submitting post:', error);
+      console.error('Error details:', error.response?.data);
+      alert(error.response?.data?.message || error.message || 'Failed to submit post. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      species: 'Dog',
-      breed: '',
-      age: '',
-      gender: 'Male',
-      size: 'Medium',
-      description: '',
-      color: '',
-      vaccinated: true,
-      neutered: false,
-      lastSeenLocation: '',
-      lastSeenDate: '',
-      ownerName: '',
-      ownerEmail: '',
-      ownerPhone: '',
-      reward: ''
-    });
-    setImageFile(null);
-    setImagePreview(null);
-    setPostType('adoption');
-  };
-
   const handleClose = () => {
-    if (!loading) {
-      resetForm();
-      onClose();
-    }
+    if (loading) return;
+    onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={handleClose}>
-      <div 
-        className="modal-content create-post-modal" 
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="modal-overlay">
+      <div className="modal-content">
         <div className="modal-header">
           <div>
             <h2 className="modal-title">
@@ -232,9 +224,7 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
             <div className="button-group">
               <button
                 type="button"
-                className={`toggle-btn ${
-                  postType === 'adoption' ? 'active' : ''
-                }`}
+                className={`toggle-btn ${postType === 'adoption' ? 'active' : ''}`}
                 onClick={() => setPostType('adoption')}
                 disabled={loading}
               >
@@ -243,9 +233,7 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
               </button>
               <button
                 type="button"
-                className={`toggle-btn ${
-                  postType === 'missing' ? 'active' : ''
-                }`}
+                className={`toggle-btn ${postType === 'missing' ? 'active' : ''}`}
                 onClick={() => setPostType('missing')}
                 disabled={loading}
               >
@@ -264,12 +252,8 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
             <div className="button-group">
               <button
                 type="button"
-                className={`toggle-btn ${
-                  formData.species === 'Dog' ? 'active' : ''
-                }`}
-                onClick={() => setFormData(
-                  prev => ({ ...prev, species: 'Dog' })
-                )}
+                className={`toggle-btn ${formData.species === 'Dog' ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, species: 'Dog' }))}
                 disabled={loading}
               >
                 <Dog size={18} />
@@ -277,12 +261,8 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
               </button>
               <button
                 type="button"
-                className={`toggle-btn ${
-                  formData.species === 'Cat' ? 'active' : ''
-                }`}
-                onClick={() => setFormData(
-                  prev => ({ ...prev, species: 'Cat' })
-                )}
+                className={`toggle-btn ${formData.species === 'Cat' ? 'active' : ''}`}
+                onClick={() => setFormData(prev => ({ ...prev, species: 'Cat' }))}
                 disabled={loading}
               >
                 <Cat size={18} />
@@ -308,26 +288,15 @@ const CreatePost = ({ isOpen, onClose, onSuccess }) => {
                   className="image-upload-input"
                   disabled={loading}
                 />
-                <label 
-                  htmlFor="pet-image" 
-                  className="image-upload-label"
-                >
+                <label htmlFor="pet-image" className="image-upload-label">
                   <Upload size={48} />
-                  <span className="upload-text">
-                    Click to upload photo
-                  </span>
-                  <span className="upload-hint">
-                    PNG, JPG up to 5MB
-                  </span>
+                  <span className="upload-text">Click to upload photo</span>
+                  <span className="upload-hint">PNG, JPG up to 5MB</span>
                 </label>
               </div>
             ) : (
               <div className="image-preview-container">
-                <img 
-src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
-                  alt="Preview" 
-                  className="image-preview" 
-                />
+                <img src={imagePreview} alt="Preview" className="image-preview" />
                 <button
                   type="button"
                   onClick={removeImage}
@@ -343,9 +312,7 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
 
           {/* Pet Name */}
           <div className="form-group">
-            <label className="form-label">
-              Pet Name *
-            </label>
+            <label className="form-label">Pet Name *</label>
             <input
               type="text"
               name="name"
@@ -375,28 +342,16 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
 
             {/* Age */}
             <div className="form-group">
-              <label className="form-label">
-                Age {postType === 'missing' && '(years)'}
-              </label>
+              <label className="form-label">Age</label>
               <input
-                type={postType === 'missing' ? 'number' : 'text'}
+                type="text"
                 name="age"
                 value={formData.age}
                 onChange={handleInputChange}
-                placeholder={
-                  postType === 'missing' 
-                    ? 'e.g., 2' 
-                    : 'e.g., 2 years, 6 months'
-                }
+                placeholder="e.g., 2 years, 6 months"
                 className="form-input"
-                min={postType === 'missing' ? '0' : undefined}
                 disabled={loading}
               />
-              {postType === 'missing' && (
-                <p className="form-hint">
-                  Leave empty if unknown
-                </p>
-              )}
             </div>
           </div>
 
@@ -417,7 +372,7 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
               </select>
             </div>
 
-            {/* Size (adoption only) */}
+            {/* Size (only for adoption) */}
             {postType === 'adoption' && (
               <div className="form-group">
                 <label className="form-label">Size</label>
@@ -434,24 +389,44 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
                 </select>
               </div>
             )}
+
+            {/* Color */}
+            <div className="form-group">
+              <label className="form-label">Color</label>
+              <input
+                type="text"
+                name="color"
+                value={formData.color}
+                onChange={handleInputChange}
+                placeholder="e.g., Brown, Black & White"
+                className="form-input"
+                disabled={loading}
+              />
+            </div>
           </div>
 
-          {/* Adoption Fields */}
+          {/* Description */}
+          <div className="form-group">
+            <label className="form-label">Description *</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder={
+                postType === 'adoption'
+                  ? "Describe the pet's personality, habits, and any special needs..."
+                  : "Provide any distinctive features or behaviors that can help identify the pet..."
+              }
+              className="form-textarea"
+              rows="4"
+              required
+              disabled={loading}
+            />
+          </div>
+
+          {/* Adoption-specific fields */}
           {postType === 'adoption' && (
             <>
-              <div className="form-group">
-                <label className="form-label">Color</label>
-                <input
-                  type="text"
-                  name="color"
-                  value={formData.color}
-                  onChange={handleInputChange}
-                  placeholder="e.g., Brown, White, Black"
-                  className="form-input"
-                  disabled={loading}
-                />
-              </div>
-
               <div className="form-row checkbox-row">
                 <div className="checkbox-group">
                   <label className="checkbox-label">
@@ -474,14 +449,101 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
                       onChange={handleInputChange}
                       disabled={loading}
                     />
-                    <span>Neutered/Spayed</span>
+                    <span>Spayed/Neutered</span>
                   </label>
+                </div>
+              </div>
+
+              {/* CONTACT INFORMATION SECTION */}
+              <div className="form-group">
+                <label className="form-label">
+                  <User size={18} />
+                  Contact Type
+                </label>
+                <select
+                  name="contactType"
+                  value={formData.contactType}
+                  onChange={handleInputChange}
+                  className="form-input"
+                  disabled={loading}
+                >
+                  <option value="individual">Individual Owner</option>
+                  <option value="shelter">Shelter/Rescue Organization</option>
+                  <option value="community">Community Member/Found Pet</option>
+                </select>
+                <p className="form-hint">
+                  {formData.contactType === 'shelter' && 
+                    'Rescue organizations and shelters'}
+                  {formData.contactType === 'individual' && 
+                    'Pet owners giving up their pets'}
+                  {formData.contactType === 'community' && 
+                    'Found stray pets or community animals'}
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <User size={18} />
+                  Contact Name *
+                </label>
+                <input
+                  type="text"
+                  name="contactName"
+                  value={formData.contactName}
+                  onChange={handleInputChange}
+                  placeholder={
+                    formData.contactType === 'shelter' 
+                      ? 'e.g., Happy Paws Shelter'
+                      : 'e.g., John Doe'
+                  }
+                  className="form-input"
+                  required
+                  disabled={loading}
+                />
+                <p className="form-hint">
+                  This will be shown to people interested in adopting
+                </p>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">
+                    <Mail size={18} />
+                    Contact Email *
+                  </label>
+                  <input
+                    type="email"
+                    name="contactEmail"
+                    value={formData.contactEmail}
+                    onChange={handleInputChange}
+                    placeholder="contact@example.com"
+                    className="form-input"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">
+                    <Phone size={18} />
+                    Contact Phone *
+                  </label>
+                  <input
+                    type="tel"
+                    name="contactPhone"
+                    value={formData.contactPhone}
+                    onChange={handleInputChange}
+                    placeholder="555-1234"
+                    className="form-input"
+                    required
+                    disabled={loading}
+                  />
                 </div>
               </div>
             </>
           )}
 
-          {/* Missing Pet Fields */}
+          {/* Missing pet specific fields */}
           {postType === 'missing' && (
             <>
               <div className="form-group">
@@ -494,7 +556,7 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
                   name="lastSeenLocation"
                   value={formData.lastSeenLocation}
                   onChange={handleInputChange}
-                  placeholder="e.g., Central Park, New York"
+                  placeholder="e.g., Central Park, near Main Street"
                   className="form-input"
                   required
                   disabled={loading}
@@ -521,14 +583,14 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
               <div className="form-group">
                 <label className="form-label">
                   <User size={18} />
-                  Your Name *
+                  Owner Name *
                 </label>
                 <input
                   type="text"
                   name="ownerName"
                   value={formData.ownerName}
                   onChange={handleInputChange}
-                  placeholder="Your full name"
+                  placeholder="Your name"
                   className="form-input"
                   required
                   disabled={loading}
@@ -539,7 +601,7 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
                 <div className="form-group">
                   <label className="form-label">
                     <Mail size={18} />
-                    Your Email *
+                    Owner Email *
                   </label>
                   <input
                     type="email"
@@ -556,7 +618,7 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
                 <div className="form-group">
                   <label className="form-label">
                     <Phone size={18} />
-                    Your Phone
+                    Owner Phone
                   </label>
                   <input
                     type="tel"
@@ -571,15 +633,13 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
               </div>
 
               <div className="form-group">
-                <label className="form-label">
-                  Reward (Optional)
-                </label>
+                <label className="form-label">Reward (optional)</label>
                 <input
                   type="text"
                   name="reward"
                   value={formData.reward}
                   onChange={handleInputChange}
-                  placeholder="e.g., $500"
+                  placeholder="e.g., $100"
                   className="form-input"
                   disabled={loading}
                 />
@@ -587,52 +647,22 @@ src={getImageUrl(imagePreview) || 'https://images.unsplash.com/...'}
             </>
           )}
 
-          {/* Description */}
-          <div className="form-group">
-            <label className="form-label">
-              <FileText size={18} />
-              Description *
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder={
-                postType === 'adoption'
-                  ? "Describe the pet's personality, temperament..."
-                  : "Describe distinctive features, behavior..."
-              }
-              className="form-textarea"
-              rows={4}
-              maxLength={500}
-              required
-              disabled={loading}
-            />
-            <p className="form-hint">
-              {formData.description.length}/500 characters
-            </p>
-          </div>
-
-          {/* Actions */}
+          {/* Form Actions */}
           <div className="form-actions">
-            <button 
-              type="button" 
-              className="btn btn-secondary" 
-              onClick={handleClose}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary"
               disabled={loading}
             >
-              {loading ? 'Submitting...' : (
-                postType === 'adoption' 
-                  ? 'Post for Adoption' 
-                  : 'Report Missing'
-              )}
+              {loading ? 'Posting...' : `Post ${postType === 'adoption' ? 'for Adoption' : 'Missing Pet'}`}
+            </button>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="btn btn-secondary"
+              disabled={loading}
+            >
+              Cancel
             </button>
           </div>
         </form>
