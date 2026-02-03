@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
@@ -19,47 +19,74 @@ import '../../css/Home.css';
 
 const Home = () => {
   const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+  const [featuredPets, setFeaturedPets] = useState([]);
+  const [stats, setStats] = useState({
+    petsAdopted: '0',
+    happyFamilies: '0',
+    volunteers: '0',
+    petsReunited: '0'
+  });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('access_token');
 
-  const featuredPets = [
-    {
-      id: 1,
-      name: 'Buddy',
-      breed: 'Golden Retriever',
-      type: 'Dog',
-      age: '2 years',
-      location: 'New York, NY',
-      status: 'Available',
-      image: 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop'
-    },
-    {
-      id: 2,
-      name: 'Whiskers',
-      breed: 'Tabby',
-      type: 'Cat',
-      age: '1 year',
-      location: 'Los Angeles, CA',
-      status: 'Available',
-      image: 'https://images.unsplash.com/photo-1574158622682-e40e69881006?w=400&h=400&fit=crop'
-    },
-    {
-      id: 3,
-      name: 'Max',
-      breed: 'Beagle',
-      type: 'Dog',
-      age: '6 months',
-      location: 'Chicago, IL',
-      status: 'Pending',
-      image: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&h=400&fit=crop'
-    }
-  ];
+  // Fetch featured pets and stats from API
+  useEffect(() => {
+    const fetchFeaturedPets = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=available`);
+        const data = await response.json();
+        
+        if (data.success && data.data.length > 0) {
+          // Get first 3 pets for featured section
+          setFeaturedPets(data.data.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error fetching featured pets:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const stats = [
-    { icon: <PawPrint size={32} />, number: '2,500+', label: 'Pets Adopted' },
-    { icon: <Users size={32} />, number: '10,000+', label: 'Happy Families' },
-    { icon: <Heart size={32} />, number: '500+', label: 'Volunteers' },
-    { icon: <Activity size={32} />, number: '150+', label: 'Pets Reunited' }
+    const fetchStats = async () => {
+      try {
+        // Fetch adopted pets count
+        const adoptedResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=adopted`);
+        const adoptedData = await adoptedResponse.json();
+        
+        // Fetch found missing pets count
+        const foundResponse = await fetch(`${import.meta.env.VITE_API_URL}/missing/missing-pets?status=found`);
+        const foundData = await foundResponse.json();
+        
+        // Fetch available pets for volunteers estimate
+        const availableResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=available`);
+        const availableData = await availableResponse.json();
+        
+        const adoptedCount = adoptedData.success ? adoptedData.count : 0;
+        const foundCount = foundData.success ? foundData.count : 0;
+        const availableCount = availableData.success ? availableData.count : 0;
+        
+        setStats({
+          petsAdopted: adoptedCount > 0 ? `${adoptedCount}+` : '0',
+          happyFamilies: adoptedCount > 0 ? `${Math.floor(adoptedCount * 0.9)}+` : '0',
+          volunteers: availableCount > 0 ? `${Math.floor(availableCount * 2)}+` : '500+',
+          petsReunited: foundCount > 0 ? `${foundCount}+` : '0'
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+        // Keep default stats on error
+      }
+    };
+
+    fetchFeaturedPets();
+    fetchStats();
+  }, []);
+
+  const statsData = [
+    { icon: <PawPrint size={32} />, number: stats.petsAdopted, label: 'Pets Adopted' },
+    { icon: <Users size={32} />, number: stats.happyFamilies, label: 'Happy Families' },
+    { icon: <Heart size={32} />, number: stats.volunteers, label: 'Volunteers' },
+    { icon: <Activity size={32} />, number: stats.petsReunited, label: 'Pets Reunited' }
   ];
 
   const steps = [
@@ -104,7 +131,13 @@ const Home = () => {
   const handleCreatePost = (postData) => {
     console.log('Post created:', postData);
     // Here you would typically make an API call to save the post
-    // Example: await api.createPost(postData);
+  };
+
+  // Helper function to get image URL
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
+    if (imageUrl.startsWith('http')) return imageUrl;
+    return `${import.meta.env.VITE_API_URL}${imageUrl}`;
   };
 
   return (
@@ -180,11 +213,11 @@ const Home = () => {
         </div>
       </section>
 
- {/* Stats Section */}
+      {/* Stats Section */}
       <section className="stats-section">
         <div className="container">
           <div className="stats-grid">
-            {stats.map((stat, index) => (
+            {statsData.map((stat, index) => (
               <div key={index} className="stat-card fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                 <div className="stat-icon">{stat.icon}</div>
                 <div className="stat-number">{stat.number}</div>
@@ -205,41 +238,58 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="pets-grid">
-            {featuredPets.map((pet, index) => (
-              <div key={pet.id} className="pet-card fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="pet-image-wrapper">
-                  <img src={pet.image} alt={pet.name} className="pet-image" />
-                  <div className={`pet-status ${pet.status.toLowerCase()}`}>
-                    {pet.status}
-                  </div>
-                  <button className="favorite-btn">
-                    <Heart size={20} />
-                  </button>
-                </div>
-                <div className="pet-info">
-                  <h3 className="pet-name">{pet.name}</h3>
-                  <p className="pet-breed">{pet.breed} • {pet.type}</p>
-                  <div className="pet-details">
-                    <div className="pet-detail">
-                      <MapPin size={16} />
-                      <span>{pet.location}</span>
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <p>Loading pets...</p>
+            </div>
+          ) : featuredPets.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem' }}>
+              <p>No pets available at the moment. Check back soon!</p>
+            </div>
+          ) : (
+            <div className="pets-grid">
+              {featuredPets.map((pet, index) => (
+                <div key={pet.pet_id} className="pet-card fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="pet-image-wrapper">
+                    <img 
+                      src={getImageUrl(pet.image_url)} 
+                      alt={pet.name} 
+                      className="pet-image" 
+                      onError={(e) => {
+                        e.target.src = 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
+                      }}
+                    />
+                    <div className={`pet-status ${pet.status?.toLowerCase() || 'available'}`}>
+                      {pet.status || 'Available'}
                     </div>
-                    <div className="pet-detail">
-                      <Clock size={16} />
-                      <span>{pet.age}</span>
-                    </div>
+                    <button className="favorite-btn">
+                      <Heart size={20} />
+                    </button>
                   </div>
-                  <button 
-                    onClick={() => handleProtectedNavigation('/adopt')}
-                    className="btn btn-primary btn-adopt"
-                  >
-                    Adopt {pet.name}
-                  </button>
+                  <div className="pet-info">
+                    <h3 className="pet-name">{pet.name}</h3>
+                    <p className="pet-breed">{pet.breed || 'Mixed'} • {pet.species || 'Pet'}</p>
+                    <div className="pet-details">
+                      <div className="pet-detail">
+                        <MapPin size={16} />
+                        <span>{pet.location || 'Location N/A'}</span>
+                      </div>
+                      <div className="pet-detail">
+                        <Clock size={16} />
+                        <span>{pet.age || 'Age Unknown'}</span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => handleProtectedNavigation('/adopt')}
+                      className="btn btn-primary btn-adopt"
+                    >
+                      Adopt {pet.name}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="view-all-container">
             <button 

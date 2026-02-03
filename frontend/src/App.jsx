@@ -17,7 +17,7 @@ import About from './pages/public/About';
 // Private Pages
 import Adopt from './pages/private/Adopt';
 import Missing from './pages/private/Missing';
-import Profile from './pages/private/profile';
+import Profile from './pages/private/Profile';  // FIXED: Proper import
 
 function App() {
   const isAuthenticated = localStorage.getItem('access_token');
@@ -40,7 +40,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/adopt" element={<Adopt />} />
           <Route path="/missing" element={<Missing />} />
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<Profile />} />  {/* FIXED: Added profile route */}
         </Route>
 
         {/* Root path redirects based on auth status */}

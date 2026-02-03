@@ -5,7 +5,7 @@ export const getAllMissingPets = async (req, res) => {
   try {
     const { species, status = 'missing' } = req.query;
     
-    let query = 'SELECT * FROM missing_pets WHERE status = $1';
+    let query = 'SELECT * FROM missing_pets WHERE LOWER(status) = LOWER($1)';
     const params = [status];
     
     if (species) {
@@ -63,13 +63,13 @@ export const getMissingPetById = async (req, res) => {
   }
 };
 
-// Report a missing pet
+// Report a missing pet - FIXED
 export const reportMissingPet = async (req, res) => {
   try {
     const {
       pet_name, species, breed, age, gender, color, description,
       last_seen_location, last_seen_date,
-      owner_name, owner_email, owner_phone, reward
+      owner_name, owner_email, owner_phone, reward, status
     } = req.body;
 
     // Get image URL from uploaded file
@@ -82,7 +82,7 @@ export const reportMissingPet = async (req, res) => {
         !last_seen_date || !owner_name || !owner_email) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields'
+        message: 'Pet name, species, last seen location, last seen date, owner name, and owner email are required'
       });
     }
 
@@ -97,8 +97,8 @@ export const reportMissingPet = async (req, res) => {
       `INSERT INTO missing_pets 
        (pet_name, species, breed, age, gender, color, description, 
         last_seen_location, last_seen_date, image_url, 
-        owner_name, owner_email, owner_phone, reward) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) 
+        owner_name, owner_email, owner_phone, reward, status) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) 
        RETURNING *`,
       [
         pet_name, 
@@ -114,7 +114,8 @@ export const reportMissingPet = async (req, res) => {
         owner_name, 
         owner_email, 
         owner_phone || null,
-        reward || null
+        reward || null,
+        (status || 'missing').toLowerCase()  // FIXED: Force lowercase
       ]
     );
 
@@ -125,6 +126,7 @@ export const reportMissingPet = async (req, res) => {
     });
   } catch (error) {
     console.error('Error reporting missing pet:', error);
+    console.error('Error details:', error.detail);
     res.status(500).json({
       success: false,
       message: 'Failed to report missing pet',
@@ -166,7 +168,8 @@ export const updateMissingPet = async (req, res) => {
        RETURNING *`,
       [
         pet_name, species, breed, age, gender, color, description,
-        last_seen_location, last_seen_date, image_url, status, 
+        last_seen_location, last_seen_date, image_url, 
+        status ? status.toLowerCase() : undefined, 
         reward, id
       ]
     );
@@ -336,7 +339,7 @@ export const updateMissingPetStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['missing', 'found', 'closed'].includes(status)) {
+    if (!['missing', 'found', 'closed'].includes(status.toLowerCase())) {
       return res.status(400).json({
         success: false,
         message: 'Invalid status. Must be missing, found, or closed'
@@ -348,7 +351,7 @@ export const updateMissingPetStatus = async (req, res) => {
        SET status = $1, updated_at = CURRENT_TIMESTAMP 
        WHERE missing_id = $2 
        RETURNING *`,
-      [status, id]
+      [status.toLowerCase(), id]
     );
 
     if (result.rows.length === 0) {

@@ -2,12 +2,15 @@ import pool from '../../database/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// Register new user
+/* ======================================
+   REGISTER USER
+====================================== */
 export const register = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
 
-    // Validation
+    console.log('📝 Registration attempt:', { fullName, email });
+
     if (!fullName || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -22,50 +25,51 @@ export const register = async (req, res) => {
       });
     }
 
-    // Check if user already exists
-    const userExists = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
+    // Check if user exists
+    const existingUser = await pool.query(
+      'SELECT user_id FROM users WHERE email = $1',
       [email]
     );
 
-    if (userExists.rows.length > 0) {
+    if (existingUser.rows.length > 0) {
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
       });
     }
 
-    // Create username from email
     const username = email.split('@')[0];
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    console.log('🔐 Creating user with:', { username, email, fullName });
 
-    // Insert user into database
-    const result = await pool.query(
-      `INSERT INTO users (full_name, username, email, password, role) 
-       VALUES ($1, $2, $3, $4, $5) 
-       RETURNING id, full_name, username, email, role, created_at`,
-      [fullName, username, email, hashedPassword, 'user']
-    );
+    // INSERT USER - exact same format as the successful test query
+    const insertQuery = `
+      INSERT INTO users (username, email, password_hash, full_name, role)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING user_id, username, email, full_name, role, created_at
+    `;
+    
+    const values = [username, email, hashedPassword, fullName, 'user'];
+    
+    console.log('📊 Executing insert...');
+    
+    const result = await pool.query(insertQuery, values);
 
-    const newUser = result.rows[0];
+    const user = result.rows[0];
+    
+    console.log('✅ User created successfully:', { user_id: user.user_id, username: user.username });
 
-    // Generate JWT token
     const token = jwt.sign(
       {
-        userId: newUser.id,
-        email: newUser.email,
-        username: newUser.username,
-        role: newUser.role
+        userId: user.user_id,
+        email: user.email,
+        username: user.username,
+        role: user.role
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRATION || '24h' }
+      { expiresIn: '24h' }
     );
-
-    console.log('✅ User registered successfully:', newUser.email);
-    console.log('🔑 Token generated:', token.substring(0, 20) + '...');
 
     res.status(201).json({
       success: true,
@@ -73,17 +77,23 @@ export const register = async (req, res) => {
       data: {
         access_token: token,
         user: {
-          id: newUser.id,
-          full_name: newUser.full_name,
-          username: newUser.username,
-          email: newUser.email,
-          role: newUser.role
+          id: user.user_id,
+          full_name: user.full_name,
+          username: user.username,
+          email: user.email,
+          role: user.role
         }
       }
     });
 
   } catch (error) {
-    console.error('❌ Registration error:', error);
+    console.error('❌ Register error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      position: error.position
+    });
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -92,14 +102,15 @@ export const register = async (req, res) => {
   }
 };
 
-// Login user
+/* ======================================
+   LOGIN USER
+====================================== */
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    console.log('🔐 Login attempt for:', email);
+    console.log('🔑 Login attempt for:', email);
 
-    // Validation
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -107,14 +118,12 @@ export const login = async (req, res) => {
       });
     }
 
-    // Find user by email
     const result = await pool.query(
-      'SELECT * FROM users WHERE email = $1',
+      'SELECT user_id, username, email, password_hash, full_name, role FROM users WHERE email = $1',
       [email]
     );
 
     if (result.rows.length === 0) {
-      console.log('❌ User not found:', email);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -123,36 +132,30 @@ export const login = async (req, res) => {
 
     const user = result.rows[0];
 
-    // Compare password
-    const validPassword = await bcrypt.compare(password, user.password);
-
-    if (!validPassword) {
-      console.log('❌ Invalid password for:', email);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    // Generate JWT token
+    console.log('✅ Login successful for:', user.username);
+
     const token = jwt.sign(
       {
-        userId: user.id,
+        userId: user.user_id,
         email: user.email,
         username: user.username,
         role: user.role
       },
       process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRATION || '24h' }
+      { expiresIn: '24h' }
     );
 
-    console.log('✅ Login successful for:', user.email);
-    console.log('🔑 Token generated:', token.substring(0, 20) + '...');
-
-    // Update last login (optional)
     await pool.query(
-      'UPDATE users SET updated_at = NOW() WHERE id = $1',
-      [user.id]
+      'UPDATE users SET updated_at = NOW() WHERE user_id = $1',
+      [user.user_id]
     );
 
     res.status(200).json({
@@ -161,7 +164,7 @@ export const login = async (req, res) => {
       data: {
         access_token: token,
         user: {
-          id: user.id,
+          id: user.user_id,
           full_name: user.full_name,
           username: user.username,
           email: user.email,
@@ -180,13 +183,15 @@ export const login = async (req, res) => {
   }
 };
 
-// Get current user
+/* ======================================
+   GET CURRENT USER
+====================================== */
 export const getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.userId;
 
     const result = await pool.query(
-      'SELECT id, full_name, username, email, role, created_at FROM users WHERE id = $1',
+      'SELECT user_id, full_name, username, email, role, created_at FROM users WHERE user_id = $1',
       [userId]
     );
 
@@ -197,13 +202,22 @@ export const getCurrentUser = async (req, res) => {
       });
     }
 
+    const user = result.rows[0];
+
     res.status(200).json({
       success: true,
-      data: result.rows[0]
+      data: {
+        id: user.user_id,
+        full_name: user.full_name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at
+      }
     });
 
   } catch (error) {
-    console.error('Get current user error:', error);
+    console.error('❌ Get current user error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

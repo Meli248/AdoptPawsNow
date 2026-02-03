@@ -5,7 +5,7 @@ export const getAllPets = async (req, res) => {
   try {
     const { species, status = 'available', size, gender } = req.query;
     
-    let query = 'SELECT * FROM pets WHERE status = $1';
+    let query = 'SELECT * FROM pets WHERE LOWER(status) = LOWER($1)';
     const params = [status];
     let paramCount = 1;
     
@@ -77,12 +77,19 @@ export const getPetById = async (req, res) => {
   }
 };
 
-// Create new pet (for admin)
+// Create new pet (for adoption) - FIXED
 export const createPet = async (req, res) => {
   try {
     const {
-      name, species, breed, age, gender, size, color, description, image_url
+      name, species, breed, age, gender, size, color, description,
+      vaccinated, neutered, status,
+      contact_name, contact_email, contact_phone, contact_type
     } = req.body;
+
+    // Get image URL from uploaded file
+    const image_url = req.file 
+      ? `/uploads/${req.file.filename}` 
+      : null;
 
     // Validate required fields
     if (!name || !species) {
@@ -92,11 +99,47 @@ export const createPet = async (req, res) => {
       });
     }
 
+    if (!image_url) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pet image is required'
+      });
+    }
+
+    // Validate contact information
+    if (!contact_name || !contact_email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact name and email are required'
+      });
+    }
+
     const result = await pool.query(
-      `INSERT INTO pets (name, species, breed, age, gender, size, color, description, image_url) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+      `INSERT INTO pets (
+        name, species, breed, age, gender, size, color, description, 
+        image_url, vaccinated, neutered, status,
+        contact_name, contact_email, contact_phone, contact_type
+      ) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
        RETURNING *`,
-      [name, species, breed, age, gender, size, color, description, image_url]
+      [
+        name, 
+        species, 
+        breed || 'Mixed', 
+        age || null, 
+        gender || 'Unknown', 
+        size || 'Medium', 
+        color || null, 
+        description,
+        image_url,
+        vaccinated === 'true' || vaccinated === true,
+        neutered === 'true' || neutered === true,
+        (status || 'available').toLowerCase(),  // FIXED: Force lowercase
+        contact_name,
+        contact_email,
+        contact_phone || null,
+        contact_type || 'individual'
+      ]
     );
 
     res.status(201).json({
@@ -106,6 +149,7 @@ export const createPet = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating pet:', error);
+    console.error('Error details:', error.detail);
     res.status(500).json({
       success: false,
       message: 'Failed to add pet',
@@ -119,8 +163,15 @@ export const updatePet = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      name, species, breed, age, gender, size, color, description, image_url, status
+      name, species, breed, age, gender, size, color, description, 
+      status, vaccinated, neutered,
+      contact_name, contact_email, contact_phone, contact_type
     } = req.body;
+
+    // Get image URL if new file uploaded
+    const image_url = req.file 
+      ? `/uploads/${req.file.filename}` 
+      : undefined;
 
     const result = await pool.query(
       `UPDATE pets 
@@ -134,10 +185,21 @@ export const updatePet = async (req, res) => {
            description = COALESCE($8, description),
            image_url = COALESCE($9, image_url),
            status = COALESCE($10, status),
+           vaccinated = COALESCE($11, vaccinated),
+           neutered = COALESCE($12, neutered),
+           contact_name = COALESCE($13, contact_name),
+           contact_email = COALESCE($14, contact_email),
+           contact_phone = COALESCE($15, contact_phone),
+           contact_type = COALESCE($16, contact_type),
            updated_at = CURRENT_TIMESTAMP
-       WHERE pet_id = $11
+       WHERE pet_id = $17
        RETURNING *`,
-      [name, species, breed, age, gender, size, color, description, image_url, status, id]
+      [
+        name, species, breed, age, gender, size, color, description,
+        image_url, status ? status.toLowerCase() : undefined, vaccinated, neutered,
+        contact_name, contact_email, contact_phone, contact_type,
+        id
+      ]
     );
 
     if (result.rows.length === 0) {
@@ -208,7 +270,7 @@ export const createAdoptionApplication = async (req, res) => {
 
     // Check if pet exists and is available
     const petCheck = await pool.query(
-      'SELECT * FROM pets WHERE pet_id = $1 AND status = $2',
+      'SELECT * FROM pets WHERE pet_id = $1 AND LOWER(status) = $2',
       [pet_id, 'available']
     );
 

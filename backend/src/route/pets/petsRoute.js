@@ -1,4 +1,5 @@
 import express from 'express';
+import upload from '../../middleware/multerConfig.js';
 import {
   getAllPets,
   getPetById,
@@ -13,11 +14,11 @@ import {
 
 const router = express.Router();
 
-// Pet routes
+// Pet routes - FIXED: Added upload middleware
 router.get('/pets', getAllPets);
 router.get('/pets/:id', getPetById);
-router.post('/pets', createPet);
-router.put('/pets/:id', updatePet);
+router.post('/pets', upload.single('image'), createPet);  // ← ADDED upload.single('image')
+router.put('/pets/:id', upload.single('image'), updatePet);  // ← ADDED upload.single('image')
 router.delete('/pets/:id', deletePet);
 
 // Application routes

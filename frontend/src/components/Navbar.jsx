@@ -1,9 +1,46 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { authAPI } from '../services/api';
 import '../css/Navbar.css';
 
 const Navbar = () => {
   const location = useLocation();
-  const user = localStorage.getItem('user');
+  const navigate = useNavigate();
+  const [user, setUser] = useState(localStorage.getItem('user'));
+  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'));
+
+  // Listen for storage changes (when user logs in/out)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const token = localStorage.getItem('access_token');
+      const username = localStorage.getItem('user');
+      setUser(username);
+      setIsAuthenticated(!!token);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check on mount
+    handleStorageChange();
+    
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleLogout = () => {
+    // Clear localStorage
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    
+    // Update state
+    setUser(null);
+    setIsAuthenticated(false);
+    
+    // Trigger storage event for other components
+    window.dispatchEvent(new Event('storage'));
+    
+    // Redirect to home (not login, so user can still browse)
+    navigate('/home');
+  };
 
   return (
     <nav className="navbar">
@@ -24,8 +61,8 @@ const Navbar = () => {
         <ul className="navbar-menu">
           <li>
             <Link 
-              to="/" 
-              className={location.pathname === '/' ? 'nav-link active' : 'nav-link'}
+              to="/home" 
+              className={location.pathname === '/' || location.pathname === '/home' ? 'nav-link active' : 'nav-link'}
             >
               Home
             </Link>
@@ -57,14 +94,17 @@ const Navbar = () => {
         </ul>
 
         <div className="navbar-actions">
-          {user ? (
+          {isAuthenticated ? (
             <>
-              <Link to="/dashboard" className="user-profile">
+              <Link to="/profile" className="user-profile">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor"/>
                 </svg>
                 <span>{user}</span>
               </Link>
+              <button onClick={handleLogout} className="btn btn-secondary">
+                Logout
+              </button>
             </>
           ) : (
             <>
