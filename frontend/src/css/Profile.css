@@ -358,6 +358,106 @@
   border-color: var(--text-light);
 }
 
+.btn-outline:hover {
+  background-color: #f9fafb;
+  border-color: var(--text-light);
+}
+
+/* Edit Profile Styles */
+.btn-icon-save {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  border-radius: 10px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-icon-save:hover {
+  background-color: #5a7a6b;
+  border-color: #5a7a6b;
+}
+
+.btn-icon-cancel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  color: var(--text-dark);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-icon-cancel:hover {
+  background-color: #f9fafb;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.profile-edit-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.profile-edit-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.profile-edit-input-small {
+  width: 100%;
+  padding: 8px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  transition: border-color 0.3s ease;
+}
+
+.profile-edit-input-small:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.post-status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: rgba(255, 255, 255, 0.95);
+  color: var(--text-dark);
+  text-transform: capitalize;
+}
+
+.post-detail-small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .dashboard-page {
@@ -414,4 +514,10 @@
   .no-posts-container {
     padding: 60px 24px;
   }
+}
+.profile-basic-info-section {
+  padding-bottom: 32px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 32px;
+  text-align: center;
 }

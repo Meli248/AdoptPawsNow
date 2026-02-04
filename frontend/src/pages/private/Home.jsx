@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
@@ -6,13 +6,14 @@ import {
   MapPin, 
   Clock, 
   PawPrint, 
-  Users, 
   Activity, 
   ArrowRight, 
   Search, 
   MessageSquare, 
   Home as HomeIcon,
-  Plus
+  Plus,
+  Dog,
+  Cat
 } from 'lucide-react';
 import CreatePostModal from '../../components/Createpost';
 import '../../css/Home.css';
@@ -22,13 +23,35 @@ const Home = () => {
   const [featuredPets, setFeaturedPets] = useState([]);
   const [stats, setStats] = useState({
     petsAdopted: '0',
-    happyFamilies: '0',
-    volunteers: '0',
-    petsReunited: '0'
+    petsReunited: '0',
+    dogs: '0',
+    cats: '0'
   });
   const [loading, setLoading] = useState(true);
+  const [imagesLoaded, setImagesLoaded] = useState({});
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('access_token');
+  const observerRef = useRef(null);
+
+  // Lazy loading intersection observer
+  const imageObserver = useCallback((node) => {
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+            img.removeAttribute('data-src');
+            observerRef.current.unobserve(img);
+          }
+        }
+      });
+    });
+
+    if (node) observerRef.current.observe(node);
+  }, []);
 
   // Fetch featured pets and stats from API
   useEffect(() => {
@@ -58,19 +81,24 @@ const Home = () => {
         const foundResponse = await fetch(`${import.meta.env.VITE_API_URL}/missing/missing-pets?status=found`);
         const foundData = await foundResponse.json();
         
-        // Fetch available pets for volunteers estimate
-        const availableResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=available`);
-        const availableData = await availableResponse.json();
+        // Fetch dogs count
+        const dogsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?species=dog`);
+        const dogsData = await dogsResponse.json();
+        
+        // Fetch cats count
+        const catsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?species=cat`);
+        const catsData = await catsResponse.json();
         
         const adoptedCount = adoptedData.success ? adoptedData.count : 0;
         const foundCount = foundData.success ? foundData.count : 0;
-        const availableCount = availableData.success ? availableData.count : 0;
+        const dogsCount = dogsData.success ? dogsData.count : 0;
+        const catsCount = catsData.success ? catsData.count : 0;
         
         setStats({
           petsAdopted: adoptedCount > 0 ? `${adoptedCount}+` : '0',
-          happyFamilies: adoptedCount > 0 ? `${Math.floor(adoptedCount * 0.9)}+` : '0',
-          volunteers: availableCount > 0 ? `${Math.floor(availableCount * 2)}+` : '500+',
-          petsReunited: foundCount > 0 ? `${foundCount}+` : '0'
+          petsReunited: foundCount > 0 ? `${foundCount}+` : '0',
+          dogs: dogsCount > 0 ? `${dogsCount}+` : '0',
+          cats: catsCount > 0 ? `${catsCount}+` : '0'
         });
       } catch (error) {
         console.error('Error fetching stats:', error);
@@ -84,9 +112,9 @@ const Home = () => {
 
   const statsData = [
     { icon: <PawPrint size={32} />, number: stats.petsAdopted, label: 'Pets Adopted' },
-    { icon: <Users size={32} />, number: stats.happyFamilies, label: 'Happy Families' },
-    { icon: <Heart size={32} />, number: stats.volunteers, label: 'Volunteers' },
-    { icon: <Activity size={32} />, number: stats.petsReunited, label: 'Pets Reunited' }
+    { icon: <Activity size={32} />, number: stats.petsReunited, label: 'Pets Reunited' },
+    { icon: <Dog size={32} />, number: stats.dogs, label: 'Dogs' },
+    { icon: <Cat size={32} />, number: stats.cats, label: 'Cats' }
   ];
 
   const steps = [
@@ -138,6 +166,11 @@ const Home = () => {
     if (!imageUrl) return 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
     if (imageUrl.startsWith('http')) return imageUrl;
     return `${import.meta.env.VITE_API_URL}${imageUrl}`;
+  };
+
+  // Handle image load
+  const handleImageLoad = (petId) => {
+    setImagesLoaded(prev => ({ ...prev, [petId]: true }));
   };
 
   return (
@@ -252,11 +285,18 @@ const Home = () => {
                 <div key={pet.pet_id} className="pet-card fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                   <div className="pet-image-wrapper">
                     <img 
-                      src={getImageUrl(pet.image_url)} 
+                      ref={imageObserver}
+                      data-src={getImageUrl(pet.image_url)}
+                      src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23f0f0f0' width='400' height='400'/%3E%3C/svg%3E"
                       alt={pet.name} 
                       className="pet-image" 
+                      onLoad={() => handleImageLoad(pet.pet_id)}
                       onError={(e) => {
                         e.target.src = 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
+                      }}
+                      style={{ 
+                        opacity: imagesLoaded[pet.pet_id] ? 1 : 0.5,
+                        transition: 'opacity 0.3s ease'
                       }}
                     />
                     <div className={`pet-status ${pet.status?.toLowerCase() || 'available'}`}>
