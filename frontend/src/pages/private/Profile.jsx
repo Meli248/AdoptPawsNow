@@ -405,8 +405,7 @@ const Profile = () => {
       <div className="container">
         {/* Simple Welcome Message */}
         <div className="welcome-banner">
-          <h1 className="welcome-text">Welcome, {userData.name || 'Friend'}! 👋</h1>
-          <p className="welcome-subtitle">Manage your pet posts and profile</p>
+          <h1 className="welcome-text">Welcome, {userData.name || 'Friend'}! </h1>
         </div>
 
         <div className="stats-grid-dashboard">
