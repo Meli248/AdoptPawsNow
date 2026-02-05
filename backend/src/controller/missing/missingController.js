@@ -63,9 +63,11 @@ export const getMissingPetById = async (req, res) => {
   }
 };
 
-// Report a missing pet - FIXED
+// Report a missing pet - FIXED with user_id
 export const reportMissingPet = async (req, res) => {
   try {
+    const userId = req.user?.userId; // Get authenticated user ID
+    
     const {
       pet_name, species, breed, age, gender, color, description,
       last_seen_location, last_seen_date,
@@ -95,12 +97,13 @@ export const reportMissingPet = async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO missing_pets 
-       (pet_name, species, breed, age, gender, color, description, 
+       (user_id, pet_name, species, breed, age, gender, color, description, 
         last_seen_location, last_seen_date, image_url, 
         owner_name, owner_email, owner_phone, reward, status) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
        RETURNING *`,
       [
+        userId,  // ✅ ADDED user_id
         pet_name, 
         species, 
         breed || 'Unknown', 
@@ -115,7 +118,7 @@ export const reportMissingPet = async (req, res) => {
         owner_email, 
         owner_phone || null,
         reward || null,
-        (status || 'missing').toLowerCase()  // FIXED: Force lowercase
+        (status || 'missing').toLowerCase()
       ]
     );
 
@@ -371,6 +374,33 @@ export const updateMissingPetStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update status',
+      error: error.message
+    });
+  }
+};
+
+// Get user's missing pets - FOR PROFILE PAGE - ✅ FIXED
+export const getUserMissingPets = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const result = await pool.query(
+      `SELECT * FROM missing_pets 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC`,  // ✅ FIXED: Use created_at instead of reported_date
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching user missing pets:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user missing pets',
       error: error.message
     });
   }

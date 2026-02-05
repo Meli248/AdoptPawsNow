@@ -73,33 +73,20 @@ const Home = () => {
 
     const fetchStats = async () => {
       try {
-        // Fetch adopted pets count
-        const adoptedResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=adopted`);
-        const adoptedData = await adoptedResponse.json();
+        // ✅ FIXED: Use dedicated stats endpoint for better performance
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/stats/home`);
+        const data = await response.json();
         
-        // Fetch found missing pets count
-        const foundResponse = await fetch(`${import.meta.env.VITE_API_URL}/missing/missing-pets?status=found`);
-        const foundData = await foundResponse.json();
-        
-        // Fetch dogs count
-        const dogsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?species=dog`);
-        const dogsData = await dogsResponse.json();
-        
-        // Fetch cats count
-        const catsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?species=cat`);
-        const catsData = await catsResponse.json();
-        
-        const adoptedCount = adoptedData.success ? adoptedData.count : 0;
-        const foundCount = foundData.success ? foundData.count : 0;
-        const dogsCount = dogsData.success ? dogsData.count : 0;
-        const catsCount = catsData.success ? catsData.count : 0;
-        
-        setStats({
-          petsAdopted: adoptedCount > 0 ? `${adoptedCount}+` : '0',
-          petsReunited: foundCount > 0 ? `${foundCount}+` : '0',
-          dogs: dogsCount > 0 ? `${dogsCount}+` : '0',
-          cats: catsCount > 0 ? `${catsCount}+` : '0'
-        });
+        if (data.success && data.data) {
+          const { petsAdopted, petsReunited, dogs, cats } = data.data;
+          
+          setStats({
+            petsAdopted: petsAdopted > 0 ? `${petsAdopted}+` : '0',
+            petsReunited: petsReunited > 0 ? `${petsReunited}+` : '0',
+            dogs: dogs > 0 ? `${dogs}+` : '0',
+            cats: cats > 0 ? `${cats}+` : '0'
+          });
+        }
       } catch (error) {
         console.error('Error fetching stats:', error);
         // Keep default stats on error

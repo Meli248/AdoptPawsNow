@@ -25,7 +25,6 @@ export const register = async (req, res) => {
       });
     }
 
-    // Check if user exists
     const existingUser = await pool.query(
       'SELECT user_id FROM users WHERE email = $1',
       [email]
@@ -41,9 +40,6 @@ export const register = async (req, res) => {
     const username = email.split('@')[0];
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    console.log('🔐 Creating user with:', { username, email, fullName });
-
-    // INSERT USER - exact same format as the successful test query
     const insertQuery = `
       INSERT INTO users (username, email, password_hash, full_name, role)
       VALUES ($1, $2, $3, $4, $5)
@@ -51,14 +47,8 @@ export const register = async (req, res) => {
     `;
     
     const values = [username, email, hashedPassword, fullName, 'user'];
-    
-    console.log('📊 Executing insert...');
-    
     const result = await pool.query(insertQuery, values);
-
     const user = result.rows[0];
-    
-    console.log('✅ User created successfully:', { user_id: user.user_id, username: user.username });
 
     const token = jwt.sign(
       {
@@ -88,12 +78,6 @@ export const register = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Register error:', error);
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      detail: error.detail,
-      position: error.position
-    });
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -108,8 +92,6 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    console.log('🔑 Login attempt for:', email);
 
     if (!email || !password) {
       return res.status(400).json({
@@ -139,8 +121,6 @@ export const login = async (req, res) => {
         message: 'Invalid email or password'
       });
     }
-
-    console.log('✅ Login successful for:', user.username);
 
     const token = jwt.sign(
       {
@@ -191,7 +171,7 @@ export const getCurrentUser = async (req, res) => {
     const userId = req.user.userId;
 
     const result = await pool.query(
-      'SELECT user_id, full_name, username, email, role, created_at FROM users WHERE user_id = $1',
+      'SELECT user_id, full_name, username, email, role, phone, location, created_at FROM users WHERE user_id = $1',
       [userId]
     );
 
@@ -212,6 +192,8 @@ export const getCurrentUser = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
+        phone: user.phone || '',
+        location: user.location || '',
         created_at: user.created_at
       }
     });
@@ -221,6 +203,140 @@ export const getCurrentUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error'
+    });
+  }
+};
+
+/* ======================================
+   GET USER PROFILE - FOR PROFILE PAGE
+====================================== */
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const result = await pool.query(
+      'SELECT user_id, full_name, username, email, role, phone, location, created_at FROM users WHERE user_id = $1',
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = result.rows[0];
+
+    res.status(200).json({
+      success: true,
+      user: {
+        user_id: user.user_id,
+        name: user.full_name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        phone: user.phone || '',
+        location: user.location || '',
+        created_at: user.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Get user profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/* ======================================
+   UPDATE USER PROFILE - WITH PHONE & LOCATION
+====================================== */
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { name, username, phone, location } = req.body;
+
+    const newFullName = name || username;
+    
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+
+    if (newFullName) {
+      updates.push(`full_name = $${paramCount}`);
+      values.push(newFullName);
+      paramCount++;
+      
+      updates.push(`username = $${paramCount}`);
+      values.push(newFullName);
+      paramCount++;
+    }
+
+    // ✅ ADD phone update
+    if (phone !== undefined) {
+      updates.push(`phone = $${paramCount}`);
+      values.push(phone || null);
+      paramCount++;
+    }
+
+    // ✅ ADD location update
+    if (location !== undefined) {
+      updates.push(`location = $${paramCount}`);
+      values.push(location || null);
+      paramCount++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No fields to update'
+      });
+    }
+
+    updates.push(`updated_at = NOW()`);
+    values.push(userId);
+
+    const result = await pool.query(
+      `UPDATE users 
+       SET ${updates.join(', ')} 
+       WHERE user_id = $${paramCount} 
+       RETURNING user_id, full_name, username, email, role, phone, location, created_at`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const updatedUser = result.rows[0];
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        user_id: updatedUser.user_id,
+        name: updatedUser.full_name,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        phone: updatedUser.phone || '',
+        location: updatedUser.location || '',
+        created_at: updatedUser.created_at
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
     });
   }
 };

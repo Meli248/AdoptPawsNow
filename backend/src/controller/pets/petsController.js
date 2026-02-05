@@ -77,9 +77,11 @@ export const getPetById = async (req, res) => {
   }
 };
 
-// Create new pet (for adoption) - FIXED
+// Create new pet (for adoption) - FIXED with user_id
 export const createPet = async (req, res) => {
   try {
+    const userId = req.user?.userId; // Get authenticated user ID
+    
     const {
       name, species, breed, age, gender, size, color, description,
       vaccinated, neutered, status,
@@ -116,13 +118,14 @@ export const createPet = async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO pets (
-        name, species, breed, age, gender, size, color, description, 
+        user_id, name, species, breed, age, gender, size, color, description, 
         image_url, vaccinated, neutered, status,
         contact_name, contact_email, contact_phone, contact_type
       ) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) 
        RETURNING *`,
       [
+        userId,  // ✅ ADDED user_id
         name, 
         species, 
         breed || 'Mixed', 
@@ -134,7 +137,7 @@ export const createPet = async (req, res) => {
         image_url,
         vaccinated === 'true' || vaccinated === true,
         neutered === 'true' || neutered === true,
-        (status || 'available').toLowerCase(),  // FIXED: Force lowercase
+        (status || 'available').toLowerCase(),
         contact_name,
         contact_email,
         contact_phone || null,
@@ -413,6 +416,32 @@ export const updateApplicationStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update application status',
+      error: error.message
+    });
+  }
+};
+// Get user's pets - FOR PROFILE PAGE
+export const getUserPets = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const result = await pool.query(
+      `SELECT * FROM pets 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    res.json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length
+    });
+  } catch (error) {
+    console.error('Error fetching user pets:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user pets',
       error: error.message
     });
   }

@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  Mail,
-  MapPin,
-  Calendar,
-  Edit2,
-  Phone,
-  Save,
-  X,
-  Dog,
-  Heart,
-  AlertTriangle,
-  Clock
+  Mail, MapPin, Calendar, Edit2, Phone, Save, X, Dog, Heart,
+  AlertTriangle, Clock
 } from 'lucide-react';
 import '../../css/Profile.css';
 
@@ -19,6 +10,8 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [userData, setUserData] = useState({
     name: '',
     email: '',
@@ -27,234 +20,211 @@ const Profile = () => {
     joinedDate: ''
   });
   const [editedData, setEditedData] = useState({ ...userData });
+  const [editFormData, setEditFormData] = useState({});
   const [stats, setStats] = useState({
     totalPosts: 0,
     adoptionPosts: 0,
     missingPosts: 0
   });
 
-  // Fetch user profile data on mount
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-          console.log('No access token found');
-          loadFallbackUserData();
-          setProfileLoading(false);
-          return;
-        }
-
-        console.log('Fetching profile with token:', token.substring(0, 20) + '...');
-
-        // FIXED: Changed from /api/auth/profile to /auth/profile since VITE_API_URL already has /api
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        console.log('Profile response status:', response.status);
-
-        if (!response.ok) {
-          console.error('Profile fetch failed:', response.status, response.statusText);
-          loadFallbackUserData();
-          throw new Error(`Failed to fetch profile: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Profile data received:', data);
-        
-        if (data.success && data.user) {
-          const user = data.user;
-          const profileData = {
-            name: user.name || user.username || '',
-            email: user.email || '',
-            phone: user.phone || '',
-            location: user.location || '',
-            joinedDate: user.created_at 
-              ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) 
-              : 'Recently'
-          };
-          setUserData(profileData);
-          setEditedData(profileData);
-          
-          // Save to localStorage for future fallback
-          localStorage.setItem('user_name', profileData.name);
-          localStorage.setItem('user_email', profileData.email);
-        } else {
-          loadFallbackUserData();
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error);
-        loadFallbackUserData();
-      } finally {
-        setProfileLoading(false);
-      }
-    };
-
-    const loadFallbackUserData = () => {
-      // Try to get basic info from localStorage
-      const userEmail = localStorage.getItem('user_email');
-      const userName = localStorage.getItem('user_name');
-      
-      if (userEmail || userName) {
-        const fallbackData = {
-          name: userName || '',
-          email: userEmail || '',
-          phone: '',
-          location: '',
-          joinedDate: 'Recently'
-        };
-        setUserData(fallbackData);
-        setEditedData(fallbackData);
-      }
-    };
-
     fetchUserProfile();
-  }, []);
-
-  // Fetch user's posts
-  useEffect(() => {
-    const fetchUserPosts = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-          console.log('No access token for posts');
-          setLoading(false);
-          return;
-        }
-
-        console.log('Fetching user posts...');
-
-        const headers = {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        };
-
-        // FIXED: Changed from /api/pets/my-posts to /pets/my-posts
-        const adoptionPromise = fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, {
-          method: 'GET',
-          headers
-        }).then(res => res.ok ? res.json() : null);
-        
-        // FIXED: Changed from /api/missing/my-posts to /missing/my-posts
-        const missingPromise = fetch(`${import.meta.env.VITE_API_URL}/missing/my-posts`, {
-          method: 'GET',
-          headers
-        }).then(res => res.ok ? res.json() : null);
-
-        const [adoptionData, missingData] = await Promise.all([adoptionPromise, missingPromise]);
-        
-        console.log('Adoption data:', adoptionData);
-        console.log('Missing data:', missingData);
-
-        const allPosts = [];
-        let adoptionCount = 0;
-        let missingCount = 0;
-
-        // Add adoption posts
-        if (adoptionData && adoptionData.success && adoptionData.data) {
-          const adoptionPosts = adoptionData.data.map(pet => ({
-            id: pet.pet_id,
-            petName: pet.name,
-            breed: pet.breed || 'Mixed',
-            petType: pet.species || 'Pet',
-            location: pet.location || 'Location N/A',
-            image: getImageUrl(pet.image_url),
-            postType: 'adoption',
-            status: pet.status,
-            age: pet.age,
-            createdAt: pet.created_at
-          }));
-          allPosts.push(...adoptionPosts);
-          adoptionCount = adoptionPosts.length;
-        }
-
-        // Add missing posts
-        if (missingData && missingData.success && missingData.data) {
-          const missingPosts = missingData.data.map(pet => ({
-            id: `missing-${pet.missing_id}`,
-            petName: pet.pet_name,
-            breed: pet.breed || 'Mixed',
-            petType: pet.species || 'Pet',
-            location: pet.last_seen_location || 'Location N/A',
-            image: getImageUrl(pet.image_url),
-            postType: 'missing',
-            status: pet.status,
-            lastSeen: pet.last_seen_date,
-            createdAt: pet.reported_date || pet.created_at
-          }));
-          allPosts.push(...missingPosts);
-          missingCount = missingPosts.length;
-        }
-
-        // Sort by creation date (most recent first)
-        allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        console.log('Total posts fetched:', allPosts.length);
-        
-        setUserPosts(allPosts);
-        setStats({
-          totalPosts: allPosts.length,
-          adoptionPosts: adoptionCount,
-          missingPosts: missingCount
-        });
-      } catch (error) {
-        console.error('Error fetching user posts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserPosts();
   }, []);
 
-  // Helper function to get image URL
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        loadFallbackUserData();
+        setProfileLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        console.error('Profile fetch failed:', response.status);
+        loadFallbackUserData();
+        setProfileLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (data.success && data.user) {
+        const user = data.user;
+        const profileData = {
+          name: user.name || user.username || user.full_name || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          location: user.location || '',
+          joinedDate: user.created_at 
+            ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) 
+            : 'Recently'
+        };
+        setUserData(profileData);
+        setEditedData(profileData);
+        
+        localStorage.setItem('user_name', profileData.name);
+        localStorage.setItem('user', profileData.name);
+        localStorage.setItem('user_email', profileData.email);
+      } else {
+        loadFallbackUserData();
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      loadFallbackUserData();
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const loadFallbackUserData = () => {
+    const userEmail = localStorage.getItem('user_email');
+    const userName = localStorage.getItem('user') || localStorage.getItem('user_name');
+    
+    if (userEmail || userName) {
+      const fallbackData = {
+        name: userName || '',
+        email: userEmail || '',
+        phone: '',
+        location: '',
+        joinedDate: 'Recently'
+      };
+      setUserData(fallbackData);
+      setEditedData(fallbackData);
+    }
+  };
+
+  const fetchUserPosts = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.log('No token found');
+        setLoading(false);
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+
+      const [adoptionResponse, missingResponse] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/missing/my-posts`, { headers })
+      ]);
+
+      const adoptionData = adoptionResponse.ok ? await adoptionResponse.json() : { success: false, data: [] };
+      const missingData = missingResponse.ok ? await missingResponse.json() : { success: false, data: [] };
+
+      const allPosts = [];
+      let adoptionCount = 0;
+      let missingCount = 0;
+
+      if (adoptionData?.success && adoptionData.data) {
+        const adoptionPosts = adoptionData.data.map(pet => ({
+          id: pet.pet_id,
+          petName: pet.name,
+          breed: pet.breed || 'Mixed',
+          petType: pet.species || 'Pet',
+          location: pet.contact_name || 'Not specified',
+          image: getImageUrl(pet.image_url),
+          postType: 'adoption',
+          status: pet.status,
+          age: pet.age,
+          gender: pet.gender,
+          size: pet.size,
+          color: pet.color,
+          description: pet.description,
+          vaccinated: pet.vaccinated,
+          neutered: pet.neutered,
+          contact_name: pet.contact_name,
+          contact_email: pet.contact_email,
+          contact_phone: pet.contact_phone,
+          createdAt: pet.created_at
+        }));
+        allPosts.push(...adoptionPosts);
+        adoptionCount = adoptionPosts.length;
+      }
+
+      if (missingData?.success && missingData.data) {
+        const missingPosts = missingData.data.map(pet => ({
+          id: pet.missing_id,
+          petName: pet.pet_name,
+          breed: pet.breed || 'Mixed',
+          petType: pet.species || 'Pet',
+          location: pet.last_seen_location || 'Location N/A',
+          image: getImageUrl(pet.image_url),
+          postType: 'missing',
+          status: pet.status,
+          lastSeen: pet.last_seen_date,
+          gender: pet.gender,
+          age: pet.age,
+          color: pet.color,
+          description: pet.description,
+          owner_name: pet.owner_name,
+          owner_email: pet.owner_email,
+          owner_phone: pet.owner_phone,
+          reward: pet.reward,
+          createdAt: pet.created_at
+        }));
+        allPosts.push(...missingPosts);
+        missingCount = missingPosts.length;
+      }
+
+      allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      setUserPosts(allPosts);
+      setStats({
+        totalPosts: allPosts.length,
+        adoptionPosts: adoptionCount,
+        missingPosts: missingCount
+      });
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getImageUrl = (imageUrl) => {
     if (!imageUrl) return 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
     if (imageUrl.startsWith('http')) return imageUrl;
-    // Remove leading slash if present to avoid double slashes
-    const cleanUrl = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-    return `${import.meta.env.VITE_API_URL}${cleanUrl}`;
+    return `${import.meta.env.VITE_API_URL.replace('/api', '')}${imageUrl}`;
   };
 
-  // Handle edit mode toggle
   const handleEditToggle = () => {
     if (isEditing) {
-      // Cancel editing
       setEditedData({ ...userData });
     }
     setIsEditing(!isEditing);
   };
 
-  // Handle input change
   const handleInputChange = (field, value) => {
-    setEditedData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setEditedData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handle save profile
   const handleSaveProfile = async () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
-        alert('Please login to update your profile.');
+        alert('Please log in to update your profile');
         return;
       }
 
-      console.log('Updating profile with data:', editedData);
-
-      // FIXED: Changed from /api/auth/profile to /auth/profile
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/profile`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           name: editedData.name,
@@ -263,61 +233,142 @@ const Profile = () => {
         })
       });
 
-      console.log('Update response status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Update failed:', errorData);
-        throw new Error(errorData.message || 'Failed to update profile');
-      }
-
       const data = await response.json();
-      console.log('Profile updated successfully:', data);
-      
+
       if (data.success) {
         setUserData(editedData);
         setIsEditing(false);
-        
-        // Update localStorage
-        localStorage.setItem('user_name', editedData.name);
-        
         alert('Profile updated successfully!');
+        
+        localStorage.setItem('user_name', editedData.name);
+        localStorage.setItem('user', editedData.name);
+      } else {
+        alert(data.message || 'Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert(`Failed to update profile: ${error.message}`);
+      alert('Failed to update profile. Please try again.');
     }
   };
 
-  // Handle delete post
+  // ✅ NEW: Handle Edit Post
+  const handleEditPost = (post) => {
+    setEditingPost(post);
+    setEditFormData({
+      petName: post.petName,
+      breed: post.breed,
+      species: post.petType,
+      age: post.age || '',
+      gender: post.gender || '',
+      size: post.size || '',
+      color: post.color || '',
+      description: post.description || '',
+      location: post.location || '',
+      status: post.status || '',
+      // For adoption posts
+      vaccinated: post.vaccinated || false,
+      neutered: post.neutered || false,
+      contact_name: post.contact_name || '',
+      contact_email: post.contact_email || '',
+      contact_phone: post.contact_phone || '',
+      // For missing posts
+      lastSeen: post.lastSeen ? new Date(post.lastSeen).toISOString().split('T')[0] : '',
+      owner_name: post.owner_name || '',
+      owner_email: post.owner_email || '',
+      owner_phone: post.owner_phone || '',
+      reward: post.reward || ''
+    });
+    setShowEditModal(true);
+  };
+
+  // ✅ NEW: Handle Edit Form Input Change
+  const handleEditFormChange = (field, value) => {
+    setEditFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // ✅ NEW: Handle Save Edit
+  const handleSaveEdit = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert('Please log in to update your post');
+        return;
+      }
+
+      const endpoint = editingPost.postType === 'adoption'
+        ? `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`
+        : `${import.meta.env.VITE_API_URL}/missing/missing-pets/${editingPost.id}`;
+
+      let body;
+      if (editingPost.postType === 'adoption') {
+        body = {
+          name: editFormData.petName,
+          breed: editFormData.breed,
+          species: editFormData.species,
+          age: editFormData.age,
+          gender: editFormData.gender,
+          size: editFormData.size,
+          color: editFormData.color,
+          description: editFormData.description,
+          status: editFormData.status,
+          vaccinated: editFormData.vaccinated,
+          neutered: editFormData.neutered,
+          contact_name: editFormData.contact_name,
+          contact_email: editFormData.contact_email,
+          contact_phone: editFormData.contact_phone
+        };
+      } else {
+        body = {
+          pet_name: editFormData.petName,
+          breed: editFormData.breed,
+          species: editFormData.species,
+          age: editFormData.age,
+          gender: editFormData.gender,
+          color: editFormData.color,
+          description: editFormData.description,
+          last_seen_location: editFormData.location,
+          last_seen_date: editFormData.lastSeen,
+          status: editFormData.status,
+          reward: editFormData.reward
+        };
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        alert('Post updated successfully!');
+        setShowEditModal(false);
+        setEditingPost(null);
+        fetchUserPosts();
+      } else {
+        const data = await response.json();
+        alert(data.message || 'Failed to update post');
+      }
+    } catch (error) {
+      console.error('Error updating post:', error);
+      alert('Failed to update post. Please try again.');
+    }
+  };
+
   const handleDeletePost = async (postId, postType) => {
-    if (!confirm('Are you sure you want to delete this post?')) {
+    if (!window.confirm('Are you sure you want to delete this post?')) {
       return;
     }
 
     try {
       const token = localStorage.getItem('access_token');
-      if (!token) {
-        alert('Please login to delete posts.');
-        return;
-      }
+      const endpoint = postType === 'adoption' 
+        ? `${import.meta.env.VITE_API_URL}/pets/pets/${postId}`
+        : `${import.meta.env.VITE_API_URL}/missing/missing-pets/${postId}`;
 
-      let endpoint = '';
-      let actualId = postId;
-
-      if (postType === 'adoption') {
-        // FIXED: Changed from /api/pets/${postId} to /pets/${postId}
-        endpoint = `/pets/pets/${postId}`;
-      } else {
-        // Remove 'missing-' prefix if present
-        actualId = postId.toString().replace('missing-', '');
-        // FIXED: Changed from /api/missing/${actualId} to /missing/missing-pets/${actualId}
-        endpoint = `/missing/missing-pets/${actualId}`;
-      }
-
-      console.log('Deleting post:', { postId, actualId, postType, endpoint });
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+      const response = await fetch(endpoint, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -325,32 +376,23 @@ const Profile = () => {
         }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete post');
+      if (response.ok) {
+        alert('Post deleted successfully!');
+        fetchUserPosts();
+      } else {
+        alert('Failed to delete post');
       }
-
-      // Remove post from state
-      setUserPosts(prev => prev.filter(post => post.id !== postId));
-      
-      // Update stats
-      setStats(prev => ({
-        totalPosts: prev.totalPosts - 1,
-        adoptionPosts: postType === 'adoption' ? prev.adoptionPosts - 1 : prev.adoptionPosts,
-        missingPosts: postType === 'missing' ? prev.missingPosts - 1 : prev.missingPosts
-      }));
-
-      alert('Post deleted successfully!');
     } catch (error) {
       console.error('Error deleting post:', error);
-      alert('An error occurred while deleting the post.');
+      alert('Failed to delete post. Please try again.');
     }
   };
 
   if (profileLoading) {
     return (
-      <div className="dashboard-page">
-        <div className="dashboard-container">
-          <div style={{ textAlign: 'center', padding: '4rem' }}>
+      <div className="profile-container">
+        <div className="container">
+          <div className="no-posts-container">
             <p>Loading profile...</p>
           </div>
         </div>
@@ -359,17 +401,14 @@ const Profile = () => {
   }
 
   return (
-    <div className="dashboard-page">
-      <div className="dashboard-container">
-        {/* Header Section */}
-        <div className="dashboard-header">
-          <div className="header-content">
-            <h1 className="dashboard-title">Welcome{userData.name ? `, ${userData.name}` : ''}!</h1>
-            <p className="dashboard-subtitle">Manage your pet posts and track their status.</p>
-          </div>
+    <div className="profile-container">
+      <div className="container">
+        {/* Simple Welcome Message */}
+        <div className="welcome-banner">
+          <h1 className="welcome-text">Welcome, {userData.name || 'Friend'}! 👋</h1>
+          <p className="welcome-subtitle">Manage your pet posts and profile</p>
         </div>
 
-        {/* Stats Grid */}
         <div className="stats-grid-dashboard">
           <div className="stat-card-dashboard">
             <div className="stat-icon-wrapper">
@@ -400,7 +439,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Profile Information Section */}
         <div className="profile-section">
           <div className="section-header-dashboard">
             <h2 className="section-title-dashboard">Profile Information</h2>
@@ -471,7 +509,7 @@ const Profile = () => {
                       value={editedData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       className="profile-edit-input-small"
-                      placeholder="Your phone"
+                      placeholder="Your phone number"
                     />
                   )}
                 </div>
@@ -510,7 +548,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Your Pet Posts Section */}
         <div className="posts-section">
           <h2 className="section-title-dashboard">Your Pet Posts</h2>
           
@@ -531,16 +568,14 @@ const Profile = () => {
               {userPosts.map((post) => (
                 <div key={post.id} className="user-post-card">
                   <div className="post-image-wrapper">
-                    {post.image && (
-                      <img 
-                        src={post.image} 
-                        alt={post.petName} 
-                        className="post-image"
-                        onError={(e) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
-                        }}
-                      />
-                    )}
+                    <img 
+                      src={post.image} 
+                      alt={post.petName} 
+                      className="post-image"
+                      onError={(e) => {
+                        e.target.src = 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
+                      }}
+                    />
                     <div className={`post-type-badge ${post.postType}`}>
                       {post.postType === 'adoption' ? (
                         <><Heart size={14} /> For Adoption</>
@@ -576,7 +611,12 @@ const Profile = () => {
                       )}
                     </div>
                     <div className="post-actions">
-                      <button className="btn btn-sm btn-secondary">Edit</button>
+                      <button 
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => handleEditPost(post)}
+                      >
+                        <Edit2 size={14} /> Edit
+                      </button>
                       <button 
                         className="btn btn-sm btn-outline"
                         onClick={() => handleDeletePost(post.id, post.postType)}
@@ -591,6 +631,238 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* ✅ NEW: Edit Post Modal */}
+      {showEditModal && editingPost && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit {editingPost.postType === 'adoption' ? 'Adoption' : 'Missing Pet'} Post</h2>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Pet Name *</label>
+                  <input
+                    type="text"
+                    value={editFormData.petName}
+                    onChange={(e) => handleEditFormChange('petName', e.target.value)}
+                    placeholder="Pet name"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Species *</label>
+                  <select
+                    value={editFormData.species}
+                    onChange={(e) => handleEditFormChange('species', e.target.value)}
+                  >
+                    <option value="dog">Dog</option>
+                    <option value="cat">Cat</option>
+                    <option value="bird">Bird</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Breed</label>
+                  <input
+                    type="text"
+                    value={editFormData.breed}
+                    onChange={(e) => handleEditFormChange('breed', e.target.value)}
+                    placeholder="Breed"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Age</label>
+                  <input
+                    type="text"
+                    value={editFormData.age}
+                    onChange={(e) => handleEditFormChange('age', e.target.value)}
+                    placeholder="e.g., 2 years"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Gender</label>
+                  <select
+                    value={editFormData.gender}
+                    onChange={(e) => handleEditFormChange('gender', e.target.value)}
+                  >
+                    <option value="">Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="unknown">Unknown</option>
+                  </select>
+                </div>
+
+                {editingPost.postType === 'adoption' && (
+                  <div className="form-group">
+                    <label>Size</label>
+                    <select
+                      value={editFormData.size}
+                      onChange={(e) => handleEditFormChange('size', e.target.value)}
+                    >
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                    </select>
+                  </div>
+                )}
+
+                <div className="form-group">
+                  <label>Color</label>
+                  <input
+                    type="text"
+                    value={editFormData.color}
+                    onChange={(e) => handleEditFormChange('color', e.target.value)}
+                    placeholder="Color"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    value={editFormData.status}
+                    onChange={(e) => handleEditFormChange('status', e.target.value)}
+                  >
+                    {editingPost.postType === 'adoption' ? (
+                      <>
+                        <option value="available">Available</option>
+                        <option value="adopted">Adopted</option>
+                        <option value="pending">Pending</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="missing">Missing</option>
+                        <option value="found">Found</option>
+                        <option value="closed">Closed</option>
+                      </>
+                    )}
+                  </select>
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Description</label>
+                  <textarea
+                    value={editFormData.description}
+                    onChange={(e) => handleEditFormChange('description', e.target.value)}
+                    placeholder="Description"
+                    rows="3"
+                  />
+                </div>
+
+                {editingPost.postType === 'adoption' ? (
+                  <>
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={editFormData.vaccinated}
+                          onChange={(e) => handleEditFormChange('vaccinated', e.target.checked)}
+                        />
+                        Vaccinated
+                      </label>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={editFormData.neutered}
+                          onChange={(e) => handleEditFormChange('neutered', e.target.checked)}
+                        />
+                        Neutered/Spayed
+                      </label>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Contact Name *</label>
+                      <input
+                        type="text"
+                        value={editFormData.contact_name}
+                        onChange={(e) => handleEditFormChange('contact_name', e.target.value)}
+                        placeholder="Contact name"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Contact Email *</label>
+                      <input
+                        type="email"
+                        value={editFormData.contact_email}
+                        onChange={(e) => handleEditFormChange('contact_email', e.target.value)}
+                        placeholder="Contact email"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Contact Phone</label>
+                      <input
+                        type="tel"
+                        value={editFormData.contact_phone}
+                        onChange={(e) => handleEditFormChange('contact_phone', e.target.value)}
+                        placeholder="Contact phone"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Last Seen Location *</label>
+                      <input
+                        type="text"
+                        value={editFormData.location}
+                        onChange={(e) => handleEditFormChange('location', e.target.value)}
+                        placeholder="Last seen location"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Last Seen Date *</label>
+                      <input
+                        type="date"
+                        value={editFormData.lastSeen}
+                        onChange={(e) => handleEditFormChange('lastSeen', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Reward</label>
+                      <input
+                        type="text"
+                        value={editFormData.reward}
+                        onChange={(e) => handleEditFormChange('reward', e.target.value)}
+                        placeholder="Reward amount (optional)"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setShowEditModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleSaveEdit}
+              >
+                <Save size={18} /> Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

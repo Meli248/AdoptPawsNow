@@ -9,17 +9,22 @@ import {
   createAdoptionApplication,
   getAllApplications,
   getApplicationById,
-  updateApplicationStatus
+  updateApplicationStatus,
+  getUserPets  // ✅ ADDED
 } from '../../controller/pets/petsController.js';
+import authenticateToken from '../../middleware/token-middleware.js';
 
 const router = express.Router();
 
-// Pet routes - FIXED: Added upload middleware
+// Public pet routes
 router.get('/pets', getAllPets);
 router.get('/pets/:id', getPetById);
-router.post('/pets', upload.single('image'), createPet);  // ← ADDED upload.single('image')
-router.put('/pets/:id', upload.single('image'), updatePet);  // ← ADDED upload.single('image')
-router.delete('/pets/:id', deletePet);
+router.post('/pets', authenticateToken, upload.single('image'), createPet);
+router.put('/pets/:id', authenticateToken, upload.single('image'), updatePet); // ✅ ADDED auth
+router.delete('/pets/:id', authenticateToken, deletePet); // ✅ ADDED auth
+
+// User's pets route - PROTECTED ✅ ADDED
+router.get('/my-posts', authenticateToken, getUserPets);
 
 // Application routes
 router.post('/applications', createAdoptionApplication);
