@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Mail, MapPin, Calendar, Edit2, Phone, Save, X, Dog, Heart,
-  AlertTriangle, Clock
+  AlertTriangle, Clock, User
 } from 'lucide-react';
 import '../../css/Profile.css';
 
@@ -233,17 +233,16 @@ const Profile = () => {
         })
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (response.ok) {
+        const data = await response.json();
         setUserData(editedData);
-        setIsEditing(false);
-        alert('Profile updated successfully!');
-        
         localStorage.setItem('user_name', editedData.name);
         localStorage.setItem('user', editedData.name);
+        setIsEditing(false);
+        alert('Profile updated successfully!');
       } else {
-        alert(data.message || 'Failed to update profile');
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -251,66 +250,65 @@ const Profile = () => {
     }
   };
 
-  // ✅ NEW: Handle Edit Post
   const handleEditPost = (post) => {
     setEditingPost(post);
-    setEditFormData({
-      petName: post.petName,
-      breed: post.breed,
-      species: post.petType,
-      age: post.age || '',
-      gender: post.gender || '',
-      size: post.size || '',
-      color: post.color || '',
-      description: post.description || '',
-      location: post.location || '',
-      status: post.status || '',
-      // For adoption posts
-      vaccinated: post.vaccinated || false,
-      neutered: post.neutered || false,
-      contact_name: post.contact_name || '',
-      contact_email: post.contact_email || '',
-      contact_phone: post.contact_phone || '',
-      // For missing posts
-      lastSeen: post.lastSeen ? new Date(post.lastSeen).toISOString().split('T')[0] : '',
-      owner_name: post.owner_name || '',
-      owner_email: post.owner_email || '',
-      owner_phone: post.owner_phone || '',
-      reward: post.reward || ''
-    });
+    if (post.postType === 'adoption') {
+      setEditFormData({
+        petName: post.petName || '',
+        species: post.petType?.toLowerCase() || 'dog',
+        breed: post.breed || '',
+        age: post.age || '',
+        gender: post.gender || '',
+        size: post.size || 'medium',
+        color: post.color || '',
+        status: post.status || 'available',
+        description: post.description || '',
+        vaccinated: post.vaccinated || false,
+        neutered: post.neutered || false,
+        contact_name: post.contact_name || '',
+        contact_email: post.contact_email || '',
+        contact_phone: post.contact_phone || ''
+      });
+    } else {
+      setEditFormData({
+        petName: post.petName || '',
+        species: post.petType?.toLowerCase() || 'dog',
+        breed: post.breed || '',
+        age: post.age || '',
+        gender: post.gender || '',
+        color: post.color || '',
+        status: post.status || 'missing',
+        description: post.description || '',
+        location: post.location || '',
+        lastSeen: post.lastSeen ? new Date(post.lastSeen).toISOString().split('T')[0] : '',
+        reward: post.reward || ''
+      });
+    }
     setShowEditModal(true);
   };
 
-  // ✅ NEW: Handle Edit Form Input Change
   const handleEditFormChange = (field, value) => {
     setEditFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  // ✅ NEW: Handle Save Edit
   const handleSaveEdit = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      if (!token) {
-        alert('Please log in to update your post');
-        return;
-      }
-
-      const endpoint = editingPost.postType === 'adoption'
-        ? `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`
-        : `${import.meta.env.VITE_API_URL}/missing/missing-pets/${editingPost.id}`;
-
-      let body;
+      
+      let endpoint, updateData;
+      
       if (editingPost.postType === 'adoption') {
-        body = {
+        endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`;
+        updateData = {
           name: editFormData.petName,
-          breed: editFormData.breed,
           species: editFormData.species,
+          breed: editFormData.breed,
           age: editFormData.age,
           gender: editFormData.gender,
           size: editFormData.size,
           color: editFormData.color,
-          description: editFormData.description,
           status: editFormData.status,
+          description: editFormData.description,
           vaccinated: editFormData.vaccinated,
           neutered: editFormData.neutered,
           contact_name: editFormData.contact_name,
@@ -318,17 +316,18 @@ const Profile = () => {
           contact_phone: editFormData.contact_phone
         };
       } else {
-        body = {
+        endpoint = `${import.meta.env.VITE_API_URL}/missing/missing-pets/${editingPost.id}`;
+        updateData = {
           pet_name: editFormData.petName,
-          breed: editFormData.breed,
           species: editFormData.species,
+          breed: editFormData.breed,
           age: editFormData.age,
           gender: editFormData.gender,
           color: editFormData.color,
+          status: editFormData.status,
           description: editFormData.description,
           last_seen_location: editFormData.location,
           last_seen_date: editFormData.lastSeen,
-          status: editFormData.status,
           reward: editFormData.reward
         };
       }
@@ -339,7 +338,7 @@ const Profile = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(updateData)
       });
 
       if (response.ok) {
@@ -401,13 +400,17 @@ const Profile = () => {
   }
 
   return (
-    <div className="profile-container">
-      <div className="container">
-        {/* Simple Welcome Message */}
-        <div className="welcome-banner">
-          <h1 className="welcome-text">Welcome, {userData.name || 'Friend'}! </h1>
+    <div className="dashboard-page">
+      <div className="dashboard-container">
+        {/* Welcome Banner */}
+        <div className="dashboard-header">
+          <div className="header-content">
+            <h1 className="dashboard-title">Welcome back, {userData.name || 'Friend'}!</h1>
+            <p className="dashboard-subtitle">Manage your profile and pet posts</p>
+          </div>
         </div>
 
+        {/* Stats Grid */}
         <div className="stats-grid-dashboard">
           <div className="stat-card-dashboard">
             <div className="stat-icon-wrapper">
@@ -438,6 +441,7 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Profile Section */}
         <div className="profile-section">
           <div className="section-header-dashboard">
             <h2 className="section-title-dashboard">Profile Information</h2>
@@ -468,16 +472,26 @@ const Profile = () => {
                   <p className="profile-role">Pet Enthusiast</p>
                 </>
               ) : (
-                <div style={{ width: '100%', marginBottom: '20px' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--text-dark)' }}>
-                    Name
+                <div style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}>
+                  <label className="form-label">
+                    <User size={18} />
+                    Full Name
                   </label>
                   <input
                     type="text"
                     value={editedData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="profile-edit-input"
+                    className="form-input"
                     placeholder="Your name"
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '2px solid #e9ecef',
+                      borderRadius: '12px',
+                      fontSize: '0.95rem',
+                      transition: 'all 0.3s ease',
+                      fontFamily: 'inherit'
+                    }}
                   />
                 </div>
               )}
@@ -507,8 +521,17 @@ const Profile = () => {
                       type="tel"
                       value={editedData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="profile-edit-input-small"
+                      className="form-input"
                       placeholder="Your phone number"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '2px solid #e9ecef',
+                        borderRadius: '12px',
+                        fontSize: '0.9rem',
+                        transition: 'all 0.3s ease',
+                        marginTop: '4px'
+                      }}
                     />
                   )}
                 </div>
@@ -527,8 +550,17 @@ const Profile = () => {
                       type="text"
                       value={editedData.location}
                       onChange={(e) => handleInputChange('location', e.target.value)}
-                      className="profile-edit-input-small"
+                      className="form-input"
                       placeholder="Your location"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        border: '2px solid #e9ecef',
+                        borderRadius: '12px',
+                        fontSize: '0.9rem',
+                        transition: 'all 0.3s ease',
+                        marginTop: '4px'
+                      }}
                     />
                   )}
                 </div>
@@ -547,79 +579,64 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Posts Section */}
         <div className="posts-section">
-          <h2 className="section-title-dashboard">Your Pet Posts</h2>
-          
+          <div className="section-header-dashboard">
+            <h2 className="section-title-dashboard">My Posts</h2>
+          </div>
+
           {loading ? (
             <div className="no-posts-container">
-              <p>Loading your posts...</p>
+              <p>Loading posts...</p>
             </div>
           ) : userPosts.length === 0 ? (
             <div className="no-posts-container">
               <div className="no-posts-icon">
-                <Dog size={48} />
+                <Dog size={40} />
               </div>
-              <h3 className="no-posts-title">No posts yet</h3>
-              <p className="no-posts-subtitle">Your adoption and missing pet posts will appear here.</p>
+              <h3 className="no-posts-title">No Posts Yet</h3>
+              <p className="no-posts-subtitle">
+                Start by creating your first post to help pets find homes or reunite missing pets with their families.
+              </p>
             </div>
           ) : (
             <div className="user-posts-grid">
               {userPosts.map((post) => (
-                <div key={post.id} className="user-post-card">
+                <div key={`${post.postType}-${post.id}`} className="user-post-card">
                   <div className="post-image-wrapper">
-                    <img 
-                      src={post.image} 
-                      alt={post.petName} 
-                      className="post-image"
-                      onError={(e) => {
-                        e.target.src = 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
-                      }}
-                    />
+                    <img src={post.image} alt={post.petName} className="post-image" />
                     <div className={`post-type-badge ${post.postType}`}>
-                      {post.postType === 'adoption' ? (
-                        <><Heart size={14} /> For Adoption</>
-                      ) : (
-                        <><AlertTriangle size={14} /> Missing</>
-                      )}
+                      {post.postType === 'adoption' ? 'For Adoption' : 'Missing'}
                     </div>
-                    {post.status && (
-                      <div className="post-status-badge">
-                        {post.status}
-                      </div>
-                    )}
+                    <div className="post-status-badge">{post.status}</div>
                   </div>
                   <div className="post-content">
                     <h3 className="post-pet-name">{post.petName}</h3>
                     <p className="post-breed">{post.breed} • {post.petType}</p>
-                    <div style={{ marginBottom: '12px' }}>
-                      <p className="post-location">
-                        <MapPin size={14} />
-                        {post.location}
-                      </p>
-                      {post.postType === 'adoption' && post.age && (
-                        <p className="post-detail-small">
-                          <Clock size={14} />
-                          {post.age}
-                        </p>
-                      )}
-                      {post.postType === 'missing' && post.lastSeen && (
-                        <p className="post-detail-small">
-                          <Clock size={14} />
-                          Last seen: {new Date(post.lastSeen).toLocaleDateString()}
-                        </p>
-                      )}
+                    <div className="post-location">
+                      <MapPin size={16} />
+                      {post.location}
                     </div>
+                    {post.postType === 'missing' && post.lastSeen && (
+                      <div className="post-detail-small">
+                        <Clock size={14} />
+                        Last seen: {new Date(post.lastSeen).toLocaleDateString()}
+                      </div>
+                    )}
                     <div className="post-actions">
                       <button 
-                        className="btn btn-sm btn-secondary"
+                        className="btn btn-sm btn-outline"
                         onClick={() => handleEditPost(post)}
                       >
-                        <Edit2 size={14} /> Edit
+                        <Edit2 size={16} />
+                        Edit
                       </button>
                       <button 
                         className="btn btn-sm btn-outline"
                         onClick={() => handleDeletePost(post.id, post.postType)}
+                        style={{ color: '#dc2626' }}
                       >
+                        <X size={16} />
                         Delete
                       </button>
                     </div>
@@ -631,32 +648,43 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* ✅ NEW: Edit Post Modal */}
+      {/* Edit Post Modal with Create Post Form Styling */}
       {showEditModal && editingPost && (
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Edit {editingPost.postType === 'adoption' ? 'Adoption' : 'Missing Pet'} Post</h2>
-              <button className="modal-close" onClick={() => setShowEditModal(false)}>
+              <div>
+                <h2 className="modal-title">
+                  <Edit2 size={24} />
+                  Edit {editingPost.postType === 'adoption' ? 'Adoption' : 'Missing'} Post
+                </h2>
+                <p className="modal-subtitle">Update the details of your post</p>
+              </div>
+              <button className="modal-close-btn" onClick={() => setShowEditModal(false)}>
                 <X size={24} />
               </button>
             </div>
-            
-            <div className="modal-body">
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Pet Name *</label>
-                  <input
-                    type="text"
-                    value={editFormData.petName}
-                    onChange={(e) => handleEditFormChange('petName', e.target.value)}
-                    placeholder="Pet name"
-                  />
-                </div>
 
+            <div className="create-post-form">
+              <div className="form-group">
+                <label className="form-label">
+                  <Dog size={18} />
+                  Pet Name *
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  value={editFormData.petName}
+                  onChange={(e) => handleEditFormChange('petName', e.target.value)}
+                  placeholder="Pet name"
+                />
+              </div>
+
+              <div className="form-row">
                 <div className="form-group">
-                  <label>Species *</label>
+                  <label className="form-label">Species *</label>
                   <select
+                    className="form-input"
                     value={editFormData.species}
                     onChange={(e) => handleEditFormChange('species', e.target.value)}
                   >
@@ -668,19 +696,23 @@ const Profile = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Breed</label>
+                  <label className="form-label">Breed</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={editFormData.breed}
                     onChange={(e) => handleEditFormChange('breed', e.target.value)}
                     placeholder="Breed"
                   />
                 </div>
+              </div>
 
+              <div className="form-row">
                 <div className="form-group">
-                  <label>Age</label>
+                  <label className="form-label">Age</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={editFormData.age}
                     onChange={(e) => handleEditFormChange('age', e.target.value)}
                     placeholder="e.g., 2 years"
@@ -688,8 +720,9 @@ const Profile = () => {
                 </div>
 
                 <div className="form-group">
-                  <label>Gender</label>
+                  <label className="form-label">Gender</label>
                   <select
+                    className="form-input"
                     value={editFormData.gender}
                     onChange={(e) => handleEditFormChange('gender', e.target.value)}
                   >
@@ -699,11 +732,14 @@ const Profile = () => {
                     <option value="unknown">Unknown</option>
                   </select>
                 </div>
+              </div>
 
-                {editingPost.postType === 'adoption' && (
+              {editingPost.postType === 'adoption' && (
+                <div className="form-row">
                   <div className="form-group">
-                    <label>Size</label>
+                    <label className="form-label">Size</label>
                     <select
+                      className="form-input"
                       value={editFormData.size}
                       onChange={(e) => handleEditFormChange('size', e.target.value)}
                     >
@@ -712,88 +748,116 @@ const Profile = () => {
                       <option value="large">Large</option>
                     </select>
                   </div>
-                )}
 
+                  <div className="form-group">
+                    <label className="form-label">Color</label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editFormData.color}
+                      onChange={(e) => handleEditFormChange('color', e.target.value)}
+                      placeholder="Color"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {editingPost.postType === 'missing' && (
                 <div className="form-group">
-                  <label>Color</label>
+                  <label className="form-label">Color</label>
                   <input
                     type="text"
+                    className="form-input"
                     value={editFormData.color}
                     onChange={(e) => handleEditFormChange('color', e.target.value)}
                     placeholder="Color"
                   />
                 </div>
+              )}
 
-                <div className="form-group">
-                  <label>Status</label>
-                  <select
-                    value={editFormData.status}
-                    onChange={(e) => handleEditFormChange('status', e.target.value)}
-                  >
-                    {editingPost.postType === 'adoption' ? (
-                      <>
-                        <option value="available">Available</option>
-                        <option value="adopted">Adopted</option>
-                        <option value="pending">Pending</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="missing">Missing</option>
-                        <option value="found">Found</option>
-                        <option value="closed">Closed</option>
-                      </>
-                    )}
-                  </select>
-                </div>
+              <div className="form-group">
+                <label className="form-label">Status</label>
+                <select
+                  className="form-input"
+                  value={editFormData.status}
+                  onChange={(e) => handleEditFormChange('status', e.target.value)}
+                >
+                  {editingPost.postType === 'adoption' ? (
+                    <>
+                      <option value="available">Available</option>
+                      <option value="adopted">Adopted</option>
+                      <option value="pending">Pending</option>
+                    </>
+                  ) : (
+                    <>
+                      <option value="missing">Missing</option>
+                      <option value="found">Found</option>
+                      <option value="closed">Closed</option>
+                    </>
+                  )}
+                </select>
+              </div>
 
-                <div className="form-group full-width">
-                  <label>Description</label>
-                  <textarea
-                    value={editFormData.description}
-                    onChange={(e) => handleEditFormChange('description', e.target.value)}
-                    placeholder="Description"
-                    rows="3"
-                  />
-                </div>
+              <div className="form-group">
+                <label className="form-label">Description</label>
+                <textarea
+                  className="form-textarea"
+                  value={editFormData.description}
+                  onChange={(e) => handleEditFormChange('description', e.target.value)}
+                  placeholder="Description"
+                  rows="3"
+                />
+              </div>
 
-                {editingPost.postType === 'adoption' ? (
-                  <>
-                    <div className="form-group checkbox-group">
-                      <label>
+              {editingPost.postType === 'adoption' ? (
+                <>
+                  <div className="form-row checkbox-row">
+                    <div className="checkbox-group">
+                      <label className="checkbox-label">
                         <input
                           type="checkbox"
                           checked={editFormData.vaccinated}
                           onChange={(e) => handleEditFormChange('vaccinated', e.target.checked)}
                         />
-                        Vaccinated
+                        <span>Vaccinated</span>
                       </label>
                     </div>
 
-                    <div className="form-group checkbox-group">
-                      <label>
+                    <div className="checkbox-group">
+                      <label className="checkbox-label">
                         <input
                           type="checkbox"
                           checked={editFormData.neutered}
                           onChange={(e) => handleEditFormChange('neutered', e.target.checked)}
                         />
-                        Neutered/Spayed
+                        <span>Neutered/Spayed</span>
                       </label>
                     </div>
+                  </div>
 
-                    <div className="form-group">
-                      <label>Contact Name *</label>
-                      <input
-                        type="text"
-                        value={editFormData.contact_name}
-                        onChange={(e) => handleEditFormChange('contact_name', e.target.value)}
-                        placeholder="Contact name"
-                      />
-                    </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <User size={18} />
+                      Contact Name *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editFormData.contact_name}
+                      onChange={(e) => handleEditFormChange('contact_name', e.target.value)}
+                      placeholder="Contact name"
+                    />
+                  </div>
 
+                  <div className="form-row">
                     <div className="form-group">
-                      <label>Contact Email *</label>
+                      <label className="form-label">
+                        <Mail size={18} />
+                        Contact Email *
+                      </label>
                       <input
                         type="email"
+                        className="form-input"
                         value={editFormData.contact_email}
                         onChange={(e) => handleEditFormChange('contact_email', e.target.value)}
                         placeholder="Contact email"
@@ -801,63 +865,77 @@ const Profile = () => {
                     </div>
 
                     <div className="form-group">
-                      <label>Contact Phone</label>
+                      <label className="form-label">
+                        <Phone size={18} />
+                        Contact Phone
+                      </label>
                       <input
                         type="tel"
+                        className="form-input"
                         value={editFormData.contact_phone}
                         onChange={(e) => handleEditFormChange('contact_phone', e.target.value)}
                         placeholder="Contact phone"
                       />
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="form-group">
-                      <label>Last Seen Location *</label>
-                      <input
-                        type="text"
-                        value={editFormData.location}
-                        onChange={(e) => handleEditFormChange('location', e.target.value)}
-                        placeholder="Last seen location"
-                      />
-                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <MapPin size={18} />
+                      Last Seen Location *
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editFormData.location}
+                      onChange={(e) => handleEditFormChange('location', e.target.value)}
+                      placeholder="Last seen location"
+                    />
+                  </div>
 
+                  <div className="form-row">
                     <div className="form-group">
-                      <label>Last Seen Date *</label>
+                      <label className="form-label">Last Seen Date *</label>
                       <input
                         type="date"
+                        className="form-input"
                         value={editFormData.lastSeen}
                         onChange={(e) => handleEditFormChange('lastSeen', e.target.value)}
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Reward</label>
+                      <label className="form-label">Reward</label>
                       <input
                         type="text"
+                        className="form-input"
                         value={editFormData.reward}
                         onChange={(e) => handleEditFormChange('reward', e.target.value)}
                         placeholder="Reward amount (optional)"
                       />
                     </div>
-                  </>
-                )}
-              </div>
-            </div>
+                  </div>
+                </>
+              )}
 
-            <div className="modal-footer">
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => setShowEditModal(false)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleSaveEdit}
-              >
-                <Save size={18} /> Save Changes
-              </button>
+              <div className="form-actions">
+                <button 
+                  type="button"
+                  className="btn btn-secondary" 
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  className="btn btn-primary" 
+                  onClick={handleSaveEdit}
+                >
+                  <Save size={18} /> Save Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>

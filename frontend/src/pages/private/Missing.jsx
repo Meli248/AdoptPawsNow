@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, PawPrint, Dog, Cat, MapPin, AlertTriangle } from 'lucide-react';
+import { Search, Filter, PawPrint, Dog, Cat, MapPin, AlertTriangle, User, Mail, Phone } from 'lucide-react';
 import { missingAPI } from '../../services/api';
 import '../../css/Missing.css';
 
@@ -250,6 +250,64 @@ const Missing = () => {
                   <p className="pet-description">
                     Missing since {formatDate(pet.last_seen_date)}. {pet.description || 'Please help find this pet.'}
                   </p>
+
+                  {/* Contact Information */}
+                  {pet.owner_name && (
+                    <div className="pet-contact-info" style={{
+                      marginTop: '12px',
+                      padding: '12px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef'
+                    }}>
+                      <p style={{ 
+                        fontSize: '0.85rem', 
+                        fontWeight: '600', 
+                        color: '#6c757d',
+                        marginBottom: '8px' 
+                      }}>
+                        Contact Owner:
+                      </p>
+                      <p style={{ 
+                        fontSize: '0.9rem', 
+                        color: '#495057',
+                        margin: '4px 0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}>
+                        <User size={14} />
+                        <strong>{pet.owner_name}</strong>
+                      </p>
+                      {pet.owner_email && (
+                        <p style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#6c757d',
+                          margin: '4px 0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <Mail size={14} />
+                          {pet.owner_email}
+                        </p>
+                      )}
+                      {pet.owner_phone && (
+                        <p style={{ 
+                          fontSize: '0.85rem', 
+                          color: '#6c757d',
+                          margin: '4px 0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <Phone size={14} />
+                          {pet.owner_phone}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <button 
                     className="btn btn-orange btn-contact"
                     onClick={() => handleReportSighting(pet)}
