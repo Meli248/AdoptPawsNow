@@ -251,62 +251,73 @@ const Missing = () => {
                     Missing since {formatDate(pet.last_seen_date)}. {pet.description || 'Please help find this pet.'}
                   </p>
 
-                  {/* Contact Information */}
-                  {pet.owner_name && (
-                    <div className="pet-contact-info" style={{
-                      marginTop: '12px',
-                      padding: '12px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '8px',
-                      border: '1px solid #e9ecef'
+                  {/* Contact Information - Always Show */}
+                  <div className="pet-contact-info" style={{
+                    marginTop: '12px',
+                    padding: '12px',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '8px',
+                    border: '1px solid #e9ecef',
+                    minHeight: '100px'
+                  }}>
+                    <p style={{ 
+                      fontSize: '0.85rem', 
+                      fontWeight: '600', 
+                      color: '#6c757d',
+                      marginBottom: '8px' 
                     }}>
+                      Contact Owner:
+                    </p>
+                    {pet.owner_name ? (
+                      <>
+                        <p style={{ 
+                          fontSize: '0.9rem', 
+                          color: '#495057',
+                          margin: '4px 0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <User size={14} />
+                          <strong>{pet.owner_name}</strong>
+                        </p>
+                        {pet.owner_email && (
+                          <p style={{ 
+                            fontSize: '0.85rem', 
+                            color: '#6c757d',
+                            margin: '4px 0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <Mail size={14} />
+                            {pet.owner_email}
+                          </p>
+                        )}
+                        {pet.owner_phone && (
+                          <p style={{ 
+                            fontSize: '0.85rem', 
+                            color: '#6c757d',
+                            margin: '4px 0',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
+                            <Phone size={14} />
+                            {pet.owner_phone}
+                          </p>
+                        )}
+                      </>
+                    ) : (
                       <p style={{ 
                         fontSize: '0.85rem', 
-                        fontWeight: '600', 
                         color: '#6c757d',
-                        marginBottom: '8px' 
+                        fontStyle: 'italic'
                       }}>
-                        Contact Owner:
+                        Contact information not available
                       </p>
-                      <p style={{ 
-                        fontSize: '0.9rem', 
-                        color: '#495057',
-                        margin: '4px 0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}>
-                        <User size={14} />
-                        <strong>{pet.owner_name}</strong>
-                      </p>
-                      {pet.owner_email && (
-                        <p style={{ 
-                          fontSize: '0.85rem', 
-                          color: '#6c757d',
-                          margin: '4px 0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          <Mail size={14} />
-                          {pet.owner_email}
-                        </p>
-                      )}
-                      {pet.owner_phone && (
-                        <p style={{ 
-                          fontSize: '0.85rem', 
-                          color: '#6c757d',
-                          margin: '4px 0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          <Phone size={14} />
-                          {pet.owner_phone}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <button 
                     className="btn btn-orange btn-contact"

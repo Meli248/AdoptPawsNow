@@ -149,6 +149,7 @@ const Profile = () => {
           contact_name: pet.contact_name,
           contact_email: pet.contact_email,
           contact_phone: pet.contact_phone,
+          contact_type: pet.contact_type,
           createdAt: pet.created_at
         }));
         allPosts.push(...adoptionPosts);
@@ -387,6 +388,14 @@ const Profile = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
   if (profileLoading) {
     return (
       <div className="profile-container">
@@ -600,29 +609,162 @@ const Profile = () => {
               </p>
             </div>
           ) : (
-            <div className="user-posts-grid">
+            <div className="pets-grid">
               {userPosts.map((post) => (
-                <div key={`${post.postType}-${post.id}`} className="user-post-card">
-                  <div className="post-image-wrapper">
-                    <img src={post.image} alt={post.petName} className="post-image" />
-                    <div className={`post-type-badge ${post.postType}`}>
-                      {post.postType === 'adoption' ? 'For Adoption' : 'Missing'}
+                <div key={`${post.postType}-${post.id}`} className={`pet-card ${post.postType === 'missing' ? 'missing-card' : ''} fade-in`}>
+                  <div className="pet-image-wrapper">
+                    <img src={post.image} alt={post.petName} className="pet-image" />
+                    <div className={`pet-status ${post.postType === 'adoption' ? 'available' : 'missing'}`}>
+                      {post.postType === 'adoption' ? post.status : 'Missing'}
                     </div>
-                    <div className="post-status-badge">{post.status}</div>
+                    {post.postType === 'missing' && (
+                      <div className="urgent-badge">
+                        <AlertTriangle size={16} />
+                      </div>
+                    )}
                   </div>
-                  <div className="post-content">
-                    <h3 className="post-pet-name">{post.petName}</h3>
-                    <p className="post-breed">{post.breed} • {post.petType}</p>
-                    <div className="post-location">
+                  <div className="pet-info">
+                    <h3 className="pet-name">{post.petName}</h3>
+                    <p className="pet-breed">
+                      {post.breed} • {post.petType} {post.age && `• ${post.age} years`}
+                    </p>
+                    <div className="pet-location">
                       <MapPin size={16} />
                       {post.location}
                     </div>
+                    <p className="pet-description">
+                      {post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Please help find this pet.')}
+                    </p>
+
+                    {/* Contact Information - Always Show */}
+                    <div className="pet-contact-info" style={{
+                      marginTop: '12px',
+                      padding: '12px',
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: '8px',
+                      border: '1px solid #e9ecef',
+                      minHeight: '100px'
+                    }}>
+                      <p style={{ 
+                        fontSize: '0.85rem', 
+                        fontWeight: '600', 
+                        color: '#6c757d',
+                        marginBottom: '8px' 
+                      }}>
+                        {post.postType === 'adoption' ? 'Contact for Adoption:' : 'Contact Owner:'}
+                      </p>
+                      {post.postType === 'adoption' ? (
+                        post.contact_name ? (
+                          <>
+                            <p style={{ 
+                              fontSize: '0.9rem', 
+                              color: '#495057',
+                              margin: '4px 0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}>
+                              <User size={14} />
+                              <strong>{post.contact_name}</strong>
+                              {post.contact_type === 'shelter' && ' (Shelter/Rescue)'}
+                              {post.contact_type === 'community' && ' (Community Member)'}
+                            </p>
+                            {post.contact_email && (
+                              <p style={{ 
+                                fontSize: '0.85rem', 
+                                color: '#6c757d',
+                                margin: '4px 0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}>
+                                <Mail size={14} />
+                                {post.contact_email}
+                              </p>
+                            )}
+                            {post.contact_phone && (
+                              <p style={{ 
+                                fontSize: '0.85rem', 
+                                color: '#6c757d',
+                                margin: '4px 0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}>
+                                <Phone size={14} />
+                                {post.contact_phone}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p style={{ 
+                            fontSize: '0.85rem', 
+                            color: '#6c757d',
+                            fontStyle: 'italic'
+                          }}>
+                            Contact information not available
+                          </p>
+                        )
+                      ) : (
+                        post.owner_name ? (
+                          <>
+                            <p style={{ 
+                              fontSize: '0.9rem', 
+                              color: '#495057',
+                              margin: '4px 0',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px'
+                            }}>
+                              <User size={14} />
+                              <strong>{post.owner_name}</strong>
+                            </p>
+                            {post.owner_email && (
+                              <p style={{ 
+                                fontSize: '0.85rem', 
+                                color: '#6c757d',
+                                margin: '4px 0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}>
+                                <Mail size={14} />
+                                {post.owner_email}
+                              </p>
+                            )}
+                            {post.owner_phone && (
+                              <p style={{ 
+                                fontSize: '0.85rem', 
+                                color: '#6c757d',
+                                margin: '4px 0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}>
+                                <Phone size={14} />
+                                {post.owner_phone}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p style={{ 
+                            fontSize: '0.85rem', 
+                            color: '#6c757d',
+                            fontStyle: 'italic'
+                          }}>
+                            Contact information not available
+                          </p>
+                        )
+                      )}
+                    </div>
+
                     {post.postType === 'missing' && post.lastSeen && (
                       <div className="post-detail-small">
                         <Clock size={14} />
-                        Last seen: {new Date(post.lastSeen).toLocaleDateString()}
+                        Last seen: {formatDate(post.lastSeen)}
                       </div>
                     )}
+
                     <div className="post-actions">
                       <button 
                         className="btn btn-sm btn-outline"
