@@ -5,8 +5,8 @@
 }
 
 :root {
-  --primary-color: #6b9080;
-  --primary-hover: #5a7a6b;
+  --primary-color: #6b9b7f;
+  --primary-hover: #5a8a6f;
   --secondary-color: #d98943;
   --text-dark: #2c2c2c;
   --text-light: #6c757d;
@@ -24,7 +24,12 @@ body {
   line-height: 1.6;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
 }
@@ -41,7 +46,8 @@ button {
   outline: none;
 }
 
-input, textarea {
+input,
+textarea {
   font-family: 'Poppins', sans-serif;
 }
 
@@ -142,6 +148,7 @@ input, textarea {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -153,6 +160,7 @@ input, textarea {
     opacity: 0;
     transform: translateX(-50px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -164,6 +172,7 @@ input, textarea {
     opacity: 0;
     transform: translateX(50px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);

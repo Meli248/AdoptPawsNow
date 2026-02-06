@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
+import {
   Mail, MapPin, Calendar, Edit2, Phone, Save, X, Dog, Heart,
   AlertTriangle, Clock, User
 } from 'lucide-react';
@@ -57,7 +57,7 @@ const Profile = () => {
       }
 
       const data = await response.json();
-      
+
       if (data.success && data.user) {
         const user = data.user;
         const profileData = {
@@ -65,13 +65,13 @@ const Profile = () => {
           email: user.email || '',
           phone: user.phone || '',
           location: user.location || '',
-          joinedDate: user.created_at 
-            ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) 
+          joinedDate: user.created_at
+            ? new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
             : 'Recently'
         };
         setUserData(profileData);
         setEditedData(profileData);
-        
+
         localStorage.setItem('user_name', profileData.name);
         localStorage.setItem('user', profileData.name);
         localStorage.setItem('user_email', profileData.email);
@@ -89,7 +89,7 @@ const Profile = () => {
   const loadFallbackUserData = () => {
     const userEmail = localStorage.getItem('user_email');
     const userName = localStorage.getItem('user') || localStorage.getItem('user_name');
-    
+
     if (userEmail || userName) {
       const fallbackData = {
         name: userName || '',
@@ -103,31 +103,70 @@ const Profile = () => {
     }
   };
 
+  const [favorites, setFavorites] = useState([]);
+  const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'favorites'
+
+  useEffect(() => {
+    fetchUserProfile();
+    fetchUserPosts();
+    fetchUserFavorites();
+  }, []);
+
+  const fetchUserFavorites = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/favorites`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = response.ok ? await response.json() : { success: false, data: [] };
+
+      if (data.success && data.data) {
+        const formattedFavs = data.data.map(pet => ({
+          id: pet.id,
+          petName: pet.name,
+          breed: pet.breed || 'Mixed',
+          petType: pet.species || 'Pet',
+          location: pet.location || 'Not specified',
+          image: getImageUrl(pet.image_url),
+          status: pet.status,
+          age: pet.age,
+          gender: pet.gender,
+          contact_name: pet.contact_name, // important for contact info
+          description: pet.description
+        }));
+        setFavorites(formattedFavs);
+      }
+
+    } catch (err) {
+      console.error('Error fetching favorites:', err);
+    }
+  };
+
   const fetchUserPosts = async () => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
-        console.log('No token found');
         setLoading(false);
         return;
       }
 
-      const headers = {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      };
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      const [adoptionResponse, missingResponse] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL}/missing/my-posts`, { headers })
-      ]);
-
-      const adoptionData = adoptionResponse.ok ? await adoptionResponse.json() : { success: false, data: [] };
-      const missingData = missingResponse.ok ? await missingResponse.json() : { success: false, data: [] };
+      const adoptionData = response.ok ? await response.json() : { success: false, data: [] };
 
       const allPosts = [];
       let adoptionCount = 0;
-      let missingCount = 0;
 
       if (adoptionData?.success && adoptionData.data) {
         const adoptionPosts = adoptionData.data.map(pet => ({
@@ -156,38 +195,14 @@ const Profile = () => {
         adoptionCount = adoptionPosts.length;
       }
 
-      if (missingData?.success && missingData.data) {
-        const missingPosts = missingData.data.map(pet => ({
-          id: pet.missing_id,
-          petName: pet.pet_name,
-          breed: pet.breed || 'Mixed',
-          petType: pet.species || 'Pet',
-          location: pet.last_seen_location || 'Location N/A',
-          image: getImageUrl(pet.image_url),
-          postType: 'missing',
-          status: pet.status,
-          lastSeen: pet.last_seen_date,
-          gender: pet.gender,
-          age: pet.age,
-          color: pet.color,
-          description: pet.description,
-          owner_name: pet.owner_name,
-          owner_email: pet.owner_email,
-          owner_phone: pet.owner_phone,
-          reward: pet.reward,
-          createdAt: pet.created_at
-        }));
-        allPosts.push(...missingPosts);
-        missingCount = missingPosts.length;
-      }
-
+      // Sort by newest first
       allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
+
       setUserPosts(allPosts);
       setStats({
         totalPosts: allPosts.length,
         adoptionPosts: adoptionCount,
-        missingPosts: missingCount
+        missingPosts: 0
       });
     } catch (error) {
       console.error('Error fetching user posts:', error);
@@ -253,38 +268,22 @@ const Profile = () => {
 
   const handleEditPost = (post) => {
     setEditingPost(post);
-    if (post.postType === 'adoption') {
-      setEditFormData({
-        petName: post.petName || '',
-        species: post.petType?.toLowerCase() || 'dog',
-        breed: post.breed || '',
-        age: post.age || '',
-        gender: post.gender || '',
-        size: post.size || 'medium',
-        color: post.color || '',
-        status: post.status || 'available',
-        description: post.description || '',
-        vaccinated: post.vaccinated || false,
-        neutered: post.neutered || false,
-        contact_name: post.contact_name || '',
-        contact_email: post.contact_email || '',
-        contact_phone: post.contact_phone || ''
-      });
-    } else {
-      setEditFormData({
-        petName: post.petName || '',
-        species: post.petType?.toLowerCase() || 'dog',
-        breed: post.breed || '',
-        age: post.age || '',
-        gender: post.gender || '',
-        color: post.color || '',
-        status: post.status || 'missing',
-        description: post.description || '',
-        location: post.location || '',
-        lastSeen: post.lastSeen ? new Date(post.lastSeen).toISOString().split('T')[0] : '',
-        reward: post.reward || ''
-      });
-    }
+    setEditFormData({
+      petName: post.petName || '',
+      species: post.petType?.toLowerCase() || 'dog',
+      breed: post.breed || '',
+      age: post.age || '',
+      gender: post.gender || '',
+      size: post.size || 'medium',
+      color: post.color || '',
+      status: post.status || 'available',
+      description: post.description || '',
+      vaccinated: post.vaccinated || false,
+      neutered: post.neutered || false,
+      contact_name: post.contact_name || '',
+      contact_email: post.contact_email || '',
+      contact_phone: post.contact_phone || ''
+    });
     setShowEditModal(true);
   };
 
@@ -295,43 +294,24 @@ const Profile = () => {
   const handleSaveEdit = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      
-      let endpoint, updateData;
-      
-      if (editingPost.postType === 'adoption') {
-        endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`;
-        updateData = {
-          name: editFormData.petName,
-          species: editFormData.species,
-          breed: editFormData.breed,
-          age: editFormData.age,
-          gender: editFormData.gender,
-          size: editFormData.size,
-          color: editFormData.color,
-          status: editFormData.status,
-          description: editFormData.description,
-          vaccinated: editFormData.vaccinated,
-          neutered: editFormData.neutered,
-          contact_name: editFormData.contact_name,
-          contact_email: editFormData.contact_email,
-          contact_phone: editFormData.contact_phone
-        };
-      } else {
-        endpoint = `${import.meta.env.VITE_API_URL}/missing/missing-pets/${editingPost.id}`;
-        updateData = {
-          pet_name: editFormData.petName,
-          species: editFormData.species,
-          breed: editFormData.breed,
-          age: editFormData.age,
-          gender: editFormData.gender,
-          color: editFormData.color,
-          status: editFormData.status,
-          description: editFormData.description,
-          last_seen_location: editFormData.location,
-          last_seen_date: editFormData.lastSeen,
-          reward: editFormData.reward
-        };
-      }
+
+      const endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`;
+      const updateData = {
+        name: editFormData.petName,
+        species: editFormData.species,
+        breed: editFormData.breed,
+        age: editFormData.age,
+        gender: editFormData.gender,
+        size: editFormData.size,
+        color: editFormData.color,
+        status: editFormData.status,
+        description: editFormData.description,
+        vaccinated: editFormData.vaccinated,
+        neutered: editFormData.neutered,
+        contact_name: editFormData.contact_name,
+        contact_email: editFormData.contact_email,
+        contact_phone: editFormData.contact_phone
+      };
 
       const response = await fetch(endpoint, {
         method: 'PUT',
@@ -364,9 +344,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const endpoint = postType === 'adoption' 
-        ? `${import.meta.env.VITE_API_URL}/pets/pets/${postId}`
-        : `${import.meta.env.VITE_API_URL}/missing/missing-pets/${postId}`;
+      const endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${postId}`;
 
       const response = await fetch(endpoint, {
         method: 'DELETE',
@@ -439,15 +417,7 @@ const Profile = () => {
               <div className="stat-label-dashboard">For Adoption</div>
             </div>
           </div>
-          <div className="stat-card-dashboard">
-            <div className="stat-icon-wrapper">
-              <AlertTriangle size={24} />
-            </div>
-            <div className="stat-info">
-              <div className="stat-number-dashboard">{stats.missingPosts}</div>
-              <div className="stat-label-dashboard">Missing Pets</div>
-            </div>
-          </div>
+
         </div>
 
         {/* Profile Section */}
@@ -472,7 +442,7 @@ const Profile = () => {
               </div>
             )}
           </div>
-          
+
           <div className="profile-card">
             <div className="profile-basic-info-section">
               {!isEditing ? (
@@ -590,203 +560,126 @@ const Profile = () => {
 
         {/* Posts Section */}
         <div className="posts-section">
-          <div className="section-header-dashboard">
-            <h2 className="section-title-dashboard">My Posts</h2>
+          <div className="section-header-dashboard" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <button
+              className={`section-title-dashboard ${activeTab === 'posts' ? 'active' : ''}`}
+              onClick={() => setActiveTab('posts')}
+              style={{ background: 'none', border: 'none', borderBottom: activeTab === 'posts' ? '3px solid var(--primary-color)' : 'none', paddingBottom: '5px', cursor: 'pointer', opacity: activeTab === 'posts' ? 1 : 0.5 }}
+            >
+              My Posts
+            </button>
+            <button
+              className={`section-title-dashboard ${activeTab === 'favorites' ? 'active' : ''}`}
+              onClick={() => setActiveTab('favorites')}
+              style={{ background: 'none', border: 'none', borderBottom: activeTab === 'favorites' ? '3px solid var(--primary-color)' : 'none', paddingBottom: '5px', cursor: 'pointer', opacity: activeTab === 'favorites' ? 1 : 0.5 }}
+            >
+              Favorites
+            </button>
           </div>
 
-          {loading ? (
-            <div className="no-posts-container">
-              <p>Loading posts...</p>
-            </div>
-          ) : userPosts.length === 0 ? (
-            <div className="no-posts-container">
-              <div className="no-posts-icon">
-                <Dog size={40} />
+          {activeTab === 'posts' ? (
+            loading ? (
+              <div className="no-posts-container">
+                <p>Loading posts...</p>
               </div>
-              <h3 className="no-posts-title">No Posts Yet</h3>
-              <p className="no-posts-subtitle">
-                Start by creating your first post to help pets find homes or reunite missing pets with their families.
-              </p>
-            </div>
-          ) : (
-            <div className="pets-grid">
-              {userPosts.map((post) => (
-                <div key={`${post.postType}-${post.id}`} className={`pet-card ${post.postType === 'missing' ? 'missing-card' : ''} fade-in`}>
-                  <div className="pet-image-wrapper">
-                    <img src={post.image} alt={post.petName} className="pet-image" />
-                    <div className={`pet-status ${post.postType === 'adoption' ? 'available' : 'missing'}`}>
-                      {post.postType === 'adoption' ? post.status : 'Missing'}
-                    </div>
-                    {post.postType === 'missing' && (
-                      <div className="urgent-badge">
-                        <AlertTriangle size={16} />
-                      </div>
-                    )}
-                  </div>
-                  <div className="pet-info">
-                    <h3 className="pet-name">{post.petName}</h3>
-                    <p className="pet-breed">
-                      {post.breed} • {post.petType} {post.age && `• ${post.age} years`}
-                    </p>
-                    <div className="pet-location">
-                      <MapPin size={16} />
-                      {post.location}
-                    </div>
-                    <p className="pet-description">
-                      {post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Please help find this pet.')}
-                    </p>
-
-                    {/* Contact Information - Always Show */}
-                    <div className="pet-contact-info" style={{
-                      marginTop: '12px',
-                      padding: '12px',
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: '8px',
-                      border: '1px solid #e9ecef',
-                      minHeight: '100px'
-                    }}>
-                      <p style={{ 
-                        fontSize: '0.85rem', 
-                        fontWeight: '600', 
-                        color: '#6c757d',
-                        marginBottom: '8px' 
-                      }}>
-                        {post.postType === 'adoption' ? 'Contact for Adoption:' : 'Contact Owner:'}
-                      </p>
-                      {post.postType === 'adoption' ? (
-                        post.contact_name ? (
-                          <>
-                            <p style={{ 
-                              fontSize: '0.9rem', 
-                              color: '#495057',
-                              margin: '4px 0',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}>
-                              <User size={14} />
-                              <strong>{post.contact_name}</strong>
-                              {post.contact_type === 'shelter' && ' (Shelter/Rescue)'}
-                              {post.contact_type === 'community' && ' (Community Member)'}
-                            </p>
-                            {post.contact_email && (
-                              <p style={{ 
-                                fontSize: '0.85rem', 
-                                color: '#6c757d',
-                                margin: '4px 0',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                              }}>
-                                <Mail size={14} />
-                                {post.contact_email}
-                              </p>
-                            )}
-                            {post.contact_phone && (
-                              <p style={{ 
-                                fontSize: '0.85rem', 
-                                color: '#6c757d',
-                                margin: '4px 0',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                              }}>
-                                <Phone size={14} />
-                                {post.contact_phone}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p style={{ 
-                            fontSize: '0.85rem', 
-                            color: '#6c757d',
-                            fontStyle: 'italic'
-                          }}>
-                            Contact information not available
-                          </p>
-                        )
-                      ) : (
-                        post.owner_name ? (
-                          <>
-                            <p style={{ 
-                              fontSize: '0.9rem', 
-                              color: '#495057',
-                              margin: '4px 0',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px'
-                            }}>
-                              <User size={14} />
-                              <strong>{post.owner_name}</strong>
-                            </p>
-                            {post.owner_email && (
-                              <p style={{ 
-                                fontSize: '0.85rem', 
-                                color: '#6c757d',
-                                margin: '4px 0',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                              }}>
-                                <Mail size={14} />
-                                {post.owner_email}
-                              </p>
-                            )}
-                            {post.owner_phone && (
-                              <p style={{ 
-                                fontSize: '0.85rem', 
-                                color: '#6c757d',
-                                margin: '4px 0',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px'
-                              }}>
-                                <Phone size={14} />
-                                {post.owner_phone}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p style={{ 
-                            fontSize: '0.85rem', 
-                            color: '#6c757d',
-                            fontStyle: 'italic'
-                          }}>
-                            Contact information not available
-                          </p>
-                        )
-                      )}
-                    </div>
-
-                    {post.postType === 'missing' && post.lastSeen && (
-                      <div className="post-detail-small">
-                        <Clock size={14} />
-                        Last seen: {formatDate(post.lastSeen)}
-                      </div>
-                    )}
-
-                    <div className="post-actions">
-                      <button 
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleEditPost(post)}
-                      >
-                        <Edit2 size={16} />
-                        Edit
-                      </button>
-                      <button 
-                        className="btn btn-sm btn-outline"
-                        onClick={() => handleDeletePost(post.id, post.postType)}
-                        style={{ color: '#dc2626' }}
-                      >
-                        <X size={16} />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
+            ) : userPosts.length === 0 ? (
+              <div className="no-posts-container">
+                <div className="no-posts-icon">
+                  <Dog size={40} />
                 </div>
-              ))}
+                <h3 className="no-posts-title">No Posts Yet</h3>
+                <p className="no-posts-subtitle">
+                  Start by creating your first post to help pets find homes or reunite missing pets with their families.
+                </p>
+              </div>
+            ) : (
+              <div className="pets-grid">
+                {userPosts.map((post) => (
+                  <div key={`${post.postType}-${post.id}`} className={`pet-card ${post.postType === 'missing' ? 'missing-card' : ''} fade-in`}>
+                    <div className="pet-image-wrapper">
+                      <img src={post.image} alt={post.petName} className="pet-image" />
+                      <div className={`pet-status ${post.postType === 'adoption' ? 'available' : 'missing'}`}>
+                        {post.postType === 'adoption' ? post.status : 'Missing'}
+                      </div>
+                    </div>
+                    <div className="pet-info">
+                      <h3 className="pet-name">{post.petName}</h3>
+                      <p className="pet-breed">
+                        {post.breed} • {post.petType} {post.age && `• ${post.age} years`}
+                      </p>
+                      <div className="pet-location">
+                        <MapPin size={16} />
+                        {post.location}
+                      </div>
+                      <p className="pet-description">
+                        {post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Please help find this pet.')}
+                      </p>
+
+                      <div className="post-actions">
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleEditPost(post)}
+                        >
+                          <Edit2 size={16} />
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleDeletePost(post.id, post.postType)}
+                          style={{ color: '#dc2626' }}
+                        >
+                          <X size={16} />
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          ) : (
+            // Favorites Tab
+            <div className="pets-grid">
+              {favorites.length === 0 ? (
+                <div className="no-posts-container" style={{ gridColumn: '1/-1' }}>
+                  <Heart size={40} style={{ margin: '0 auto', display: 'block', color: '#ccc' }} />
+                  <p style={{ textAlign: 'center', marginTop: '10px', color: '#666' }}>No favorites yet.</p>
+                </div>
+              ) : (
+                favorites.map((pet) => (
+                  <div key={pet.id} className="pet-card fade-in">
+                    <div className="pet-image-wrapper">
+                      <img src={pet.image} alt={pet.petName} className="pet-image" />
+                      <div className="pet-status available">
+                        {pet.status || 'Available'}
+                      </div>
+                    </div>
+                    <div className="pet-info">
+                      <h3 className="pet-name">{pet.petName}</h3>
+                      <p className="pet-breed">
+                        {pet.breed} • {pet.petType}
+                      </p>
+                      <div className="pet-location">
+                        <MapPin size={16} />
+                        {pet.location}
+                      </div>
+                      <p className="pet-description">
+                        {pet.description?.substring(0, 100)}...
+                      </p>
+                      <button
+                        onClick={() => {/* Navigate to detail if needed */ }}
+                        className="btn btn-primary btn-sm"
+                        style={{ width: '100%', marginTop: '10px' }}
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           )}
+
         </div>
       </div>
 
@@ -1063,16 +956,16 @@ const Profile = () => {
               )}
 
               <div className="form-actions">
-                <button 
+                <button
                   type="button"
-                  className="btn btn-secondary" 
+                  className="btn btn-secondary"
                   onClick={() => setShowEditModal(false)}
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="button"
-                  className="btn btn-primary" 
+                  className="btn btn-primary"
                   onClick={handleSaveEdit}
                 >
                   <Save size={18} /> Save Changes

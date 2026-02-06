@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import PrivateRoute from './routes/privateRoute';
-import PublicRoute from './routes/publicRoute';
+import PublicRoute from './routes/publicRoute'; // Ensure this logic exists too
+import AdminRoute from './routes/Adminroute';
 
 // Layout Components
 import Navbar from './components/Navbar';
@@ -9,55 +10,53 @@ import Footer from './components/Footer';
 // Public Pages
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
-
-// Shared Pages (both public and private)
-import Home from './pages/private/Home';
 import About from './pages/public/About';
 
-// Private Pages
+// Pages from the 'private' folder (based on your VS Code explorer)
+import Home from './pages/private/Home';
 import Adopt from './pages/private/Adopt';
 import Missing from './pages/private/Missing';
-import Profile from './pages/private/Profile';  // FIXED: Proper import
+import Profile from './pages/private/Profile';
+import PetDetail from './pages/private/Petdetail'; // Note: lowercase 'd' in filename
+import AdminDashboard from './pages/private/Admindashboard'; // Note: lowercase 'd'
+import ManageUsers from './pages/private/Manageusers'; // Note: lowercase 'u'
+import SurrenderRequest from './pages/private/SurrenderRequest'; // Added
+import AdminSurrenderRequests from './pages/private/AdminSurrenderRequests'; // Added
 
 function App() {
-  const isAuthenticated = localStorage.getItem('access_token');
-
   return (
     <Router>
       <Navbar />
       <Routes>
-        {/* Public Routes - Accessible only when NOT logged in */}
+        {/* 1. Public Routes: Only for guest users */}
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
         </Route>
 
-        {/* Shared Routes - Accessible to both public and authenticated users */}
+        {/* 2. Open Routes: Accessible to everyone */}
         <Route path="/home" element={<Home />} />
         <Route path="/about" element={<About />} />
 
-        {/* Private Routes - Accessible only when logged in */}
+        {/* 3. Private Routes: Requires any logged-in user */}
         <Route element={<PrivateRoute />}>
+          <Route path="/pet/:petId" element={<PetDetail />} />
           <Route path="/adopt" element={<Adopt />} />
           <Route path="/missing" element={<Missing />} />
-          <Route path="/profile" element={<Profile />} />  {/* FIXED: Added profile route */}
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/surrender-request" element={<SurrenderRequest />} /> {/* Added */}
         </Route>
 
-        {/* Root path redirects based on auth status */}
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated 
-              ? <Navigate to="/home" replace /> 
-              : <Navigate to="/home" replace />
-          } 
-        />
+        {/* 4. Admin Routes: Requires logged-in user AND 'admin' role */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/manage-users" element={<ManageUsers />} />
+          <Route path="/admin/surrender-requests" element={<AdminSurrenderRequests />} /> {/* Added */}
+        </Route>
 
-        {/* Catch all - redirect to home */}
-        <Route 
-          path="*" 
-          element={<Navigate to="/home" replace />} 
-        />
+        {/* Redirects */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
       <Footer />
     </Router>

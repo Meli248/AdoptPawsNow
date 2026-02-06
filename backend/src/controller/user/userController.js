@@ -43,10 +43,8 @@ export const getDashboardStats = async (req, res) => {
       [userId, 'adopted']
     );
 
-    const missingPets = await pool.query(
-      'SELECT COUNT(*) FROM pets WHERE user_id = $1 AND type = $2',
-      [userId, 'missing']
-    );
+    // Missing pets functionality removed
+    const missingPets = { rows: [{ count: 0 }] };
 
     const availablePets = await pool.query(
       'SELECT COUNT(*) FROM pets WHERE user_id = $1 AND status = $2',
@@ -58,7 +56,7 @@ export const getDashboardStats = async (req, res) => {
       data: {
         totalPosts: totalPosts.rows[0].count,
         adopted: adoptedPets.rows[0].count,
-        missing: missingPets.rows[0].count,
+        missing: 0,
         available: availablePets.rows[0].count
       }
     });
@@ -231,6 +229,100 @@ export const deletePetPost = async (req, res) => {
     });
   } catch (error) {
     console.error('Delete pet post error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+// ==========================================
+// ADMIN USER MANAGEMENT
+// ==========================================
+
+// Get all users (Admin only)
+export const getAllUsers = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT user_id, username, email, full_name, role, status, created_at, 
+      (SELECT COUNT(*) FROM pets WHERE pets.user_id = users.user_id) as posts_count 
+      FROM users ORDER BY created_at DESC`
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+// Block user
+export const blockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Prevent blocking self
+    if (parseInt(id) === req.user.userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot block yourself'
+      });
+    }
+
+    const result = await pool.query(
+      'UPDATE users SET status = $1 WHERE user_id = $2 RETURNING *',
+      ['blocked', id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'User blocked successfully'
+    });
+  } catch (error) {
+    console.error('Error blocking user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+// Unblock user
+export const unblockUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'UPDATE users SET status = $1 WHERE user_id = $2 RETURNING *',
+      ['active', id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'User unblocked successfully'
+    });
+  } catch (error) {
+    console.error('Error unblocking user:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

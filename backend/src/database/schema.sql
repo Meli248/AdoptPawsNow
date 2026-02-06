@@ -1,9 +1,15 @@
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
+    user_id SERIAL UNIQUE, -- tailored for existing code usage if needed, but usually id is enough. keeping compatible with authController returning user_id
     full_name VARCHAR(100) NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'blocked')),
+    phone VARCHAR(20),
+    location VARCHAR(200),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -51,4 +57,23 @@ CREATE TRIGGER update_pets_updated_at BEFORE UPDATE ON pets
 -- Insert sample data (optional)
 INSERT INTO users (full_name, email, password) VALUES
 ('John Doe', 'john@example.com', '$2b$10$YourHashedPasswordHere')
-ON CONFLICT (email) DO NOTHING;
+
+-- Create surrender_applications table
+CREATE TABLE IF NOT EXISTS surrender_applications (
+    application_id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    pet_name VARCHAR(100) NOT NULL,
+    pet_type VARCHAR(50) NOT NULL,
+    breed VARCHAR(100),
+    age VARCHAR(50),
+    gender VARCHAR(20),
+    reason TEXT NOT NULL,
+    image_url TEXT,
+    contact_phone VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'approved', 'rejected')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TRIGGER update_surrender_updated_at BEFORE UPDATE ON surrender_applications
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

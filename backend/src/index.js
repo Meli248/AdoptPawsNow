@@ -3,11 +3,15 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import pool from './database/index.js'; // Added pool import
 
 // Import routes
 import authRoutes from './route/auth/authRoute.js';
 import petsRoutes from './route/pets/petsRoute.js';
 import missingRoutes from './route/missing/missingRoute.js';
+import userRoutes from './route/user/userRoute.js';
+import surrenderRoutes from './route/surrender/surrenderRoute.js';
+import statsRoutes from './route/stats/statsRoute.js'; // Added // Added
 
 // Load environment variables
 dotenv.config();
@@ -60,7 +64,9 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/pets', petsRoutes);
-app.use('/api/missing', missingRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/surrender', surrenderRoutes);
+app.use('/api/stats', statsRoutes); // Added
 
 // ============================================
 // ERROR HANDLING
@@ -113,7 +119,26 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ============================================
 
-app.listen(PORT, () => {
+// Create favorites table if not exists
+const createTables = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS favorites (
+        favorite_id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+        pet_id INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, pet_id)
+      );
+    `);
+    console.log('✅ Favorites table checked/created');
+  } catch (error) {
+    console.error('❌ Error creating favorites table:', error);
+  }
+};
+
+app.listen(PORT, async () => {
+  await createTables();
   console.log('='.repeat(50));
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);

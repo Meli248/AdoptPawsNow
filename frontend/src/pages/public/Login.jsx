@@ -1,4 +1,4 @@
-import { loginSchema } from './schema/authschema.js'; 
+import { loginSchema } from './schema/authschema.js';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -19,7 +19,7 @@ const Login = () => {
   const onSubmit = async (data) => {
     setLoginError('');
     setIsLoading(true);
-    
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
         method: 'POST',
@@ -33,12 +33,19 @@ const Login = () => {
         // Store authentication data in localStorage
         localStorage.setItem('access_token', result.data.access_token);
         localStorage.setItem('user', result.data.user.username);
-        
+        localStorage.setItem('user_role', result.data.user.role); // Store user role
+        localStorage.setItem('user_id', result.data.user.user_id); // Store user ID
+
         // Notify other components (like Navbar) about the login
         window.dispatchEvent(new Event('storage'));
-        
-        // Redirect to home page (private route)
-        navigate('/home');
+
+        // Redirect based on role
+        if (result.data.user.role === 'admin' || result.data.user.email === 'admin@gmail.com') {
+          console.log('Redirecting to Admin Dashboard');
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/home');
+        }
       } else {
         setLoginError(result.message || 'Login failed');
       }
@@ -57,16 +64,16 @@ const Login = () => {
           <h1 className="login-title">Login</h1>
           <form onSubmit={handleSubmit(onSubmit)} className="login-form">
             {loginError && <div className="error-message-box">{loginError}</div>}
-            
+
             <div className="form-group">
               <label className="form-label">
                 <Mail size={18} />
                 Email
               </label>
-              <input 
-                type="email" 
-                className="form-input" 
-                {...register('email')} 
+              <input
+                type="email"
+                className="form-input"
+                {...register('email')}
                 placeholder="Enter your email"
               />
               {errors.email && <span className="error-text">{errors.email.message}</span>}
@@ -78,14 +85,14 @@ const Login = () => {
                 Password
               </label>
               <div className="password-input-wrapper">
-                <input 
-                  type={showPassword ? 'text' : 'password'} 
-                  className="form-input" 
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  className="form-input"
                   {...register('password')}
                   placeholder="Enter your password"
                 />
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
                 >
@@ -98,7 +105,7 @@ const Login = () => {
             <button type="submit" className="btn btn-primary" disabled={isLoading}>
               {isLoading ? 'Logging in...' : 'Log In'}
             </button>
-            
+
             <p className="auth-switch">
               Don't have an account? <Link to="/register">Sign Up</Link>
             </p>
