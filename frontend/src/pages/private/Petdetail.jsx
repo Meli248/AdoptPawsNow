@@ -21,7 +21,61 @@ const PetDetail = () => {
 
   useEffect(() => {
     fetchPetDetails();
+    checkIfFavorited();
   }, [petId]);
+
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  const checkIfFavorited = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/favorites`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        // data.data is array of pets. Check if any has id == petId
+        const found = data.data.some(p => p.id === parseInt(petId) || p.pet_id === parseInt(petId));
+        setIsFavorited(found);
+      }
+    } catch (err) {
+      console.error("Error checking favorites:", err);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        alert('Please login to favorite pets');
+        return;
+      }
+
+      const method = isFavorited ? 'DELETE' : 'POST';
+      const url = isFavorited
+        ? `${import.meta.env.VITE_API_URL}/users/favorites/${petId}`
+        : `${import.meta.env.VITE_API_URL}/users/favorites`;
+
+      const body = isFavorited ? undefined : JSON.stringify({ pet_id: petId });
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body
+      });
+
+      if (response.ok) {
+        setIsFavorited(!isFavorited);
+      }
+    } catch (err) {
+      console.error("Error toggling favorite:", err);
+    }
+  };
 
   const fetchPetDetails = async () => {
     try {
@@ -75,7 +129,7 @@ const PetDetail = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/adoption/applications`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/applications`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -137,15 +191,22 @@ const PetDetail = () => {
         <div className="detail-content">
           <div className="detail-image-section">
             <img
-              src={pet.image_url ? `http://localhost:5000${pet.image_url}` : 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=600&h=600&fit=crop'}
+              src={pet.image_url ? `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${pet.image_url}` : 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=600&h=600&fit=crop'}
               alt={pet.name}
               className="detail-image"
             />
             <div className={`detail-status ${pet.type === 'missing' ? 'missing' : 'adoption'}`}>
               {pet.type === 'missing' ? 'Missing' : 'For Adoption'}
             </div>
-            <button className="favorite-btn-detail">
-              <Heart size={24} />
+            <button
+              className="favorite-btn-detail"
+              onClick={handleToggleFavorite}
+            >
+              <Heart
+                size={24}
+                fill={isFavorited ? "red" : "none"}
+                color={isFavorited ? "red" : "currentColor"}
+              />
             </button>
           </div>
 

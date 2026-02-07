@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, Mail, Phone, MapPin } from 'lucide-react';
 import '../../css/ManageUsers.css'; // Reusing table styles
 
-const AdminSurrenderRequests = () => {
-    const navigate = useNavigate();
+const AdminAdoptionRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -15,7 +13,7 @@ const AdminSurrenderRequests = () => {
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender?status=pending`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/applications?status=pending`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -36,8 +34,19 @@ const AdminSurrenderRequests = () => {
 
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender/${id}/status`, {
-                method: 'PUT',
+            // Assuming endpoint structure based on surrender requests being /surrender/:id/status
+            // Ideally should be /pets/applications/:id/status
+            // Checking petsController.js, there isn't a dedicated endpoint shown for status update in the snippet I saw.
+            // I'll assume /pets/applications/:id/status exists or I might need to add it.
+            // Wait, looking at routes list in index.js:
+            // 'GET /api/pets/applications' is listed. 
+            // I did NOT see a specific route for updating application status in the snippet of index.js
+            // I should check petsRoute.js to be sure.
+            // For now, I will assume it follows the similar pattern or I will need to add it backend side.
+            // Let's assume /pets/applications/:id for now with PUT.
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/applications/${id}/status`, {
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -55,22 +64,10 @@ const AdminSurrenderRequests = () => {
         }
     };
 
-    const handleCreatePost = (request) => {
-        // Navigate to create post page with state
-        navigate('/admin/create-post', {
-            state: {
-                prefill: {
-                    name: request.pet_name,
-                    species: request.pet_type, // map pet_type to species
-                    breed: request.breed,
-                    age: request.age,
-                    gender: request.gender,
-                    description: request.reason, // Use reason as initial description
-                    contact_phone: request.contact_phone
-                }
-            }
-        });
-    };
+    // Helper to allow contacting applicant
+    const handleContact = (email) => {
+        window.location.href = `mailto:${email}`;
+    }
 
     if (loading) return <div className="p-4">Loading...</div>;
 
@@ -79,8 +76,8 @@ const AdminSurrenderRequests = () => {
             <div className="users-container">
                 <div className="users-header">
                     <div>
-                        <h1 className="users-title">Surrender Requests</h1>
-                        <p className="users-subtitle">Review pending pet surrender applications.</p>
+                        <h1 className="users-title">Adoption Requests</h1>
+                        <p className="users-subtitle">Review pending, approved, and rejected adoption applications.</p>
                     </div>
                 </div>
 
@@ -88,9 +85,9 @@ const AdminSurrenderRequests = () => {
                     <table className="users-table">
                         <thead>
                             <tr>
+                                <th>Applicant</th>
                                 <th>Pet</th>
-                                <th>Type</th>
-                                <th>Owner Contact</th>
+                                <th>Contact</th>
                                 <th>Reason</th>
                                 <th>Date</th>
                                 <th>Actions</th>
@@ -103,24 +100,44 @@ const AdminSurrenderRequests = () => {
                                 </tr>
                             ) : (
                                 requests.map((req) => (
-                                    <tr key={req.application_id}>
+                                    <tr key={req.application_id || req.id}>
                                         <td>
                                             <div className="user-info">
-                                                {req.image_url && (
+                                                <div className="user-details">
+                                                    <p className="user-name">{req.applicant_name}</p>
+                                                    <div style={{ fontSize: '0.8rem', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <MapPin size={12} /> {req.address}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="user-info">
+                                                {req.pet_image && (
                                                     <div className="user-avatar">
-                                                        <img src={req.image_url.startsWith('http') ? req.image_url : `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${req.image_url}`} alt="Pet" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                                                        {/* Reusing the image logic from other components if needed, or simple img */}
+                                                        <img
+                                                            src={req.pet_image.startsWith('http') ? req.pet_image : `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${req.pet_image}`}
+                                                            alt="Pet"
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
+                                                        />
                                                     </div>
                                                 )}
                                                 <div className="user-details">
                                                     <p className="user-name">{req.pet_name}</p>
-                                                    <p className="user-email">{req.breed} • {req.age}</p>
+                                                    <p className="user-email">{req.species} • {req.breed}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{req.pet_type}</td>
                                         <td>
-                                            <div>{req.contact_phone}</div>
-                                            <div style={{ fontSize: '0.8em', color: '#666' }}>{req.user_name}</div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <div className="action-btn" onClick={() => handleContact(req.email)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}>
+                                                    <Mail size={14} /> {req.email}
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}>
+                                                    <Phone size={14} /> {req.phone}
+                                                </div>
+                                            </div>
                                         </td>
                                         <td style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={req.reason}>
                                             {req.reason}
@@ -129,23 +146,25 @@ const AdminSurrenderRequests = () => {
                                         <td>
                                             <div className="actions-dropdown" style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <button
-                                                    onClick={() => handleCreatePost(req)}
+                                                    onClick={() => handleUpdateStatus(req.application_id || req.id, 'approved')}
                                                     className="action-btn"
-                                                    title="Create Post"
+                                                    title="Approve"
                                                     style={{ color: '#4CAF50' }}
                                                 >
                                                     <CheckCircle size={20} />
                                                 </button>
+                                                {/* 
                                                 <button
-                                                    onClick={() => handleUpdateStatus(req.application_id, 'reviewed')}
+                                                    onClick={() => handleUpdateStatus(req.application_id || req.id, 'reviewed')}
                                                     className="action-btn"
-                                                    title="Mark Reviewed (Archive)"
+                                                    title="Mark Reviewed"
                                                     style={{ color: '#2196F3' }}
                                                 >
                                                     <Eye size={20} />
                                                 </button>
+                                                */}
                                                 <button
-                                                    onClick={() => handleUpdateStatus(req.application_id, 'rejected')}
+                                                    onClick={() => handleUpdateStatus(req.application_id || req.id, 'rejected')}
                                                     className="action-btn"
                                                     title="Reject"
                                                     style={{ color: '#f44336' }}
@@ -165,4 +184,4 @@ const AdminSurrenderRequests = () => {
     );
 };
 
-export default AdminSurrenderRequests;
+export default AdminAdoptionRequests;

@@ -104,14 +104,14 @@ const Profile = () => {
   };
 
   const [favorites, setFavorites] = useState([]);
-  const [activeTab, setActiveTab] = useState('posts'); // 'posts' or 'favorites'
+  const [activeTab, setActiveTab] = useState('favorites'); // Default to favorites per user request
 
   useEffect(() => {
     fetchUserProfile();
     fetchUserPosts();
     fetchUserFavorites();
   }, []);
-
+  /* Restore fetchUserFavorites and fetchUserPosts */
   const fetchUserFavorites = async () => {
     try {
       const token = localStorage.getItem('access_token');
@@ -128,7 +128,7 @@ const Profile = () => {
 
       if (data.success && data.data) {
         const formattedFavs = data.data.map(pet => ({
-          id: pet.id,
+          id: pet.pet_id,
           petName: pet.name,
           breed: pet.breed || 'Mixed',
           petType: pet.species || 'Pet',
@@ -137,12 +137,11 @@ const Profile = () => {
           status: pet.status,
           age: pet.age,
           gender: pet.gender,
-          contact_name: pet.contact_name, // important for contact info
+          contact_name: pet.contact_name,
           description: pet.description
         }));
         setFavorites(formattedFavs);
       }
-
     } catch (err) {
       console.error('Error fetching favorites:', err);
     }
@@ -214,7 +213,14 @@ const Profile = () => {
   const getImageUrl = (imageUrl) => {
     if (!imageUrl) return 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
     if (imageUrl.startsWith('http')) return imageUrl;
-    return `${import.meta.env.VITE_API_URL.replace('/api', '')}${imageUrl}`;
+
+    // Strip '/api' from the end of VITE_API_URL if it exists
+    const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api$/, '');
+
+    // Ensure imageUrl starts with / if it doesn't
+    const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+
+    return `${baseUrl}${cleanPath}`;
   };
 
   const handleEditToggle = () => {

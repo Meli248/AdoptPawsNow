@@ -97,6 +97,15 @@ const AdminDashboard = () => {
     navigate(`/pet/${petId}`);
   };
 
+  /* Search Logic */
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredPets = pets.filter(pet =>
+    pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (pet.breed && pet.breed.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (pet.species && pet.species.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   if (loading) {
     return (
       <div className="admin-dashboard">
@@ -117,9 +126,9 @@ const AdminDashboard = () => {
           </div>
           <button
             className="btn-create-post"
-            onClick={() => navigate('/admin/create-post')}
+            onClick={() => navigate('/surrender-request')}
           >
-            + Create New Post
+            + Surrender Form
           </button>
         </div>
 
@@ -145,8 +154,6 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-
-
           <div className="stat-card">
             <div className="stat-icon stat-icon-dog">
               <Dog size={24} />
@@ -168,32 +175,30 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="quick-actions">
-          <h2 className="section-title">Quick Actions</h2>
-          <div className="action-buttons">
-            <button
-              className="action-btn"
-              onClick={() => navigate('/adopt')}
-            >
-              <Grid size={20} />
-              View All Pets
-            </button>
-            <button
-              className="action-btn"
-              onClick={() => navigate('/admin/surrender-requests')}
-            >
-              <Clock size={20} />
-              Surrender Requests
-            </button>
-          </div>
-        </div>
 
         {/* All Pet Posts */}
         <div className="all-pets-section">
-          <h2 className="section-title">All Pet Posts</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h2 className="section-title" style={{ marginBottom: 0 }}>All Pet Posts</h2>
+            <div className="search-bar" style={{ position: 'relative' }}>
+              <input
+                type="text"
+                placeholder="Search pets..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '20px',
+                  border: '1px solid #ddd',
+                  width: '300px',
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
+          </div>
+
           <div className="pets-grid">
-            {pets.slice(0, 8).map((pet) => (
+            {filteredPets.slice(0, 8).map((pet) => (
               <div key={pet.pet_id} className="pet-card" onClick={() => handleViewPet(pet.pet_id)}>
                 <div className="pet-image-wrapper">
                   <img

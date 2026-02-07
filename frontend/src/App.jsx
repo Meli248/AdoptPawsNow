@@ -21,7 +21,10 @@ import PetDetail from './pages/private/Petdetail'; // Note: lowercase 'd' in fil
 import AdminDashboard from './pages/private/Admindashboard'; // Note: lowercase 'd'
 import ManageUsers from './pages/private/Manageusers'; // Note: lowercase 'u'
 import SurrenderRequest from './pages/private/SurrenderRequest'; // Added
-import AdminSurrenderRequests from './pages/private/AdminSurrenderRequests'; // Added
+import AdminSurrenderRequests from './pages/private/AdminSurrenderRequests';
+import AdminAdoptionRequests from './pages/private/AdminAdoptionRequests';
+import AdminCreatePost from './pages/private/AdminCreatePost';
+import AdminEditPet from './pages/private/AdminEditPet';
 
 function App() {
   return (
@@ -51,7 +54,10 @@ function App() {
         <Route element={<AdminRoute />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/manage-users" element={<ManageUsers />} />
-          <Route path="/admin/surrender-requests" element={<AdminSurrenderRequests />} /> {/* Added */}
+          <Route path="/admin/surrender-requests" element={<AdminSurrenderRequests />} />
+          <Route path="/admin/adoption-requests" element={<AdminAdoptionRequests />} />
+          <Route path="/admin/create-post" element={<AdminCreatePost />} />
+          <Route path="/admin/edit-pet/:id" element={<AdminEditPet />} />
         </Route>
 
         {/* Redirects */}

@@ -67,7 +67,22 @@ const Navbar = () => {
                   Dashboard
                 </Link>
               </li>
-              {/* Manage Users Removed as per request */}
+              <li>
+                <Link
+                  to="/admin/surrender-requests"
+                  className={location.pathname === '/admin/surrender-requests' ? 'nav-link active' : 'nav-link'}
+                >
+                  Surrender Requests
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/admin/adoption-requests"
+                  className={location.pathname === '/admin/adoption-requests' ? 'nav-link active' : 'nav-link'}
+                >
+                  Adoption Requests
+                </Link>
+              </li>
             </>
           ) : (
             <>

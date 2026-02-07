@@ -402,6 +402,17 @@ export const updateApplicationStatus = async (req, res) => {
       });
     }
 
+    // If approved, update pet status to 'adopted'
+    if (status === 'approved') {
+      const appId = result.rows[0].application_id;
+      const petId = result.rows[0].pet_id;
+
+      await pool.query(
+        `UPDATE pets SET status = 'adopted' WHERE pet_id = $1`,
+        [petId]
+      );
+    }
+
     res.json({
       success: true,
       message: 'Application status updated successfully',

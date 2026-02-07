@@ -76,7 +76,7 @@ export const getUserFavorites = async (req, res) => {
         const result = await pool.query(
             `SELECT p.*, f.created_at as favorited_at
        FROM favorites f
-       JOIN pets p ON f.pet_id = p.id
+       JOIN pets p ON f.pet_id = p.pet_id
        WHERE f.user_id = $1
        ORDER BY f.created_at DESC`,
             [userId]
