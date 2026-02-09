@@ -5,22 +5,32 @@ export const getAllPets = async (req, res) => {
   try {
     const { species, status = 'available', size, gender } = req.query;
 
-    let query = "SELECT * FROM pets WHERE LOWER(status) = LOWER($1)";
-    const params = [status];
+    let query = "SELECT * FROM pets";
+    const params = [];
+    const conditions = [];
+
+    if (status !== 'all') {
+      conditions.push(`LOWER(status) = LOWER($${params.length + 1})`);
+      params.push(status);
+    }
 
     if (species) {
+      conditions.push(`species = $${params.length + 1}`);
       params.push(species);
-      query += ` AND species = $${params.length}`;
     }
 
     if (size) {
+      conditions.push(`size = $${params.length + 1}`);
       params.push(size);
-      query += ` AND size = $${params.length}`;
     }
 
     if (gender) {
+      conditions.push(`gender = $${params.length + 1}`);
       params.push(gender);
-      query += ` AND gender = $${params.length}`;
+    }
+
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
     }
 
     query += ' ORDER BY created_at DESC';

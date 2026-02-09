@@ -50,15 +50,15 @@ const About = () => {
               furry friends.
             </p>
             <p className="mission-text">
-              Whether you're looking to adopt a new family member or need help locating a missing
-              pet, we're here to support you every step of the way. We've created a simple, 
-              user-friendly platform that brings together animal lovers, shelters, and pet owners 
+              Whether you're looking to adopt a new family member or want to help a pet in need,
+              pet, we're here to support you every step of the way. We've created a simple,
+              user-friendly platform that brings together animal lovers, shelters, and pet owners
               in one compassionate community.
             </p>
             <p className="mission-text">
-              Our platform serves as a bridge between pets in need and people with big hearts. 
-              We provide tools for posting adoption listings, reporting missing pets, and connecting
-              with fellow animal lovers. Every day, we work to make a difference in the lives of 
+              Our platform serves as a bridge between pets in need and people with big hearts.
+              We provide tools for posting adoption listings and connecting
+              with fellow animal lovers. Every day, we work to make a difference in the lives of
               animals and the families who care for them.
             </p>
           </div>
@@ -87,20 +87,20 @@ const About = () => {
           <div className="story-content fade-in">
             <h2 className="section-title">Our Story</h2>
             <p className="story-text">
-              AdoptPawsNow was created with a simple vision: to make pet adoption and reunion 
-              easier and more accessible for everyone. We saw the challenges faced by both 
-              pet owners looking to rehome their beloved companions and families searching 
+              AdoptPawsNow was created with a simple vision: to make pet adoption and reunion
+              easier and more accessible for everyone. We saw the challenges faced by both
+              pet owners looking to rehome their beloved companions and families searching
               for the perfect pet to join their household.
             </p>
             <p className="story-text">
-              Through our platform, we've witnessed countless heartwarming stories of pets 
-              finding their forever homes and lost animals being reunited with their worried 
-              families. These success stories fuel our commitment to improving and expanding 
+              Through our platform, we've witnessed countless heartwarming stories of pets
+              finding their forever homes and lost animals being reunited with their worried
+              families. These success stories fuel our commitment to improving and expanding
               our services every day.
             </p>
             <p className="story-text">
-              We're proud to serve the pet-loving community across Nepal, providing a safe, 
-              reliable, and easy-to-use platform for all your pet adoption and missing pet needs.
+              We're proud to serve the pet-loving community across Nepal, providing a safe,
+              reliable, and easy-to-use platform for all your pet adoption needs.
               Join us in making a difference, one paw at a time.
             </p>
           </div>

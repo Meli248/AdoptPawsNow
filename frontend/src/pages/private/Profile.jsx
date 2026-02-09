@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Mail, MapPin, Calendar, Edit2, Phone, Save, X, Dog, Heart,
   AlertTriangle, Clock, User
@@ -6,6 +7,8 @@ import {
 import '../../css/Profile.css';
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const isAdmin = localStorage.getItem('user_role') === 'admin';
   const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(true);
@@ -24,7 +27,7 @@ const Profile = () => {
   const [stats, setStats] = useState({
     totalPosts: 0,
     adoptionPosts: 0,
-    missingPosts: 0
+    adoptionPosts: 0
   });
 
   useEffect(() => {
@@ -50,6 +53,13 @@ const Profile = () => {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('user');
+          localStorage.removeItem('user_email');
+          navigate('/login');
+          return;
+        }
         console.error('Profile fetch failed:', response.status);
         loadFallbackUserData();
         setProfileLoading(false);
@@ -155,20 +165,36 @@ const Profile = () => {
         return;
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const [petsResponse, surrenderResponse] = await Promise.all([
+        fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }),
+        fetch(`${import.meta.env.VITE_API_URL}/surrender/my-requests`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      ]);
 
-      const adoptionData = response.ok ? await response.json() : { success: false, data: [] };
+      if (petsResponse.status === 401 || surrenderResponse.status === 401) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        navigate('/login');
+        return;
+      }
+
+      const petsData = petsResponse.ok ? await petsResponse.json() : { success: false, data: [] };
+      const surrenderData = surrenderResponse.ok ? await surrenderResponse.json() : { success: false, data: [] };
 
       const allPosts = [];
       let adoptionCount = 0;
 
-      if (adoptionData?.success && adoptionData.data) {
-        const adoptionPosts = adoptionData.data.map(pet => ({
+      if (petsData?.success && petsData.data) {
+        const adoptionPosts = petsData.data.map(pet => ({
           id: pet.pet_id,
           petName: pet.name,
           breed: pet.breed || 'Mixed',
@@ -194,6 +220,26 @@ const Profile = () => {
         adoptionCount = adoptionPosts.length;
       }
 
+      if (surrenderData?.success && surrenderData.data) {
+        const surrenderPosts = surrenderData.data.map(req => ({
+          id: req.application_id,
+          petName: req.pet_name,
+          breed: req.breed || 'Mixed',
+          petType: req.pet_type,
+          location: req.location || 'Surrender Request',
+          image: getImageUrl(req.image_url),
+          postType: 'surrender',
+          status: req.status, // pending, approved, rejected
+          age: req.age,
+          gender: req.gender,
+          description: req.reason, // Store raw reason
+          reason: req.reason,     // Store raw reason explicitly
+          contact_phone: req.contact_phone,
+          createdAt: req.created_at
+        }));
+        allPosts.push(...surrenderPosts);
+      }
+
       // Sort by newest first
       allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
@@ -201,7 +247,7 @@ const Profile = () => {
       setStats({
         totalPosts: allPosts.length,
         adoptionPosts: adoptionCount,
-        missingPosts: 0
+        adoptionPosts: adoptionCount
       });
     } catch (error) {
       console.error('Error fetching user posts:', error);
@@ -274,22 +320,35 @@ const Profile = () => {
 
   const handleEditPost = (post) => {
     setEditingPost(post);
-    setEditFormData({
-      petName: post.petName || '',
-      species: post.petType?.toLowerCase() || 'dog',
-      breed: post.breed || '',
-      age: post.age || '',
-      gender: post.gender || '',
-      size: post.size || 'medium',
-      color: post.color || '',
-      status: post.status || 'available',
-      description: post.description || '',
-      vaccinated: post.vaccinated || false,
-      neutered: post.neutered || false,
-      contact_name: post.contact_name || '',
-      contact_email: post.contact_email || '',
-      contact_phone: post.contact_phone || ''
-    });
+    if (post.postType === 'surrender') {
+      setEditFormData({
+        petName: post.petName || '',
+        petType: post.petType?.toLowerCase() || 'dog',
+        breed: post.breed || '',
+        age: post.age || '',
+        gender: post.gender || 'unknown',
+        reason: post.reason || '',
+        contact_phone: post.contact_phone || '',
+        location: post.location || ''
+      });
+    } else {
+      setEditFormData({
+        petName: post.petName || '',
+        species: post.petType?.toLowerCase() || 'dog',
+        breed: post.breed || '',
+        age: post.age || '',
+        gender: post.gender || '',
+        size: post.size || 'medium',
+        color: post.color || '',
+        status: post.status || 'available',
+        description: post.description || '',
+        vaccinated: post.vaccinated || false,
+        neutered: post.neutered || false,
+        contact_name: post.contact_name || '',
+        contact_email: post.contact_email || '',
+        contact_phone: post.contact_phone || ''
+      });
+    }
     setShowEditModal(true);
   };
 
@@ -300,24 +359,40 @@ const Profile = () => {
   const handleSaveEdit = async () => {
     try {
       const token = localStorage.getItem('access_token');
+      let endpoint;
+      let updateData;
 
-      const endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`;
-      const updateData = {
-        name: editFormData.petName,
-        species: editFormData.species,
-        breed: editFormData.breed,
-        age: editFormData.age,
-        gender: editFormData.gender,
-        size: editFormData.size,
-        color: editFormData.color,
-        status: editFormData.status,
-        description: editFormData.description,
-        vaccinated: editFormData.vaccinated,
-        neutered: editFormData.neutered,
-        contact_name: editFormData.contact_name,
-        contact_email: editFormData.contact_email,
-        contact_phone: editFormData.contact_phone
-      };
+      if (editingPost.postType === 'surrender') {
+        endpoint = `${import.meta.env.VITE_API_URL}/surrender/${editingPost.id}`;
+        updateData = {
+          pet_name: editFormData.petName,
+          pet_type: editFormData.petType,
+          breed: editFormData.breed,
+          age: editFormData.age,
+          gender: editFormData.gender,
+          reason: editFormData.reason,
+          contact_phone: editFormData.contact_phone,
+          location: editFormData.location
+        };
+      } else {
+        endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`;
+        updateData = {
+          name: editFormData.petName,
+          species: editFormData.species,
+          breed: editFormData.breed,
+          age: editFormData.age,
+          gender: editFormData.gender,
+          size: editFormData.size,
+          color: editFormData.color,
+          status: editFormData.status,
+          description: editFormData.description,
+          vaccinated: editFormData.vaccinated,
+          neutered: editFormData.neutered,
+          contact_name: editFormData.contact_name,
+          contact_email: editFormData.contact_email,
+          contact_phone: editFormData.contact_phone
+        };
+      }
 
       const response = await fetch(endpoint, {
         method: 'PUT',
@@ -350,7 +425,9 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${postId}`;
+      const endpoint = postType === 'surrender'
+        ? `${import.meta.env.VITE_API_URL}/surrender/${postId}`
+        : `${import.meta.env.VITE_API_URL}/pets/pets/${postId}`;
 
       const response = await fetch(endpoint, {
         method: 'DELETE',
@@ -565,131 +642,143 @@ const Profile = () => {
         </div>
 
         {/* Posts Section */}
-        <div className="posts-section">
-          <div className="section-header-dashboard" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-            <button
-              className={`section-title-dashboard ${activeTab === 'posts' ? 'active' : ''}`}
-              onClick={() => setActiveTab('posts')}
-              style={{ background: 'none', border: 'none', borderBottom: activeTab === 'posts' ? '3px solid var(--primary-color)' : 'none', paddingBottom: '5px', cursor: 'pointer', opacity: activeTab === 'posts' ? 1 : 0.5 }}
-            >
-              My Posts
-            </button>
-            <button
-              className={`section-title-dashboard ${activeTab === 'favorites' ? 'active' : ''}`}
-              onClick={() => setActiveTab('favorites')}
-              style={{ background: 'none', border: 'none', borderBottom: activeTab === 'favorites' ? '3px solid var(--primary-color)' : 'none', paddingBottom: '5px', cursor: 'pointer', opacity: activeTab === 'favorites' ? 1 : 0.5 }}
-            >
-              Favorites
-            </button>
-          </div>
+        {!isAdmin && (
+          <div className="posts-section">
+            <div className="section-header-dashboard" style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+              <button
+                className={`section-title-dashboard ${activeTab === 'posts' ? 'active' : ''}`}
+                onClick={() => setActiveTab('posts')}
+                style={{ background: 'none', border: 'none', borderBottom: activeTab === 'posts' ? '3px solid var(--primary-color)' : 'none', paddingBottom: '5px', cursor: 'pointer', opacity: activeTab === 'posts' ? 1 : 0.5 }}
+              >
+                My Posts
+              </button>
+              <button
+                className={`section-title-dashboard ${activeTab === 'favorites' ? 'active' : ''}`}
+                onClick={() => setActiveTab('favorites')}
+                style={{ background: 'none', border: 'none', borderBottom: activeTab === 'favorites' ? '3px solid var(--primary-color)' : 'none', paddingBottom: '5px', cursor: 'pointer', opacity: activeTab === 'favorites' ? 1 : 0.5 }}
+              >
+                Favorites
+              </button>
+            </div>
 
-          {activeTab === 'posts' ? (
-            loading ? (
-              <div className="no-posts-container">
-                <p>Loading posts...</p>
-              </div>
-            ) : userPosts.length === 0 ? (
-              <div className="no-posts-container">
-                <div className="no-posts-icon">
-                  <Dog size={40} />
+            {activeTab === 'posts' ? (
+              loading ? (
+                <div className="no-posts-container">
+                  <p>Loading posts...</p>
                 </div>
-                <h3 className="no-posts-title">No Posts Yet</h3>
-                <p className="no-posts-subtitle">
-                  Start by creating your first post to help pets find homes or reunite missing pets with their families.
-                </p>
-              </div>
-            ) : (
-              <div className="pets-grid">
-                {userPosts.map((post) => (
-                  <div key={`${post.postType}-${post.id}`} className={`pet-card ${post.postType === 'missing' ? 'missing-card' : ''} fade-in`}>
-                    <div className="pet-image-wrapper">
-                      <img src={post.image} alt={post.petName} className="pet-image" />
-                      <div className={`pet-status ${post.postType === 'adoption' ? 'available' : 'missing'}`}>
-                        {post.postType === 'adoption' ? post.status : 'Missing'}
-                      </div>
-                    </div>
-                    <div className="pet-info">
-                      <h3 className="pet-name">{post.petName}</h3>
-                      <p className="pet-breed">
-                        {post.breed} • {post.petType} {post.age && `• ${post.age} years`}
-                      </p>
-                      <div className="pet-location">
-                        <MapPin size={16} />
-                        {post.location}
-                      </div>
-                      <p className="pet-description">
-                        {post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Please help find this pet.')}
-                      </p>
-
-                      <div className="post-actions">
-                        <button
-                          className="btn btn-sm btn-outline"
-                          onClick={() => handleEditPost(post)}
-                        >
-                          <Edit2 size={16} />
-                          Edit
-                        </button>
-                        <button
-                          className="btn btn-sm btn-outline"
-                          onClick={() => handleDeletePost(post.id, post.postType)}
-                          style={{ color: '#dc2626' }}
-                        >
-                          <X size={16} />
-                          Delete
-                        </button>
-                      </div>
-                    </div>
+              ) : userPosts.length === 0 ? (
+                <div className="no-posts-container">
+                  <div className="no-posts-icon">
+                    <Dog size={40} />
                   </div>
-                ))}
-              </div>
-            )
-          ) : (
-            // Favorites Tab
-            <div className="pets-grid">
-              {favorites.length === 0 ? (
-                <div className="no-posts-container" style={{ gridColumn: '1/-1' }}>
-                  <Heart size={40} style={{ margin: '0 auto', display: 'block', color: '#ccc' }} />
-                  <p style={{ textAlign: 'center', marginTop: '10px', color: '#666' }}>No favorites yet.</p>
+                  <h3 className="no-posts-title">No Posts Yet</h3>
+                  <p className="no-posts-subtitle">
+                    Start by creating your first post to help pets find homes or reunite missing pets with their families.
+                  </p>
                 </div>
               ) : (
-                favorites.map((pet) => (
-                  <div key={pet.id} className="pet-card fade-in">
-                    <div className="pet-image-wrapper">
-                      <img src={pet.image} alt={pet.petName} className="pet-image" />
-                      <div className="pet-status available">
-                        {pet.status || 'Available'}
+                <div className="pets-grid">
+                  {userPosts.map((post) => (
+                    <div key={`${post.postType}-${post.id}`} className="pet-card fade-in">
+                      <div className="pet-image-wrapper">
+                        <img src={post.image} alt={post.petName} className="pet-image" />
+                        <div className="pet-status available">
+                          {post.postType === 'adoption' ? post.status : post.status}
+                        </div>
                       </div>
-                    </div>
-                    <div className="pet-info">
-                      <h3 className="pet-name">{pet.petName}</h3>
-                      <p className="pet-breed">
-                        {pet.breed} • {pet.petType}
-                      </p>
-                      <div className="pet-location">
-                        <MapPin size={16} />
-                        {pet.location}
-                      </div>
-                      <p className="pet-description">
-                        {pet.description?.substring(0, 100)}...
-                      </p>
-                      <button
-                        onClick={() => {/* Navigate to detail if needed */ }}
-                        className="btn btn-primary btn-sm"
-                        style={{ width: '100%', marginTop: '10px' }}
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
+                      <div className="pet-info">
+                        <h3 className="pet-name">{post.petName}</h3>
+                        <p className="pet-breed">
+                          {post.breed} • {post.petType} {post.age && `• ${post.age} years`}
+                        </p>
+                        <div className="pet-location">
+                          <MapPin size={16} />
+                          {post.location}
+                        </div>
+                        <p className="pet-description">
+                          {post.description && post.description.length > 50
+                            ? `${post.description.substring(0, 50)}...`
+                            : post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Surrender Request')}
+                        </p>
 
-        </div>
+                        <div className="post-actions">
+                          {post.postType === 'adoption' && (
+                            <button
+                              onClick={() => navigate(`/pet/${post.id}`)}
+                              className="btn btn-sm btn-outline"
+                            >
+                              <Dog size={16} />
+                              View
+                            </button>
+                          )}
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => handleEditPost(post)}
+                          >
+                            <Edit2 size={16} />
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => handleDeletePost(post.id, post.postType)}
+                            style={{ color: '#dc2626' }}
+                          >
+                            <X size={16} />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : (
+              // Favorites Tab
+              <div className="pets-grid">
+                {favorites.length === 0 ? (
+                  <div className="no-posts-container" style={{ gridColumn: '1/-1' }}>
+                    <Heart size={40} style={{ margin: '0 auto', display: 'block', color: '#ccc' }} />
+                    <p style={{ textAlign: 'center', marginTop: '10px', color: '#666' }}>No favorites yet.</p>
+                  </div>
+                ) : (
+                  favorites.map((pet) => (
+                    <div key={pet.id} className="pet-card fade-in">
+                      <div className="pet-image-wrapper">
+                        <img src={pet.image} alt={pet.petName} className="pet-image" />
+                        <div className="pet-status available">
+                          {pet.status || 'Available'}
+                        </div>
+                      </div>
+                      <div className="pet-info">
+                        <h3 className="pet-name">{pet.petName}</h3>
+                        <p className="pet-breed">
+                          {pet.breed} • {pet.petType}
+                        </p>
+                        <div className="pet-location">
+                          <MapPin size={16} />
+                          {pet.location}
+                        </div>
+                        <p className="pet-description">
+                          {pet.description?.substring(0, 100)}...
+                        </p>
+                        <button
+                          onClick={() => navigate(`/pet/${pet.id}`)}
+                          className="btn btn-primary btn-sm"
+                          style={{ width: '100%', marginTop: '10px' }}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+          </div>
+        )}
       </div>
 
-      {/* Edit Post Modal with Create Post Form Styling */}
       {showEditModal && editingPost && (
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -697,7 +786,7 @@ const Profile = () => {
               <div>
                 <h2 className="modal-title">
                   <Edit2 size={24} />
-                  Edit {editingPost.postType === 'adoption' ? 'Adoption' : 'Missing'} Post
+                  Edit {editingPost.postType === 'adoption' ? 'Adoption' : 'Surrender'} Post
                 </h2>
                 <p className="modal-subtitle">Update the details of your post</p>
               </div>
@@ -726,8 +815,8 @@ const Profile = () => {
                   <label className="form-label">Species *</label>
                   <select
                     className="form-input"
-                    value={editFormData.species}
-                    onChange={(e) => handleEditFormChange('species', e.target.value)}
+                    value={editingPost.postType === 'surrender' ? editFormData.petType : editFormData.species}
+                    onChange={(e) => handleEditFormChange(editingPost.postType === 'surrender' ? 'petType' : 'species', e.target.value)}
                   >
                     <option value="dog">Dog</option>
                     <option value="cat">Cat</option>
@@ -776,82 +865,57 @@ const Profile = () => {
               </div>
 
               {editingPost.postType === 'adoption' && (
-                <div className="form-row">
+                <>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Size</label>
+                      <select
+                        className="form-input"
+                        value={editFormData.size}
+                        onChange={(e) => handleEditFormChange('size', e.target.value)}
+                      >
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Color</label>
+                      <input
+                        type="text"
+                        className="form-input"
+                        value={editFormData.color}
+                        onChange={(e) => handleEditFormChange('color', e.target.value)}
+                        placeholder="Color"
+                      />
+                    </div>
+                  </div>
+
                   <div className="form-group">
-                    <label className="form-label">Size</label>
+                    <label className="form-label">Status</label>
                     <select
                       className="form-input"
-                      value={editFormData.size}
-                      onChange={(e) => handleEditFormChange('size', e.target.value)}
+                      value={editFormData.status}
+                      onChange={(e) => handleEditFormChange('status', e.target.value)}
                     >
-                      <option value="small">Small</option>
-                      <option value="medium">Medium</option>
-                      <option value="large">Large</option>
+                      <option value="available">Available</option>
+                      <option value="adopted">Adopted</option>
+                      <option value="pending">Pending</option>
                     </select>
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Color</label>
-                    <input
-                      type="text"
-                      className="form-input"
-                      value={editFormData.color}
-                      onChange={(e) => handleEditFormChange('color', e.target.value)}
-                      placeholder="Color"
+                    <label className="form-label">Description</label>
+                    <textarea
+                      className="form-textarea"
+                      value={editFormData.description}
+                      onChange={(e) => handleEditFormChange('description', e.target.value)}
+                      placeholder="Description"
+                      rows="3"
                     />
                   </div>
-                </div>
-              )}
 
-              {editingPost.postType === 'missing' && (
-                <div className="form-group">
-                  <label className="form-label">Color</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    value={editFormData.color}
-                    onChange={(e) => handleEditFormChange('color', e.target.value)}
-                    placeholder="Color"
-                  />
-                </div>
-              )}
-
-              <div className="form-group">
-                <label className="form-label">Status</label>
-                <select
-                  className="form-input"
-                  value={editFormData.status}
-                  onChange={(e) => handleEditFormChange('status', e.target.value)}
-                >
-                  {editingPost.postType === 'adoption' ? (
-                    <>
-                      <option value="available">Available</option>
-                      <option value="adopted">Adopted</option>
-                      <option value="pending">Pending</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="missing">Missing</option>
-                      <option value="found">Found</option>
-                      <option value="closed">Closed</option>
-                    </>
-                  )}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">Description</label>
-                <textarea
-                  className="form-textarea"
-                  value={editFormData.description}
-                  onChange={(e) => handleEditFormChange('description', e.target.value)}
-                  placeholder="Description"
-                  rows="3"
-                />
-              </div>
-
-              {editingPost.postType === 'adoption' ? (
-                <>
                   <div className="form-row checkbox-row">
                     <div className="checkbox-group">
                       <label className="checkbox-label">
@@ -904,62 +968,48 @@ const Profile = () => {
                         placeholder="Contact email"
                       />
                     </div>
-
-                    <div className="form-group">
-                      <label className="form-label">
-                        <Phone size={18} />
-                        Contact Phone
-                      </label>
-                      <input
-                        type="tel"
-                        className="form-input"
-                        value={editFormData.contact_phone}
-                        onChange={(e) => handleEditFormChange('contact_phone', e.target.value)}
-                        placeholder="Contact phone"
-                      />
-                    </div>
                   </div>
                 </>
-              ) : (
+              )}
+
+              {editingPost.postType === 'surrender' && (
                 <>
                   <div className="form-group">
-                    <label className="form-label">
-                      <MapPin size={18} />
-                      Last Seen Location *
-                    </label>
+                    <label className="form-label">Location</label>
                     <input
                       type="text"
                       className="form-input"
                       value={editFormData.location}
                       onChange={(e) => handleEditFormChange('location', e.target.value)}
-                      placeholder="Last seen location"
+                      placeholder="City, State"
                     />
                   </div>
-
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Last Seen Date *</label>
-                      <input
-                        type="date"
-                        className="form-input"
-                        value={editFormData.lastSeen}
-                        onChange={(e) => handleEditFormChange('lastSeen', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label className="form-label">Reward</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        value={editFormData.reward}
-                        onChange={(e) => handleEditFormChange('reward', e.target.value)}
-                        placeholder="Reward amount (optional)"
-                      />
-                    </div>
+                  <div className="form-group">
+                    <label className="form-label">Reason for Surrender</label>
+                    <textarea
+                      className="form-textarea"
+                      value={editFormData.reason}
+                      onChange={(e) => handleEditFormChange('reason', e.target.value)}
+                      rows="3"
+                      placeholder="Reason..."
+                    />
                   </div>
                 </>
               )}
+
+              <div className="form-group">
+                <label className="form-label">
+                  <Phone size={18} />
+                  Contact Phone
+                </label>
+                <input
+                  type="tel"
+                  className="form-input"
+                  value={editFormData.contact_phone}
+                  onChange={(e) => handleEditFormChange('contact_phone', e.target.value)}
+                  placeholder="Contact phone"
+                />
+              </div>
 
               <div className="form-actions">
                 <button
@@ -981,7 +1031,7 @@ const Profile = () => {
           </div>
         </div>
       )}
-    </div>
+    </div >
   );
 };
 

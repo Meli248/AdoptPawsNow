@@ -5,15 +5,17 @@ import '../../css/ManageUsers.css'; // Reusing table styles
 const AdminAdoptionRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved', 'rejected'
 
     useEffect(() => {
         fetchRequests();
-    }, []);
+    }, [activeTab]);
 
     const fetchRequests = async () => {
         try {
+            setLoading(true);
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/applications?status=pending`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/applications?status=${activeTab}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -21,6 +23,8 @@ const AdminAdoptionRequests = () => {
             const data = await response.json();
             if (data.success) {
                 setRequests(data.data);
+            } else {
+                setRequests([]);
             }
             setLoading(false);
         } catch (error) {
@@ -30,21 +34,10 @@ const AdminAdoptionRequests = () => {
     };
 
     const handleUpdateStatus = async (id, status) => {
-        if (!window.confirm(`Are you sure you want to mark this request as ${status}?`)) return;
+        if (!window.confirm(`Are you sure you want to ${status} this request?`)) return;
 
         try {
             const token = localStorage.getItem('access_token');
-            // Assuming endpoint structure based on surrender requests being /surrender/:id/status
-            // Ideally should be /pets/applications/:id/status
-            // Checking petsController.js, there isn't a dedicated endpoint shown for status update in the snippet I saw.
-            // I'll assume /pets/applications/:id/status exists or I might need to add it.
-            // Wait, looking at routes list in index.js:
-            // 'GET /api/pets/applications' is listed. 
-            // I did NOT see a specific route for updating application status in the snippet of index.js
-            // I should check petsRoute.js to be sure.
-            // For now, I will assume it follows the similar pattern or I will need to add it backend side.
-            // Let's assume /pets/applications/:id for now with PUT.
-
             const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/applications/${id}/status`, {
                 method: 'PATCH',
                 headers: {
@@ -77,8 +70,33 @@ const AdminAdoptionRequests = () => {
                 <div className="users-header">
                     <div>
                         <h1 className="users-title">Adoption Requests</h1>
-                        <p className="users-subtitle">Review pending, approved, and rejected adoption applications.</p>
+                        <p className="users-subtitle">Review adoption applications.</p>
                     </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="filter-tabs fade-in" style={{ justifyContent: 'flex-start', marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
+                    <button
+                        className={`filter-tab ${activeTab === 'pending' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('pending')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'pending' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'pending' ? '#6b9b7f' : 'white', color: activeTab === 'pending' ? 'white' : '#666', cursor: 'pointer' }}
+                    >
+                        Pending
+                    </button>
+                    <button
+                        className={`filter-tab ${activeTab === 'approved' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('approved')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'approved' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'approved' ? '#6b9b7f' : 'white', color: activeTab === 'approved' ? 'white' : '#666', cursor: 'pointer' }}
+                    >
+                        Approved
+                    </button>
+                    <button
+                        className={`filter-tab ${activeTab === 'rejected' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('rejected')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'rejected' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'rejected' ? '#6b9b7f' : 'white', color: activeTab === 'rejected' ? 'white' : '#666', cursor: 'pointer' }}
+                    >
+                        Rejected
+                    </button>
                 </div>
 
                 <div className="users-table-wrapper">
@@ -96,7 +114,7 @@ const AdminAdoptionRequests = () => {
                         <tbody>
                             {requests.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No pending requests</td>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No {activeTab} requests</td>
                                 </tr>
                             ) : (
                                 requests.map((req) => (
@@ -115,7 +133,6 @@ const AdminAdoptionRequests = () => {
                                             <div className="user-info">
                                                 {req.pet_image && (
                                                     <div className="user-avatar">
-                                                        {/* Reusing the image logic from other components if needed, or simple img */}
                                                         <img
                                                             src={req.pet_image.startsWith('http') ? req.pet_image : `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${req.pet_image}`}
                                                             alt="Pet"
@@ -131,7 +148,7 @@ const AdminAdoptionRequests = () => {
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                <div className="action-btn" onClick={() => handleContact(req.email)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}>
+                                                <div className="action-btn" onClick={() => handleContact(req.email)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem', border: 'none', background: 'none', padding: 0 }}>
                                                     <Mail size={14} /> {req.email}
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.9rem' }}>
@@ -144,34 +161,34 @@ const AdminAdoptionRequests = () => {
                                         </td>
                                         <td>{new Date(req.created_at).toLocaleDateString()}</td>
                                         <td>
-                                            <div className="actions-dropdown" style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button
-                                                    onClick={() => handleUpdateStatus(req.application_id || req.id, 'approved')}
-                                                    className="action-btn"
-                                                    title="Approve"
-                                                    style={{ color: '#4CAF50' }}
-                                                >
-                                                    <CheckCircle size={20} />
-                                                </button>
-                                                {/* 
-                                                <button
-                                                    onClick={() => handleUpdateStatus(req.application_id || req.id, 'reviewed')}
-                                                    className="action-btn"
-                                                    title="Mark Reviewed"
-                                                    style={{ color: '#2196F3' }}
-                                                >
-                                                    <Eye size={20} />
-                                                </button>
-                                                */}
-                                                <button
-                                                    onClick={() => handleUpdateStatus(req.application_id || req.id, 'rejected')}
-                                                    className="action-btn"
-                                                    title="Reject"
-                                                    style={{ color: '#f44336' }}
-                                                >
-                                                    <XCircle size={20} />
-                                                </button>
-                                            </div>
+                                            {activeTab === 'pending' ? (
+                                                <div className="actions-dropdown" style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(req.application_id || req.id, 'approved')}
+                                                        className="action-btn"
+                                                        title="Approve"
+                                                        style={{ color: '#4CAF50', border: '1px solid #e0e0e0', padding: '6px', borderRadius: '50%' }}
+                                                    >
+                                                        <CheckCircle size={20} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(req.application_id || req.id, 'rejected')}
+                                                        className="action-btn"
+                                                        title="Reject"
+                                                        style={{ color: '#f44336', border: '1px solid #e0e0e0', padding: '6px', borderRadius: '50%' }}
+                                                    >
+                                                        <XCircle size={20} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className={`status-badge ${activeTab === 'approved' ? 'status-active' : 'status-inactive'}`} style={{
+                                                    padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem',
+                                                    backgroundColor: activeTab === 'approved' ? '#e6f4ea' : '#fce8e6',
+                                                    color: activeTab === 'approved' ? '#1e7e34' : '#c53030'
+                                                }}>
+                                                    {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

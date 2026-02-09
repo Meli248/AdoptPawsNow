@@ -95,9 +95,15 @@ const Adopt = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/users/favorites`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      if (response.status === 401) {
+        localStorage.removeItem('access_token');
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
-        const favSet = new Set(data.data.map(f => f.id));
+        const favSet = new Set(data.data.map(f => f.pet_id));
         setFavorites(favSet);
       }
     } catch (err) {
@@ -364,7 +370,10 @@ const Adopt = () => {
                   {!userRole || userRole !== 'admin' ? (
                     <button
                       className="adopt-btn-card"
-                      onClick={(e) => handleAdoptClick(e, pet)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/pet/${pet.pet_id || pet.id}`);
+                      }}
                       style={{
                         marginTop: '15px',
                         width: '100%',
@@ -381,8 +390,7 @@ const Adopt = () => {
                         gap: '8px'
                       }}
                     >
-                      <Heart size={18} fill="white" />
-                      Adopt
+                      View Details
                     </button>
                   ) : null}
                 </div>

@@ -7,15 +7,25 @@ const AdminSurrenderRequests = () => {
     const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved', 'rejected'
 
     useEffect(() => {
         fetchRequests();
-    }, []);
+    }, [activeTab]);
 
     const fetchRequests = async () => {
         try {
+            setLoading(true);
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender?status=pending`, {
+            // Fetch requests based on active tab status
+            // Backend might allow filtering by status. If not, we might need to fetch all and filter client side.
+            // Assuming backend supports ?status=... which I saw in earlier files it did for applications at least.
+            // Let's try fetching by status. 
+            // NOTE: Early code had /surrender?status=pending. 
+            // We'll update to use the activeTab state, mapping 'approved' to 'reviewed' maybe if that was the old term, but user wants 'approved'.
+            // I'll stick to 'pending', 'approved', 'rejected' as status values.
+
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender?status=${activeTab}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -23,6 +33,8 @@ const AdminSurrenderRequests = () => {
             const data = await response.json();
             if (data.success) {
                 setRequests(data.data);
+            } else {
+                setRequests([]);
             }
             setLoading(false);
         } catch (error) {
@@ -32,7 +44,7 @@ const AdminSurrenderRequests = () => {
     };
 
     const handleUpdateStatus = async (id, status) => {
-        if (!window.confirm(`Are you sure you want to mark this request as ${status}?`)) return;
+        if (!window.confirm(`Are you sure you want to ${status === 'approved' ? 'approve' : 'reject'} this request?`)) return;
 
         try {
             const token = localStorage.getItem('access_token');
@@ -61,11 +73,11 @@ const AdminSurrenderRequests = () => {
             state: {
                 prefill: {
                     name: request.pet_name,
-                    species: request.pet_type, // map pet_type to species
+                    species: request.pet_type,
                     breed: request.breed,
                     age: request.age,
                     gender: request.gender,
-                    description: request.reason, // Use reason as initial description
+                    description: request.reason,
                     contact_phone: request.contact_phone
                 }
             }
@@ -80,8 +92,33 @@ const AdminSurrenderRequests = () => {
                 <div className="users-header">
                     <div>
                         <h1 className="users-title">Surrender Requests</h1>
-                        <p className="users-subtitle">Review pending pet surrender applications.</p>
+                        <p className="users-subtitle">Review and manage pet surrender applications.</p>
                     </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="filter-tabs fade-in" style={{ justifyContent: 'flex-start', marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
+                    <button
+                        className={`filter-tab ${activeTab === 'pending' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('pending')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'pending' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'pending' ? '#6b9b7f' : 'white', color: activeTab === 'pending' ? 'white' : '#666', cursor: 'pointer' }}
+                    >
+                        Pending
+                    </button>
+                    <button
+                        className={`filter-tab ${activeTab === 'approved' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('approved')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'approved' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'approved' ? '#6b9b7f' : 'white', color: activeTab === 'approved' ? 'white' : '#666', cursor: 'pointer' }}
+                    >
+                        Approved
+                    </button>
+                    <button
+                        className={`filter-tab ${activeTab === 'rejected' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('rejected')}
+                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'rejected' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'rejected' ? '#6b9b7f' : 'white', color: activeTab === 'rejected' ? 'white' : '#666', cursor: 'pointer' }}
+                    >
+                        Rejected
+                    </button>
                 </div>
 
                 <div className="users-table-wrapper">
@@ -99,7 +136,7 @@ const AdminSurrenderRequests = () => {
                         <tbody>
                             {requests.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No pending requests</td>
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '2rem' }}>No {activeTab} requests</td>
                                 </tr>
                             ) : (
                                 requests.map((req) => (
@@ -127,32 +164,34 @@ const AdminSurrenderRequests = () => {
                                         </td>
                                         <td>{new Date(req.created_at).toLocaleDateString()}</td>
                                         <td>
-                                            <div className="actions-dropdown" style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button
-                                                    onClick={() => handleCreatePost(req)}
-                                                    className="action-btn"
-                                                    title="Create Post"
-                                                    style={{ color: '#4CAF50' }}
-                                                >
-                                                    <CheckCircle size={20} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleUpdateStatus(req.application_id, 'reviewed')}
-                                                    className="action-btn"
-                                                    title="Mark Reviewed (Archive)"
-                                                    style={{ color: '#2196F3' }}
-                                                >
-                                                    <Eye size={20} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleUpdateStatus(req.application_id, 'rejected')}
-                                                    className="action-btn"
-                                                    title="Reject"
-                                                    style={{ color: '#f44336' }}
-                                                >
-                                                    <XCircle size={20} />
-                                                </button>
-                                            </div>
+                                            {activeTab === 'pending' ? (
+                                                <div className="actions-dropdown" style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button
+                                                        onClick={() => handleCreatePost(req)}
+                                                        className="action-btn"
+                                                        title="Approve & Create Post"
+                                                        style={{ color: '#4CAF50', border: '1px solid #e0e0e0', padding: '6px', borderRadius: '50%' }}
+                                                    >
+                                                        <CheckCircle size={20} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleUpdateStatus(req.application_id, 'rejected')}
+                                                        className="action-btn"
+                                                        title="Reject"
+                                                        style={{ color: '#f44336', border: '1px solid #e0e0e0', padding: '6px', borderRadius: '50%' }}
+                                                    >
+                                                        <XCircle size={20} />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className={`status-badge ${activeTab === 'approved' ? 'status-active' : 'status-inactive'}`} style={{
+                                                    padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem',
+                                                    backgroundColor: activeTab === 'approved' ? '#e6f4ea' : '#fce8e6',
+                                                    color: activeTab === 'approved' ? '#1e7e34' : '#c53030'
+                                                }}>
+                                                    {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

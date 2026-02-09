@@ -34,6 +34,12 @@ const PetDetail = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/users/favorites`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      if (response.status === 401) {
+        localStorage.removeItem('access_token');
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
         // data.data is array of pets. Check if any has id == petId
@@ -195,8 +201,8 @@ const PetDetail = () => {
               alt={pet.name}
               className="detail-image"
             />
-            <div className={`detail-status ${pet.type === 'missing' ? 'missing' : 'adoption'}`}>
-              {pet.type === 'missing' ? 'Missing' : 'For Adoption'}
+            <div className="detail-status adoption">
+              For Adoption
             </div>
             <button
               className="favorite-btn-detail"
@@ -238,10 +244,7 @@ const PetDetail = () => {
                 <Calendar size={18} />
                 <span>Posted on {new Date(pet.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
               </div>
-              <div className="meta-item">
-                <User size={18} />
-                <span>Posted by {pet.username || 'Admin User'}</span>
-              </div>
+
             </div>
 
             <div className="detail-section">
@@ -302,7 +305,7 @@ const PetDetail = () => {
               </div>
             )}
 
-            {!isAdmin && pet.type !== 'missing' && (
+            {!isAdmin && (
               <div className="action-buttons">
                 <button
                   className="btn-primary-large"
@@ -310,7 +313,7 @@ const PetDetail = () => {
                   style={{ backgroundColor: '#6b9b7f', width: '100%' }}
                 >
                   <Heart size={20} style={{ marginRight: '8px' }} />
-                  Adopt Me
+                  Adopt
                 </button>
               </div>
             )}

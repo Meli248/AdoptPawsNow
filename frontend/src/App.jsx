@@ -15,7 +15,6 @@ import About from './pages/public/About';
 // Pages from the 'private' folder (based on your VS Code explorer)
 import Home from './pages/private/Home';
 import Adopt from './pages/private/Adopt';
-import Missing from './pages/private/Missing';
 import Profile from './pages/private/Profile';
 import PetDetail from './pages/private/Petdetail'; // Note: lowercase 'd' in filename
 import AdminDashboard from './pages/private/Admindashboard'; // Note: lowercase 'd'
@@ -45,7 +44,6 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path="/pet/:petId" element={<PetDetail />} />
           <Route path="/adopt" element={<Adopt />} />
-          <Route path="/missing" element={<Missing />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/surrender-request" element={<SurrenderRequest />} /> {/* Added */}
         </Route>

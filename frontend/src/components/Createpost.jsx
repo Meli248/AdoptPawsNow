@@ -5,7 +5,7 @@ import {
   Home, AlertCircle, MapPin, Calendar,
   FileText, User, Mail, Phone
 } from 'lucide-react';
-import { adoptionAPI, missingAPI } from '../services/api';
+import { adoptionAPI } from '../services/api';
 import '../css/Createpost.css';
 
 const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initialData = null }) => {
@@ -109,54 +109,31 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
     try {
       const formDataToSend = new FormData();
 
-      if (postType === 'adoption') {
-        // Pet details
-        formDataToSend.append('name', formData.name);
-        formDataToSend.append('species', formData.species);
-        formDataToSend.append('breed', formData.breed || 'Mixed');
-        formDataToSend.append('age', formData.age);
-        formDataToSend.append('gender', formData.gender);
-        formDataToSend.append('size', formData.size);
-        formDataToSend.append('color', formData.color);
-        formDataToSend.append('description', formData.description);
-        formDataToSend.append('vaccinated', formData.vaccinated);
-        formDataToSend.append('neutered', formData.neutered);
-        formDataToSend.append('status', 'Available');
+      // Pet details
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('species', formData.species);
+      formDataToSend.append('breed', formData.breed || 'Mixed');
+      formDataToSend.append('age', formData.age);
+      formDataToSend.append('gender', formData.gender);
+      formDataToSend.append('size', formData.size);
+      formDataToSend.append('color', formData.color);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('vaccinated', formData.vaccinated);
+      formDataToSend.append('neutered', formData.neutered);
+      formDataToSend.append('status', 'Available');
 
-        // Contact information
-        formDataToSend.append('contact_name', formData.contactName);
-        formDataToSend.append('contact_email', formData.contactEmail);
-        formDataToSend.append('contact_phone', formData.contactPhone);
-        formDataToSend.append('contact_type', formData.contactType);
+      // Contact information
+      formDataToSend.append('contact_name', formData.contactName);
+      formDataToSend.append('contact_email', formData.contactEmail);
+      formDataToSend.append('contact_phone', formData.contactPhone);
+      formDataToSend.append('contact_type', formData.contactType);
 
-        formDataToSend.append('image', imageFile);
+      formDataToSend.append('image', imageFile);
 
-        const response = await adoptionAPI.createPet(formDataToSend);
-        console.log('Adoption response:', response);
+      const response = await adoptionAPI.createPet(formDataToSend);
+      console.log('Adoption response:', response);
 
-        alert(response.message || 'Pet posted for adoption successfully!');
-      } else {
-        // Missing pet
-        formDataToSend.append('pet_name', formData.name);
-        formDataToSend.append('species', formData.species);
-        formDataToSend.append('breed', formData.breed || 'Unknown');
-        formDataToSend.append('age', formData.age || 'Unknown');
-        formDataToSend.append('gender', formData.gender);
-        formDataToSend.append('description', formData.description);
-        formDataToSend.append('last_seen_location', formData.lastSeenLocation);
-        formDataToSend.append('last_seen_date', formData.lastSeenDate);
-        formDataToSend.append('owner_name', formData.ownerName);
-        formDataToSend.append('owner_email', formData.ownerEmail);
-        formDataToSend.append('owner_phone', formData.ownerPhone || '');
-        formDataToSend.append('reward', formData.reward || '');
-        formDataToSend.append('status', 'Missing');
-        formDataToSend.append('image', imageFile);
-
-        const response = await missingAPI.createMissingPet(formDataToSend);
-        console.log('Missing pet response:', response);
-
-        alert(response.message || 'Missing pet report submitted successfully!');
-      }
+      alert(response.message || 'Pet posted for adoption successfully!');
 
       // Reset form
       setFormData({
@@ -207,23 +184,11 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
       <div className="modal-header">
         <div>
           <h2 className="modal-title">
-            {postType === 'adoption' ? (
-              <>
-                <Home className="title-icon" size={28} />
-                Post Pet for Adoption
-              </>
-            ) : (
-              <>
-                <AlertCircle className="title-icon" size={28} />
-                Report Missing Pet
-              </>
-            )}
+            <Home className="title-icon" size={28} />
+            Post Pet for Adoption
           </h2>
           <p className="modal-subtitle">
-            {postType === 'adoption'
-              ? 'Help find a loving home for a pet in need'
-              : 'Help reunite a lost pet with their family'
-            }
+            Help find a loving home for a pet in need
           </p>
         </div>
         {isModal && (
@@ -238,33 +203,7 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
       </div>
 
       <form onSubmit={handleSubmit} className="create-post-form">
-        {/* Post Type */}
-        <div className="form-group">
-          <label className="form-label">
-            <FileText size={18} />
-            Post Type
-          </label>
-          <div className="button-group">
-            <button
-              type="button"
-              className={`toggle-btn ${postType === 'adoption' ? 'active' : ''}`}
-              onClick={() => setPostType('adoption')}
-              disabled={loading}
-            >
-              <Home size={18} />
-              For Adoption
-            </button>
-            <button
-              type="button"
-              className={`toggle-btn ${postType === 'missing' ? 'active' : ''}`}
-              onClick={() => setPostType('missing')}
-              disabled={loading}
-            >
-              <AlertCircle size={18} />
-              Missing Pet
-            </button>
-          </div>
-        </div>
+        {/* Post Type - Hidden/Removed, default to Adoption */}
 
         {/* Pet Species */}
         <div className="form-group">
@@ -567,108 +506,7 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
         )}
 
         {/* Missing pet specific fields */}
-        {postType === 'missing' && (
-          <>
-            <div className="form-group">
-              <label className="form-label">
-                <MapPin size={18} />
-                Last Seen Location *
-              </label>
-              <input
-                type="text"
-                name="lastSeenLocation"
-                value={formData.lastSeenLocation}
-                onChange={handleInputChange}
-                placeholder="e.g., Central Park, near Main Street"
-                className="form-input"
-                required
-                disabled={loading}
-              />
-            </div>
 
-            <div className="form-group">
-              <label className="form-label">
-                <Calendar size={18} />
-                Last Seen Date *
-              </label>
-              <input
-                type="date"
-                name="lastSeenDate"
-                value={formData.lastSeenDate}
-                onChange={handleInputChange}
-                className="form-input"
-                max={new Date().toISOString().split('T')[0]}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">
-                <User size={18} />
-                Owner Name *
-              </label>
-              <input
-                type="text"
-                name="ownerName"
-                value={formData.ownerName}
-                onChange={handleInputChange}
-                placeholder="Your name"
-                className="form-input"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label className="form-label">
-                  <Mail size={18} />
-                  Owner Email *
-                </label>
-                <input
-                  type="email"
-                  name="ownerEmail"
-                  value={formData.ownerEmail}
-                  onChange={handleInputChange}
-                  placeholder="your@email.com"
-                  className="form-input"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  <Phone size={18} />
-                  Owner Phone
-                </label>
-                <input
-                  type="tel"
-                  name="ownerPhone"
-                  value={formData.ownerPhone}
-                  onChange={handleInputChange}
-                  placeholder="555-1234"
-                  className="form-input"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Reward (optional)</label>
-              <input
-                type="text"
-                name="reward"
-                value={formData.reward}
-                onChange={handleInputChange}
-                placeholder="e.g., $100"
-                className="form-input"
-                disabled={loading}
-              />
-            </div>
-          </>
-        )}
 
         {/* Form Actions */}
         <div className="form-actions">

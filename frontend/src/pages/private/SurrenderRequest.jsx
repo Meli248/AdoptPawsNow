@@ -3,19 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Dog, Cat, Upload, AlertCircle, User, Phone, FileText, Calendar, Hash } from 'lucide-react';
+import { Dog, Cat, Upload, AlertCircle, User, Phone, FileText, Calendar, Hash, MapPin } from 'lucide-react';
 import '../../css/CreatePost.css'; // Reusing existing styles or create new
 
 const surrenderSchema = z.object({
     pet_name: z.string().min(1, 'Pet name is required'),
-    pet_type: z.enum(['dog', 'cat', 'other'], {
-        errorMap: () => ({ message: 'Please select a pet type' }),
+    pet_type: z.enum(['dog', 'cat'], {
+        errorMap: () => ({ message: 'Please select either Dog or Cat' }),
     }),
     breed: z.string().optional(),
-    age: z.string().optional(),
+    age: z.string().regex(/^[0-9]+$/, 'Age must be a number').optional(),
     gender: z.enum(['male', 'female', 'unknown']).optional(),
     reason: z.string().min(10, 'Please provide a detailed reason (min 10 chars)'),
-    contact_phone: z.string().regex(/^\+?[0-9\s-]{10,}$/, 'Please enter a valid phone number'),
+    contact_phone: z.string().regex(/^[0-9]{10}$/, 'Phone number must be exactly 10 digits'),
+    location: z.string().min(1, 'Location is required'),
     image: z.any()
         .refine((files) => files?.length > 0, "Image is required")
 });
@@ -45,6 +46,7 @@ const SurrenderRequest = () => {
             formData.append('pet_type', data.pet_type);
             formData.append('reason', data.reason);
             formData.append('contact_phone', data.contact_phone);
+            formData.append('location', data.location);
             formData.append('image', data.image[0]);
 
             if (data.breed) formData.append('breed', data.breed);
@@ -58,6 +60,13 @@ const SurrenderRequest = () => {
                 },
                 body: formData
             });
+
+            if (response.status === 401) {
+                alert('Session expired. Please login again.');
+                localStorage.removeItem('access_token');
+                navigate('/login');
+                return;
+            }
 
             const result = await response.json();
 
@@ -121,7 +130,6 @@ const SurrenderRequest = () => {
                                 <option value="">Select Type</option>
                                 <option value="dog">Dog</option>
                                 <option value="cat">Cat</option>
-                                <option value="other">Other</option>
                             </select>
                             {errors.pet_type && <span className="error-msg">{errors.pet_type.message}</span>}
                         </div>
@@ -135,13 +143,26 @@ const SurrenderRequest = () => {
                         </div>
                     </div>
 
+                    <div className="form-group">
+                        <label className="form-label">
+                            <MapPin size={18} />
+                            Location*
+                        </label>
+                        <input
+                            {...register('location')}
+                            placeholder="City, State"
+                            className={`form-input ${errors.location ? 'error' : ''}`}
+                        />
+                        {errors.location && <span className="error-msg">{errors.location.message}</span>}
+                    </div>
+
                     <div className="form-row">
                         <div className="form-group">
                             <label className="form-label">
                                 <Calendar size={18} />
                                 Age
                             </label>
-                            <input {...register('age')} placeholder="e.g. 2 years" className="form-input" />
+                            <input {...register('age')} placeholder="Enter age" type="number" className="form-input" />
                         </div>
 
                         <div className="form-group">
@@ -160,7 +181,7 @@ const SurrenderRequest = () => {
                     <div className="form-group">
                         <label className="form-label">
                             <FileText size={18} />
-                            Reason for Surrender*
+                            Reason for rehoming*
                         </label>
                         <textarea
                             {...register('reason')}
@@ -178,7 +199,9 @@ const SurrenderRequest = () => {
                         </label>
                         <input
                             {...register('contact_phone')}
-                            placeholder="+1 234 567 8900"
+                            placeholder="Enter 10 digit number"
+                            type="tel"
+                            maxLength={10}
                             className={`form-input ${errors.contact_phone ? 'error' : ''}`}
                         />
                         {errors.contact_phone && <span className="error-msg">{errors.contact_phone.message}</span>}

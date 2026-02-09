@@ -12,14 +12,15 @@ export const createSurrenderRequest = async (req, res) => {
             gender,
             reason,
             image_url, // Allow URL string directly or handle file upload in route
-            contact_phone
+            contact_phone,
+            location
         } = req.body;
 
         // Validate required fields
-        if (!pet_name || !pet_type || !reason) {
+        if (!pet_name || !pet_type || !reason || !location) {
             return res.status(400).json({
                 success: false,
-                message: 'Pet name, type, and reason for surrender are required'
+                message: 'Pet name, type, reason, and location are required'
             });
         }
 
@@ -28,10 +29,10 @@ export const createSurrenderRequest = async (req, res) => {
 
         const result = await pool.query(
             `INSERT INTO surrender_applications 
-      (user_id, pet_name, pet_type, breed, age, gender, reason, image_url, contact_phone)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      (user_id, pet_name, pet_type, breed, age, gender, reason, image_url, contact_phone, location)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
-            [userId, pet_name, pet_type, breed, age, gender, reason, finalImage, contact_phone]
+            [userId, pet_name, pet_type, breed, age, gender, reason, finalImage, contact_phone, location]
         );
 
         res.status(201).json({
@@ -119,6 +120,136 @@ export const updateSurrenderStatus = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Internal server error'
+        });
+    }
+};
+
+// Get user's surrender requests
+export const getUserSurrenderRequests = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        const result = await pool.query(
+            `SELECT * FROM surrender_applications 
+             WHERE user_id = $1 
+             ORDER BY created_at DESC`,
+            [userId]
+        );
+
+        res.status(200).json({
+            success: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching user surrender requests:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch surrender requests',
+            error: error.message
+        });
+    }
+};
+
+// Update surrender request (User)
+export const updateSurrenderRequest = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.userId;
+        const {
+            pet_name,
+            pet_type,
+            breed,
+            age,
+            gender,
+            reason,
+            contact_phone,
+            location
+        } = req.body;
+
+        // Check if request exists and belongs to user
+        const checkResult = await pool.query(
+            'SELECT * FROM surrender_applications WHERE application_id = $1 AND user_id = $2',
+            [id, userId]
+        );
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found or unauthorized'
+            });
+        }
+
+        // Handle image if file uploaded
+        const image_url = req.file ? `/uploads/${req.file.filename}` : undefined;
+
+        let query = `
+            UPDATE surrender_applications 
+            SET pet_name = COALESCE($1, pet_name),
+                pet_type = COALESCE($2, pet_type),
+                breed = COALESCE($3, breed),
+                age = COALESCE($4, age),
+                gender = COALESCE($5, gender),
+                reason = COALESCE($6, reason),
+                contact_phone = COALESCE($7, contact_phone),
+                location = COALESCE($8, location),
+                updated_at = CURRENT_TIMESTAMP
+        `;
+
+        const params = [pet_name, pet_type, breed, age, gender, reason, contact_phone, location];
+
+        if (image_url) {
+            query += `, image_url = $${params.length + 1}`;
+            params.push(image_url);
+        }
+
+        query += ` WHERE application_id = $${params.length + 1} RETURNING *`;
+        params.push(id);
+
+        const result = await pool.query(query, params);
+
+        res.status(200).json({
+            success: true,
+            message: 'Request updated successfully',
+            data: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Error updating surrender request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to update request',
+            error: error.message
+        });
+    }
+};
+
+// Delete surrender request (User)
+export const deleteSurrenderRequest = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.userId;
+
+        const result = await pool.query(
+            'DELETE FROM surrender_applications WHERE application_id = $1 AND user_id = $2 RETURNING *',
+            [id, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Request not found or unauthorized'
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Request deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting surrender request:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete request',
+            error: error.message
         });
     }
 };

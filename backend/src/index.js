@@ -3,15 +3,15 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import pool from './database/index.js'; // Added pool import
+import pool from './database/index.js';
 
 // Import routes
 import authRoutes from './route/auth/authRoute.js';
 import petsRoutes from './route/pets/petsRoute.js';
-import missingRoutes from './route/missing/missingRoute.js';
 import userRoutes from './route/user/userRoute.js';
 import surrenderRoutes from './route/surrender/surrenderRoute.js';
-import statsRoutes from './route/stats/statsRoute.js'; // Added // Added
+import statsRoutes from './route/stats/statsRoute.js';
+import notificationRoutes from './route/notification/notificationRoute.js';
 
 // Load environment variables
 dotenv.config();
@@ -66,7 +66,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/surrender', surrenderRoutes);
-app.use('/api/stats', statsRoutes); // Added
+app.use('/api/stats', statsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // ============================================
 // ERROR HANDLING
@@ -91,15 +92,6 @@ app.use((req, res) => {
         'DELETE /api/pets/pets/:id',
         'POST /api/pets/applications',
         'GET /api/pets/applications'
-      ],
-      missing: [
-        'GET /api/missing/missing-pets',
-        'GET /api/missing/missing-pets/:id',
-        'POST /api/missing/missing-pets',
-        'PUT /api/missing/missing-pets/:id',
-        'DELETE /api/missing/missing-pets/:id',
-        'POST /api/missing/sightings',
-        'GET /api/missing/sightings'
       ]
     }
   });
@@ -119,21 +111,36 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ============================================
 
-// Create favorites table if not exists
+// Create tables if not exists
 const createTables = async () => {
   try {
+    // Favorites Table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS favorites (
         favorite_id SERIAL PRIMARY KEY,
         user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-        pet_id INTEGER NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
+        pet_id INTEGER NOT NULL REFERENCES pets(pet_id) ON DELETE CASCADE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(user_id, pet_id)
       );
     `);
     console.log('✅ Favorites table checked/created');
+
+    // Notifications Table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+        message TEXT NOT NULL,
+        type VARCHAR(50) DEFAULT 'info',
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('✅ Notifications table checked/created');
+
   } catch (error) {
-    console.error('❌ Error creating favorites table:', error);
+    console.error('❌ Error creating tables:', error);
   }
 };
 
@@ -148,7 +155,7 @@ app.listen(PORT, async () => {
   console.log('Available routes:');
   console.log('  Auth:    /api/auth/*');
   console.log('  Pets:    /api/pets/*');
-  console.log('  Missing: /api/missing/*');
+  console.log('  Notifications: /api/notifications/*');
   console.log('='.repeat(50));
 });
 

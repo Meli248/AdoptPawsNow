@@ -1,5 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { Bell } from 'lucide-react';
+import Notification from './Notification';
 import '../css/Navbar.css';
 
 const Navbar = () => {
@@ -8,6 +10,7 @@ const Navbar = () => {
   const [user, setUser] = useState(localStorage.getItem('user'));
   const [userRole, setUserRole] = useState(localStorage.getItem('user_role'));
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'));
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -125,6 +128,17 @@ const Navbar = () => {
         <div className="navbar-actions">
           {isAuthenticated ? (
             <>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="btn-icon"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center' }}
+                >
+                  <Bell size={20} />
+                </button>
+                <Notification isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+              </div>
+
               <Link to="/profile" className="user-profile">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor" />

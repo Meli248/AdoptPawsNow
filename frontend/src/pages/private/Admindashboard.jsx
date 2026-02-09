@@ -31,7 +31,7 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('access_token');
 
       // Fetch all pets
-      const petsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets`, {
+      const petsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -42,11 +42,12 @@ const AdminDashboard = () => {
       setPets(allPets);
 
       // Calculate stats
-      const adoptionPets = allPets.filter(p => p.type === 'adoption');
-      const missingPets = allPets.filter(p => p.type === 'missing');
+      const adoptionPets = allPets.filter(p => !['missing', 'found', 'closed'].includes(p.status?.toLowerCase()));
+      const missingPets = allPets.filter(p => p.status?.toLowerCase() === 'missing');
+
       const dogs = allPets.filter(p => p.species?.toLowerCase() === 'dog');
       const cats = allPets.filter(p => p.species?.toLowerCase() === 'cat');
-      const adopted = adoptionPets.filter(p => p.status?.toLowerCase() === 'adopted');
+      const adopted = allPets.filter(p => p.status?.toLowerCase() === 'adopted');
 
       setStats({
         totalPosts: allPets.length,
@@ -206,8 +207,8 @@ const AdminDashboard = () => {
                     alt={pet.name}
                     className="pet-image"
                   />
-                  <div className={`pet-status ${pet.type === 'missing' ? 'missing' : 'adoption'}`}>
-                    {pet.type === 'missing' ? 'Missing' : 'For Adoption'}
+                  <div className="pet-status adoption">
+                    For Adoption
                   </div>
                   <button
                     className="favorite-btn"

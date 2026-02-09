@@ -20,12 +20,12 @@ CREATE TABLE IF NOT EXISTS pets (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     breed VARCHAR(100) NOT NULL,
-    type VARCHAR(20) NOT NULL CHECK (type IN ('adoption', 'missing')),
+    type VARCHAR(20) NOT NULL CHECK (type IN ('adoption')),
     pet_type VARCHAR(10) NOT NULL CHECK (pet_type IN ('dog', 'cat')),
     age VARCHAR(50) NOT NULL,
     location VARCHAR(200) NOT NULL,
     description TEXT NOT NULL,
-    status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'pending', 'adopted', 'missing', 'reunited')),
+    status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'pending', 'adopted', 'reunited')),
     image TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS surrender_applications (
     reason TEXT NOT NULL,
     image_url TEXT,
     contact_phone VARCHAR(20),
+    location VARCHAR(200),
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'approved', 'rejected')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

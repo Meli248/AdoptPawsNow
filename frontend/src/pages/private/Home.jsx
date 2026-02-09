@@ -23,7 +23,7 @@ const Home = () => {
   const [featuredPets, setFeaturedPets] = useState([]);
   const [stats, setStats] = useState({
     petsAdopted: '0',
-    petsReunited: '0',
+
     dogs: '0',
     cats: '0'
   });
@@ -176,6 +176,13 @@ const Home = () => {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/users/favorites`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+
+      if (response.status === 401) {
+        localStorage.removeItem('access_token');
+        // Optionally refresh page or update state, but finding 401 is enough to stop
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
         // favorites from API returns pet objects joined with favorites
@@ -258,8 +265,7 @@ const Home = () => {
               <span className="title-highlight">Forever Home</span>
             </h1>
             <p className="hero-description">
-              Connect with loving pets waiting for adoption, report missing pets, and help
-              reunite families with their beloved companions.
+              Connect with loving pets waiting for adoption and help them find their forever homes.
             </p>
             <div className="hero-actions">
               <button
@@ -376,10 +382,10 @@ const Home = () => {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleProtectedNavigation('/adopt')}
+                        onClick={() => handleProtectedNavigation(`/pet/${pet.pet_id}`)}
                         className="btn btn-primary btn-adopt"
                       >
-                        Adopt {pet.name}
+                        View Details
                       </button>
                     </div>
                   </div>
