@@ -91,7 +91,8 @@ export const createPet = async (req, res) => {
     const {
       name, species, breed, age, gender, size, color, description,
       vaccinated, neutered, status,
-      contact_name, contact_email, contact_phone, contact_type
+      contact_name, contact_email, contact_phone, contact_type,
+      location // Added location
     } = req.body;
 
     // Get image URL from uploaded file
@@ -126,9 +127,10 @@ export const createPet = async (req, res) => {
       `INSERT INTO pets (
         user_id, name, species, breed, age, gender, size, color, description, 
         image_url, vaccinated, neutered, status,
-        contact_name, contact_email, contact_phone, contact_type
+        contact_name, contact_email, contact_phone, contact_type,
+        location
       ) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) 
        RETURNING *`,
       [
         userId,  // ✅ ADDED user_id
@@ -138,7 +140,7 @@ export const createPet = async (req, res) => {
         age || null,
         gender || 'Unknown',
         size || 'Medium',
-        color || null,
+        color || 'Unknown',
         description,
         image_url,
         vaccinated === 'true' || vaccinated === true,
@@ -147,7 +149,8 @@ export const createPet = async (req, res) => {
         contact_name,
         contact_email,
         contact_phone || null,
-        contact_type || 'individual'
+        contact_type || 'individual',
+        location || 'Not specified'
       ]
     );
 
@@ -174,7 +177,8 @@ export const updatePet = async (req, res) => {
     const {
       name, species, breed, age, gender, size, color, description,
       status, vaccinated, neutered,
-      contact_name, contact_email, contact_phone, contact_type
+      contact_name, contact_email, contact_phone, contact_type,
+      location // Added
     } = req.body;
 
     // Get image URL if new file uploaded
@@ -200,13 +204,15 @@ export const updatePet = async (req, res) => {
            contact_email = COALESCE($14, contact_email),
            contact_phone = COALESCE($15, contact_phone),
            contact_type = COALESCE($16, contact_type),
+           location = COALESCE($17, location),
            updated_at = CURRENT_TIMESTAMP
-       WHERE pet_id = $17
+       WHERE pet_id = $18
        RETURNING *`,
       [
         name, species, breed, age, gender, size, color, description,
-        image_url, status ? status.toLowerCase() : undefined, vaccinated, neutered,
+        image_url, status, vaccinated, neutered,
         contact_name, contact_email, contact_phone, contact_type,
+        location,
         id
       ]
     );
@@ -291,10 +297,10 @@ export const createAdoptionApplication = async (req, res) => {
     }
 
     const result = await pool.query(
-      `INSERT INTO adoption_applications 
-       (pet_id, applicant_name, email, phone, address, reason) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
-       RETURNING *`,
+      `INSERT INTO adoption_applications
+      (pet_id, applicant_name, email, phone, address, reason)
+    VALUES($1, $2, $3, $4, $5, $6)
+    RETURNING * `,
       [pet_id, applicant_name, email, phone, address, reason]
     );
 
@@ -322,7 +328,7 @@ export const getAllApplications = async (req, res) => {
       SELECT a.*, p.name as pet_name, p.species, p.breed, p.image_url as pet_image 
       FROM adoption_applications a
       JOIN pets p ON a.pet_id = p.pet_id
-    `;
+      `;
 
     const params = [];
 
@@ -400,8 +406,8 @@ export const updateApplicationStatus = async (req, res) => {
     const result = await pool.query(
       `UPDATE adoption_applications 
        SET status = $1, updated_at = CURRENT_TIMESTAMP 
-       WHERE application_id = $2 
-       RETURNING *`,
+       WHERE application_id = $2
+    RETURNING * `,
       [status, id]
     );
 

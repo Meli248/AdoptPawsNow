@@ -129,14 +129,16 @@ const Navbar = () => {
           {isAuthenticated ? (
             <>
               <div style={{ position: 'relative' }}>
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="btn-icon"
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center' }}
-                >
-                  <Bell size={20} />
-                </button>
-                <Notification isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+                {!isAdmin && (
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="btn-icon"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center' }}
+                  >
+                    <Bell size={20} />
+                  </button>
+                )}
+                {!isAdmin && <Notification isOpen={showNotifications} onClose={() => setShowNotifications(false)} />}
               </div>
 
               <Link to="/profile" className="user-profile">

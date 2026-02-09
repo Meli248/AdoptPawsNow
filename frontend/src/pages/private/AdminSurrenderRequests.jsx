@@ -167,9 +167,9 @@ const AdminSurrenderRequests = () => {
                                             {activeTab === 'pending' ? (
                                                 <div className="actions-dropdown" style={{ display: 'flex', gap: '0.5rem' }}>
                                                     <button
-                                                        onClick={() => handleCreatePost(req)}
+                                                        onClick={() => handleUpdateStatus(req.application_id, 'approved')}
                                                         className="action-btn"
-                                                        title="Approve & Create Post"
+                                                        title="Approve"
                                                         style={{ color: '#4CAF50', border: '1px solid #e0e0e0', padding: '6px', borderRadius: '50%' }}
                                                     >
                                                         <CheckCircle size={20} />

@@ -41,6 +41,16 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
     reward: ''
   });
 
+  const [errors, setErrors] = useState({});
+
+  const validateAge = (value) => {
+    if (!value) return null; // Optional
+    if (isNaN(value)) return "Age must be a number";
+    if (parseInt(value) < 0) return "Age cannot be negative";
+    if (value.length > 2 || parseInt(value) > 99) return "Age cannot be more than 2 digits";
+    return null;
+  };
+
   useEffect(() => {
     const dataToLoad = initialData || location.state?.prefill;
 
@@ -62,6 +72,12 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    if (name === 'age') {
+      const error = validateAge(value);
+      setErrors(prev => ({ ...prev, age: error }));
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -104,6 +120,11 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
       return;
     }
 
+    if (errors.age) {
+      alert("Please fix errors before submitting");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -130,10 +151,15 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
 
       formDataToSend.append('image', imageFile);
 
-      const response = await adoptionAPI.createPet(formDataToSend);
+      let response;
+      if (initialData && initialData.id) {
+        response = await adoptionAPI.updatePet(initialData.id, formDataToSend);
+      } else {
+        response = await adoptionAPI.createPet(formDataToSend);
+      }
       console.log('Adoption response:', response);
 
-      alert(response.message || 'Pet posted for adoption successfully!');
+      alert(response.message || (initialData && initialData.id ? 'Pet updated successfully!' : 'Pet posted for adoption successfully!'));
 
       // Reset form
       setFormData({
@@ -306,14 +332,17 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
           <div className="form-group">
             <label className="form-label">Age</label>
             <input
-              type="text"
+              type="number"
               name="age"
               value={formData.age}
               onChange={handleInputChange}
-              placeholder="e.g., 2 years, 6 months"
-              className="form-input"
+              placeholder="Age in years"
+              className={`form-input ${errors.age ? 'input-error' : ''}`}
               disabled={loading}
+              min="0"
+              max="99"
             />
+            {errors.age && <span className="error-message" style={{ color: 'red', fontSize: '0.8rem' }}>{errors.age}</span>}
           </div>
         </div>
 
@@ -515,7 +544,7 @@ const CreatePost = ({ isOpen = true, onClose, onSuccess, isModal = true, initial
             className="btn btn-primary"
             disabled={loading}
           >
-            {loading ? 'Posting...' : `Post ${postType === 'adoption' ? 'for Adoption' : 'Missing Pet'}`}
+            {loading ? 'Processing...' : (initialData && initialData.id ? 'Update Pet' : `Post ${postType === 'adoption' ? 'for Adoption' : 'Missing Pet'}`)}
           </button>
           <button
             type="button"

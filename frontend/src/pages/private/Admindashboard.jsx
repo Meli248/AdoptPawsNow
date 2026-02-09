@@ -13,7 +13,9 @@ const AdminDashboard = () => {
     cats: 0
   });
   const [pets, setPets] = useState([]);
+  const [surrenderRequests, setSurrenderRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState(null); // For modal
 
   useEffect(() => {
     // Check if user is admin
@@ -31,7 +33,7 @@ const AdminDashboard = () => {
       const token = localStorage.getItem('access_token');
 
       // Fetch all pets
-      const petsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=all`, {
+      const petsResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets?status=all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -40,6 +42,15 @@ const AdminDashboard = () => {
       const allPets = petsData.data || [];
 
       setPets(allPets);
+
+      // Fetch Surrender Requests (Pending)
+      const surrenderResponse = await fetch(`${import.meta.env.VITE_API_URL}/surrender?status=pending`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const surrenderData = await surrenderResponse.json();
+      setSurrenderRequests(surrenderData.data || []);
 
       // Calculate stats
       const adoptionPets = allPets.filter(p => !['missing', 'found', 'closed'].includes(p.status?.toLowerCase()));
@@ -96,6 +107,30 @@ const AdminDashboard = () => {
 
   const handleViewPet = (petId) => {
     navigate(`/pet/${petId}`);
+  };
+
+  const handleSurrenderAction = async (id, status) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (response.ok) {
+        alert(`Request ${status === 'approved' ? 'accepted' : 'declined'} successfully`);
+        fetchDashboardData(); // Refresh data
+      } else {
+        alert('Failed to update request status');
+      }
+    } catch (error) {
+      console.error('Error updating surrender status:', error);
+      alert('Error updating status');
+    }
   };
 
   /* Search Logic */
@@ -176,6 +211,119 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Detail Modal */}
+        {selectedItem && (
+          <div className="modal-overlay" onClick={() => setSelectedItem(null)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <button className="close-btn" onClick={() => setSelectedItem(null)}>×</button>
+
+              <div className="modal-header">
+                <h2>{selectedItem.pet_name || selectedItem.name} Details</h2>
+              </div>
+
+              <div className="modal-body">
+                <div className="modal-image-container">
+                  <img
+                    src={selectedItem.image_url ? `http://localhost:5000${selectedItem.image_url}` : 'https://via.placeholder.com/400'}
+                    alt={selectedItem.pet_name || selectedItem.name}
+                    className="modal-image"
+                  />
+                </div>
+
+                <div className="modal-info">
+                  <p><strong>Type:</strong> {selectedItem.pet_type || selectedItem.species}</p>
+                  <p><strong>Breed:</strong> {selectedItem.breed || 'Unknown'}</p>
+                  <p><strong>Age:</strong> {selectedItem.age || 'Unknown'} years</p>
+                  <p><strong>Gender:</strong> {selectedItem.gender || 'Unknown'}</p>
+                  <p><strong>Reason/Description:</strong> {selectedItem.reason || selectedItem.description}</p>
+                  <p><strong>Location:</strong> {selectedItem.location}</p>
+                  <p><strong>Contact:</strong> {selectedItem.contact_phone || selectedItem.contact_email || 'N/A'}</p>
+                  <p><strong>Status:</strong> {selectedItem.status}</p>
+                  {selectedItem.user_name && <p><strong>Submitted by:</strong> {selectedItem.user_name} ({selectedItem.user_email})</p>}
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                {selectedItem.application_id && selectedItem.status === 'pending' && (
+                  <>
+                    <button
+                      className="btn-accept"
+                      onClick={() => {
+                        handleSurrenderAction(selectedItem.application_id, 'approved');
+                        setSelectedItem(null);
+                      }}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      className="btn-decline"
+                      onClick={() => {
+                        handleSurrenderAction(selectedItem.application_id, 'rejected');
+                        setSelectedItem(null);
+                      }}
+                    >
+                      Decline
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Surrender Requests Section */}
+        {surrenderRequests.length > 0 && (
+          <div className="surrender-section">
+            <h2 className="section-title">Pending Surrender Requests</h2>
+            <div className="requests-grid">
+              {surrenderRequests.map((request) => (
+                <div
+                  key={request.application_id}
+                  className="request-card"
+                  onClick={() => setSelectedItem(request)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div className="request-image-wrapper">
+                    <img
+                      src={request.image_url ? `http://localhost:5000${request.image_url}` : 'https://via.placeholder.com/300'}
+                      alt={request.pet_name}
+                      className="request-image"
+                    />
+                    <div className="request-badge">Pending</div>
+                  </div>
+                  <div className="request-content">
+                    <h3>{request.pet_name} ({request.pet_type})</h3>
+                    <p className="request-detail"><strong>Breed:</strong> {request.breed || 'Unknown'}</p>
+                    <p className="request-detail"><strong>Age:</strong> {request.age} years</p>
+                    <p className="request-detail"><strong>Reason:</strong> {request.reason}</p>
+                    <p className="request-detail"><strong>Location:</strong> {request.location}</p>
+
+                    <div className="request-actions" onClick={e => e.stopPropagation()}>
+                      <button
+                        className="btn-accept"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSurrenderAction(request.application_id, 'approved');
+                        }}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        className="btn-decline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSurrenderAction(request.application_id, 'rejected');
+                        }}
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* All Pet Posts */}
         <div className="all-pets-section">

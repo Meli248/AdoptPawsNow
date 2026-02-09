@@ -375,7 +375,7 @@ const Profile = () => {
           location: editFormData.location
         };
       } else {
-        endpoint = `${import.meta.env.VITE_API_URL}/pets/pets/${editingPost.id}`;
+        endpoint = `${import.meta.env.VITE_API_URL}/pets/${editingPost.id}`;
         updateData = {
           name: editFormData.petName,
           species: editFormData.species,

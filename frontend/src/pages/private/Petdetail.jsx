@@ -85,7 +85,7 @@ const PetDetail = () => {
 
   const fetchPetDetails = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets/${petId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/${petId}`);
       const data = await response.json();
 
       if (data.success) {

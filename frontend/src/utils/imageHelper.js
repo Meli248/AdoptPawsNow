@@ -1,4 +1,4 @@
-export const getImageUrl = (imageUrl) => {
+ export const getImageUrl = (imageUrl) => {
   if (!imageUrl) return null;
   
   // If already a full URL, return as is

@@ -139,6 +139,13 @@ const createTables = async () => {
     `);
     console.log('✅ Notifications table checked/created');
 
+    // Add location column to pets if not exists
+    await pool.query(`
+      ALTER TABLE pets 
+      ADD COLUMN IF NOT EXISTS location VARCHAR(255);
+    `);
+    console.log('✅ Pets table schema updated (location column)');
+
   } catch (error) {
     console.error('❌ Error creating tables:', error);
   }

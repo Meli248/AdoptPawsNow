@@ -1,4 +1,5 @@
 import pool from '../../database/index.js';
+import { createNotification } from '../notification/notificationController.js';
 
 // Submit a surrender request
 export const createSurrenderRequest = async (req, res) => {
@@ -110,10 +111,43 @@ export const updateSurrenderStatus = async (req, res) => {
             });
         }
 
+        const surrenderRequest = result.rows[0];
+
+        // If approved, create a new pet listing
+        if (status === 'approved') {
+            await pool.query(
+                `INSERT INTO pets (
+                    user_id, name, species, breed, age, gender, description, 
+                    image_url, contact_phone, contact_type, location, status
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+                [
+                    surrenderRequest.user_id,
+                    surrenderRequest.pet_name,
+                    surrenderRequest.pet_type,
+                    surrenderRequest.breed,
+                    surrenderRequest.age,
+                    surrenderRequest.gender,
+                    surrenderRequest.reason, // Use reason as description
+                    surrenderRequest.image_url,
+                    surrenderRequest.contact_phone,
+                    'individual', // Default contact type
+                    surrenderRequest.location,
+                    'available'
+                ]
+            );
+        }
+
+        // Notify the user
+        await createNotification(
+            surrenderRequest.user_id,
+            `Your surrender request for ${surrenderRequest.pet_name} has been ${status}.`,
+            'surrender_update'
+        );
+
         res.status(200).json({
             success: true,
             message: 'Status updated successfully',
-            data: result.rows[0]
+            data: surrenderRequest
         });
     } catch (error) {
         console.error('Error updating surrender status:', error);

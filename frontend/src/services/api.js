@@ -38,7 +38,7 @@ apiClient.interceptors.response.use(
         window.dispatchEvent(new Event('storage'));
         window.location.href = '/login';
       }
-      
+
       // Server responded with error
       throw {
         message: error.response.data.message || 'An error occurred',
@@ -65,17 +65,17 @@ apiClient.interceptors.response.use(
 export const adoptionAPI = {
   // Get all pets for adoption
   getAllPets: async (params = {}) => {
-    return await apiClient.get('/pets/pets', { params });
+    return await apiClient.get('/pets', { params });
   },
 
   // Get single pet by ID
   getPetById: async (id) => {
-    return await apiClient.get(`/pets/pets/${id}`);
+    return await apiClient.get(`/pets/${id}`);
   },
 
   // Create new pet for adoption (with image upload)
   createPet: async (formData) => {
-    return await apiClient.post('/pets/pets', formData, {
+    return await apiClient.post('/pets', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -84,7 +84,7 @@ export const adoptionAPI = {
 
   // Update pet
   updatePet: async (id, formData) => {
-    return await apiClient.put(`/pets/pets/${id}`, formData, {
+    return await apiClient.put(`/pets/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -93,7 +93,7 @@ export const adoptionAPI = {
 
   // Delete pet
   deletePet: async (id) => {
-    return await apiClient.delete(`/pets/pets/${id}`);
+    return await apiClient.delete(`/pets/${id}`);
   },
 
   // Create adoption application

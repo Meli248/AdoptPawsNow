@@ -17,11 +17,11 @@ import authenticateToken from '../../middleware/token-middleware.js';
 const router = express.Router();
 
 // Public pet routes
-router.get('/pets', getAllPets);
-router.get('/pets/:id', getPetById);
-router.post('/pets', authenticateToken, upload.single('image'), createPet);
-router.put('/pets/:id', authenticateToken, upload.single('image'), updatePet); // ✅ ADDED auth
-router.delete('/pets/:id', authenticateToken, deletePet); // ✅ ADDED auth
+router.get('/', getAllPets);
+router.get('/:id', getPetById);
+router.post('/', authenticateToken, upload.single('image'), createPet);
+router.put('/:id', authenticateToken, upload.single('image'), updatePet); // Matches /api/pets/:id
+router.delete('/:id', authenticateToken, deletePet); // Matches /api/pets/:id
 
 // User's pets route - PROTECTED ✅ ADDED
 router.get('/my-posts', authenticateToken, getUserPets);

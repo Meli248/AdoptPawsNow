@@ -57,7 +57,7 @@ const Home = () => {
   useEffect(() => {
     const fetchFeaturedPets = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/pets?status=available`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/pets?status=available`);
         const data = await response.json();
 
         if (data.success && data.data.length > 0) {
