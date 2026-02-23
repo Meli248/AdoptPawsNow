@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Mail, MapPin, Calendar, Edit2, Phone, Save, X, Dog, Heart,
-  AlertTriangle, Clock, User
+  AlertTriangle, Clock, User, Hash, FileText, Palette, Activity, Layout
 } from 'lucide-react';
 import '../../css/Profile.css';
 
@@ -234,6 +234,8 @@ const Profile = () => {
           gender: req.gender,
           description: req.reason, // Store raw reason
           reason: req.reason,     // Store raw reason explicitly
+          contact_name: req.contact_name,
+          contact_email: req.contact_email,
           contact_phone: req.contact_phone,
           createdAt: req.created_at
         }));
@@ -328,6 +330,8 @@ const Profile = () => {
         age: post.age || '',
         gender: post.gender || 'unknown',
         reason: post.reason || '',
+        contact_name: post.contact_name || '',
+        contact_email: post.contact_email || '',
         contact_phone: post.contact_phone || '',
         location: post.location || ''
       });
@@ -371,6 +375,8 @@ const Profile = () => {
           age: editFormData.age,
           gender: editFormData.gender,
           reason: editFormData.reason,
+          contact_name: editFormData.contact_name,
+          contact_email: editFormData.contact_email,
           contact_phone: editFormData.contact_phone,
           location: editFormData.location
         };
@@ -798,7 +804,7 @@ const Profile = () => {
             <div className="create-post-form">
               <div className="form-group">
                 <label className="form-label">
-                  <Dog size={18} />
+                  <User size={18} />
                   Pet Name *
                 </label>
                 <input
@@ -812,7 +818,10 @@ const Profile = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Species *</label>
+                  <label className="form-label">
+                    <Dog size={18} />
+                    Species *
+                  </label>
                   <select
                     className="form-input"
                     value={editingPost.postType === 'surrender' ? editFormData.petType : editFormData.species}
@@ -826,7 +835,10 @@ const Profile = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Breed</label>
+                  <label className="form-label">
+                    <Hash size={18} />
+                    Breed
+                  </label>
                   <input
                     type="text"
                     className="form-input"
@@ -839,7 +851,10 @@ const Profile = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Age</label>
+                  <label className="form-label">
+                    <Calendar size={18} />
+                    Age
+                  </label>
                   <input
                     type="text"
                     className="form-input"
@@ -850,7 +865,10 @@ const Profile = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Gender</label>
+                  <label className="form-label">
+                    <User size={18} />
+                    Gender
+                  </label>
                   <select
                     className="form-input"
                     value={editFormData.gender}
@@ -868,7 +886,10 @@ const Profile = () => {
                 <>
                   <div className="form-row">
                     <div className="form-group">
-                      <label className="form-label">Size</label>
+                      <label className="form-label">
+                        <Layout size={18} />
+                        Size
+                      </label>
                       <select
                         className="form-input"
                         value={editFormData.size}
@@ -881,7 +902,10 @@ const Profile = () => {
                     </div>
 
                     <div className="form-group">
-                      <label className="form-label">Color</label>
+                      <label className="form-label">
+                        <Palette size={18} />
+                        Color
+                      </label>
                       <input
                         type="text"
                         className="form-input"
@@ -893,7 +917,10 @@ const Profile = () => {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Status</label>
+                    <label className="form-label">
+                      <Activity size={18} />
+                      Status
+                    </label>
                     <select
                       className="form-input"
                       value={editFormData.status}
@@ -906,7 +933,10 @@ const Profile = () => {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Description</label>
+                    <label className="form-label">
+                      <FileText size={18} />
+                      Description
+                    </label>
                     <textarea
                       className="form-textarea"
                       value={editFormData.description}
@@ -975,7 +1005,10 @@ const Profile = () => {
               {editingPost.postType === 'surrender' && (
                 <>
                   <div className="form-group">
-                    <label className="form-label">Location</label>
+                    <label className="form-label">
+                      <MapPin size={18} />
+                      Location
+                    </label>
                     <input
                       type="text"
                       className="form-input"
@@ -985,13 +1018,42 @@ const Profile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Reason for Surrender</label>
+                    <label className="form-label">
+                      <FileText size={18} />
+                      Reason for Surrender
+                    </label>
                     <textarea
                       className="form-textarea"
                       value={editFormData.reason}
                       onChange={(e) => handleEditFormChange('reason', e.target.value)}
                       rows="3"
                       placeholder="Reason..."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <User size={18} />
+                      Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      value={editFormData.contact_name}
+                      onChange={(e) => handleEditFormChange('contact_name', e.target.value)}
+                      placeholder="Contact name"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">
+                      <Mail size={18} />
+                      Contact Email
+                    </label>
+                    <input
+                      type="email"
+                      className="form-input"
+                      value={editFormData.contact_email}
+                      onChange={(e) => handleEditFormChange('contact_email', e.target.value)}
+                      placeholder="Contact email"
                     />
                   </div>
                 </>

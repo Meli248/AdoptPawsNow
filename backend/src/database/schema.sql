@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS surrender_applications (
     gender VARCHAR(20),
     reason TEXT NOT NULL,
     image_url TEXT,
+    contact_name VARCHAR(100),
+    contact_email VARCHAR(255),
     contact_phone VARCHAR(20),
     location VARCHAR(200),
     status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'approved', 'rejected')),

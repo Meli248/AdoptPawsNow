@@ -13,6 +13,8 @@ export const createSurrenderRequest = async (req, res) => {
             gender,
             reason,
             image_url, // Allow URL string directly or handle file upload in route
+            contact_name,
+            contact_email,
             contact_phone,
             location
         } = req.body;
@@ -30,10 +32,10 @@ export const createSurrenderRequest = async (req, res) => {
 
         const result = await pool.query(
             `INSERT INTO surrender_applications 
-      (user_id, pet_name, pet_type, breed, age, gender, reason, image_url, contact_phone, location)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      (user_id, pet_name, pet_type, breed, age, gender, reason, image_url, contact_name, contact_email, contact_phone, location)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *`,
-            [userId, pet_name, pet_type, breed, age, gender, reason, finalImage, contact_phone, location]
+            [userId, pet_name, pet_type, breed, age, gender, reason, finalImage, contact_name, contact_email, contact_phone, location]
         );
 
         res.status(201).json({
@@ -196,6 +198,8 @@ export const updateSurrenderRequest = async (req, res) => {
             age,
             gender,
             reason,
+            contact_name,
+            contact_email,
             contact_phone,
             location
         } = req.body;
@@ -224,12 +228,14 @@ export const updateSurrenderRequest = async (req, res) => {
                 age = COALESCE($4, age),
                 gender = COALESCE($5, gender),
                 reason = COALESCE($6, reason),
-                contact_phone = COALESCE($7, contact_phone),
-                location = COALESCE($8, location),
+                contact_name = COALESCE($7, contact_name),
+                contact_email = COALESCE($8, contact_email),
+                contact_phone = COALESCE($9, contact_phone),
+                location = COALESCE($10, location),
                 updated_at = CURRENT_TIMESTAMP
         `;
 
-        const params = [pet_name, pet_type, breed, age, gender, reason, contact_phone, location];
+        const params = [pet_name, pet_type, breed, age, gender, reason, contact_name, contact_email, contact_phone, location];
 
         if (image_url) {
             query += `, image_url = $${params.length + 1}`;

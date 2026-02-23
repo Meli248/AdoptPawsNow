@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,16 +12,27 @@ const surrenderSchema = z.object({
         errorMap: () => ({ message: 'Please select either Dog or Cat' }),
     }),
     breed: z.string().optional(),
-    age: z.string().regex(/^[0-9]+$/, 'Age must be a number').optional(),
+    age: z.string()
+        .optional()
+        .refine((val) => !val || /^\d+$/.test(val), { message: "Age must be numbers only" })
+        .refine((val) => !val || (parseInt(val) >= 0), { message: "Age cannot be negative" })
+        .refine((val) => !val || (val.length <= 2), { message: "Age cannot be more than 2 digits (use months for younger)" }),
     gender: z.enum(['male', 'female', 'unknown']).optional(),
     reason: z.string().min(10, 'Please provide a detailed reason (min 10 chars)'),
-    contact_phone: z.string().regex(/^[0-9]{10}$/, 'Phone number must be exactly 10 digits'),
+
+    // Contact Info - All Required
+    contact_name: z.string().min(1, 'Contact Name is required'),
+    contact_email: z.string().email('Invalid email address').min(1, 'Contact Email is required'),
+    contact_phone: z.string().regex(/^[0-9]+$/, 'Phone must be numbers only').min(10, 'Phone must be at least 10 digits').max(15, 'Phone cannot be more than 15 digits'),
+
     location: z.string().min(1, 'Location is required'),
-    image: z.any()
-        .refine((files) => files?.length > 0, "Image is required")
+    image: z.union([
+        z.any().refine((files) => files?.length > 0, "Image is required"),
+        z.string().min(1, "Image is required") // Allow string URL for existing images
+    ])
 });
 
-const SurrenderRequest = () => {
+const SurrenderRequest = ({ initialData, isEdit = false }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(null);
@@ -31,10 +42,42 @@ const SurrenderRequest = () => {
         handleSubmit,
         formState: { errors },
         setValue,
-        watch
+        watch,
+        reset
     } = useForm({
-        resolver: zodResolver(surrenderSchema)
+        resolver: zodResolver(surrenderSchema),
+        defaultValues: {
+            pet_type: 'dog',
+            gender: 'unknown'
+        }
     });
+
+    // Populate form if editing
+    useEffect(() => {
+        if (initialData) {
+            // Map initial data to form fields
+            const defaultValues = {
+                pet_name: initialData.pet_name || initialData.name,
+                pet_type: (initialData.pet_type || initialData.species || 'dog').toLowerCase(),
+                breed: initialData.breed || '',
+                age: initialData.age ? String(initialData.age) : '',
+                gender: (initialData.gender || 'unknown').toLowerCase(),
+                reason: initialData.reason || initialData.description || '',
+                contact_name: initialData.contact_name || '',
+                contact_email: initialData.contact_email || '',
+                contact_phone: initialData.contact_phone || '',
+                location: initialData.location || '',
+                image: initialData.image_url // Set existing image URL
+            };
+
+            // Set preview if image exists
+            if (initialData.image_url) {
+                setPreview(initialData.image_url.startsWith('http') ? initialData.image_url : `${import.meta.env.VITE_API_URL}${initialData.image_url}`);
+            }
+
+            reset(defaultValues);
+        }
+    }, [initialData, reset]);
 
     const onSubmit = async (data) => {
         setLoading(true);
@@ -45,21 +88,50 @@ const SurrenderRequest = () => {
             formData.append('pet_name', data.pet_name);
             formData.append('pet_type', data.pet_type);
             formData.append('reason', data.reason);
+            // Append new contact fields
+            formData.append('contact_name', data.contact_name);
+            formData.append('contact_email', data.contact_email);
             formData.append('contact_phone', data.contact_phone);
+
             formData.append('location', data.location);
-            formData.append('image', data.image[0]);
+
+            if (data.image && data.image instanceof FileList && data.image.length > 0) {
+                formData.append('image', data.image[0]);
+            }
 
             if (data.breed) formData.append('breed', data.breed);
             if (data.age) formData.append('age', data.age);
             if (data.gender) formData.append('gender', data.gender);
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
+            let response;
+            if (isEdit && initialData) {
+                // Determine if updating a Pet (Admin) or Surrender Request (User)
+                const id = initialData.pet_id || initialData.id || initialData.application_id;
+                // If it has application_id, likely a surrender request. If id/pet_id, likely a pet.
+                // However, AdminEditPet passes 'id' from params.
+
+                // If updating a PET (Admin side usually), endpoint is /pets/:id
+                // If updating a Surrender Request (User side), endpoint is /surrender/:id
+
+                // Let's guess based on where it came from or structure.
+                // Surrender requests have 'application_id'. Pets have 'id'.
+
+                const endpoint = initialData.application_id
+                    ? `${import.meta.env.VITE_API_URL}/surrender/${initialData.application_id}` // Update request
+                    : `${import.meta.env.VITE_API_URL}/pets/${id}`;   // Update pet
+
+                response = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+            } else {
+                response = await fetch(`${import.meta.env.VITE_API_URL}/surrender`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+            }
 
             if (response.status === 401) {
                 alert('Session expired. Please login again.');
@@ -71,8 +143,12 @@ const SurrenderRequest = () => {
             const result = await response.json();
 
             if (response.ok) {
-                alert('Request submitted successfully! We will contact you shortly.');
-                navigate('/profile');
+                alert(isEdit ? 'Updated successfully!' : 'Request submitted successfully! We will contact you shortly.');
+                if (window.history.length > 1) {
+                    navigate(-1); // Go back to previous page (Profile or Admin Dashboard)
+                } else {
+                    navigate('/profile');
+                }
             } else {
                 alert(result.message || 'Failed to submit request');
             }
@@ -98,9 +174,9 @@ const SurrenderRequest = () => {
 
     return (
         <div className="create-post-page" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-            <h1 className="page-title">Form</h1>
+            <h1 className="page-title">{isEdit ? 'Edit Details' : 'Surrender Form'}</h1>
             <p className="page-subtitle">
-                Help this pet find a loving forever home. Please provide details below.
+                {isEdit ? 'Update the details below.' : 'Help this pet find a loving forever home. Please provide details below.'}
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="create-post-form">
@@ -160,9 +236,14 @@ const SurrenderRequest = () => {
                         <div className="form-group">
                             <label className="form-label">
                                 <Calendar size={18} />
-                                Age
+                                Age (Optional)
                             </label>
-                            <input {...register('age')} placeholder="Enter age" type="number" className="form-input" />
+                            <input
+                                {...register('age')}
+                                placeholder="e.g. 5"
+                                className={`form-input ${errors.age ? 'error' : ''}`}
+                            />
+                            {errors.age && <span className="error-msg">{errors.age.message}</span>}
                         </div>
 
                         <div className="form-group">
@@ -178,33 +259,60 @@ const SurrenderRequest = () => {
                         </div>
                     </div>
 
+                    <h3>Contact Information</h3>
                     <div className="form-group">
                         <label className="form-label">
-                            <FileText size={18} />
-                            Reason for rehoming*
+                            <User size={18} />
+                            Contact Name*
                         </label>
-                        <textarea
-                            {...register('reason')}
-                            rows="4"
-                            placeholder="Please explain why you are surrendering this pet..."
-                            className={`form-textarea ${errors.reason ? 'error' : ''}`}
+                        <input
+                            {...register('contact_name')}
+                            placeholder="e.g. John Doe"
+                            className={`form-input ${errors.contact_name ? 'error' : ''}`}
                         />
-                        {errors.reason && <span className="error-msg">{errors.reason.message}</span>}
+                        {errors.contact_name && <span className="error-msg">{errors.contact_name.message}</span>}
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label className="form-label">
+                                <FileText size={18} />
+                                Contact Email*
+                            </label>
+                            <input
+                                {...register('contact_email')}
+                                placeholder="e.g. john@example.com"
+                                className={`form-input ${errors.contact_email ? 'error' : ''}`}
+                            />
+                            {errors.contact_email && <span className="error-msg">{errors.contact_email.message}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">
+                                <Phone size={18} />
+                                Contact Phone*
+                            </label>
+                            <input
+                                {...register('contact_phone')}
+                                placeholder="e.g. 5551234567"
+                                className={`form-input ${errors.contact_phone ? 'error' : ''}`}
+                            />
+                            {errors.contact_phone && <span className="error-msg">{errors.contact_phone.message}</span>}
+                        </div>
                     </div>
 
                     <div className="form-group">
                         <label className="form-label">
-                            <Phone size={18} />
-                            Contact Phone*
+                            <FileText size={18} />
+                            Reason/Description*
                         </label>
-                        <input
-                            {...register('contact_phone')}
-                            placeholder="Enter 10 digit number"
-                            type="tel"
-                            maxLength={10}
-                            className={`form-input ${errors.contact_phone ? 'error' : ''}`}
+                        <textarea
+                            {...register('reason')}
+                            rows="4"
+                            placeholder="Please explain why you are surrendering this pet or maintain a description..."
+                            className={`form-textarea ${errors.reason ? 'error' : ''}`}
                         />
-                        {errors.contact_phone && <span className="error-msg">{errors.contact_phone.message}</span>}
+                        {errors.reason && <span className="error-msg">{errors.reason.message}</span>}
                     </div>
 
                     <div className="form-group">
@@ -253,7 +361,7 @@ const SurrenderRequest = () => {
                 <div className="form-actions">
                     <button
                         type="button"
-                        onClick={() => navigate('/home')}
+                        onClick={() => navigate(-1)}
                         className="btn btn-secondary"
                     >
                         Cancel
@@ -263,7 +371,7 @@ const SurrenderRequest = () => {
                         className="btn btn-primary"
                         disabled={loading}
                     >
-                        {loading ? 'Submitting...' : 'Submit Request'}
+                        {loading ? 'Submitting...' : (isEdit ? 'Update Details' : 'Submit Request')}
                     </button>
                 </div>
             </form>
