@@ -161,7 +161,7 @@ const AdminDashboard = () => {
             <p className="dashboard-subtitle">Manage all pets and users from your admin dashboard.</p>
           </div>
           <button
-            className="btn-create-post"
+            className="btn btn-primary"
             onClick={() => navigate('/surrender-request')}
           >
             + Surrender Form
@@ -247,7 +247,7 @@ const AdminDashboard = () => {
                 {selectedItem.application_id && selectedItem.status === 'pending' && (
                   <>
                     <button
-                      className="btn-accept"
+                      className="btn btn-primary"
                       onClick={() => {
                         handleSurrenderAction(selectedItem.application_id, 'approved');
                         setSelectedItem(null);
@@ -256,7 +256,7 @@ const AdminDashboard = () => {
                       Accept
                     </button>
                     <button
-                      className="btn-decline"
+                      className="btn btn-secondary"
                       onClick={() => {
                         handleSurrenderAction(selectedItem.application_id, 'rejected');
                         setSelectedItem(null);

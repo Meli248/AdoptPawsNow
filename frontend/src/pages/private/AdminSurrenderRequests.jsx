@@ -67,23 +67,6 @@ const AdminSurrenderRequests = () => {
         }
     };
 
-    const handleCreatePost = (request) => {
-        // Navigate to create post page with state
-        navigate('/admin/create-post', {
-            state: {
-                prefill: {
-                    name: request.pet_name,
-                    species: request.pet_type,
-                    breed: request.breed,
-                    age: request.age,
-                    gender: request.gender,
-                    description: request.reason,
-                    contact_phone: request.contact_phone
-                }
-            }
-        });
-    };
-
     if (loading) return <div className="p-4">Loading...</div>;
 
     return (

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import CreatePost from '../../components/Createpost';
+import SurrenderRequest from './SurrenderRequest';
 
 const AdminEditPet = () => {
     const { id } = useParams();
@@ -14,7 +14,6 @@ const AdminEditPet = () => {
 
     const fetchPetDetails = async () => {
         try {
-            // Assuming public endpoint is enough, otherwise use /admin/pets/:id if available
             const response = await fetch(`${import.meta.env.VITE_API_URL}/pets/${id}`);
             const data = await response.json();
 
@@ -31,26 +30,13 @@ const AdminEditPet = () => {
         }
     };
 
-    const handleClose = () => {
-        navigate('/admin/dashboard');
-    };
-
-    const handleSuccess = () => {
-        alert('Pet updated successfully!');
-        navigate('/admin/dashboard');
-    };
-
     if (loading) return <div className="p-4 text-center">Loading pet details...</div>;
 
     return (
-        <div className="admin-page-container" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-            <h1 style={{ marginBottom: '2rem' }}>Edit Pet</h1>
-            <CreatePost
-                isOpen={true}
-                isModal={false}
-                onClose={handleClose}
-                onSuccess={handleSuccess}
+        <div className="admin-page-container">
+            <SurrenderRequest
                 initialData={petData}
+                isEdit={true}
             />
         </div>
     );

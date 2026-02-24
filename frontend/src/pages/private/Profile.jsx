@@ -514,17 +514,17 @@ const Profile = () => {
           <div className="section-header-dashboard">
             <h2 className="section-title-dashboard">Profile Information</h2>
             {!isEditing ? (
-              <button className="btn-icon-edit" onClick={handleEditToggle}>
+              <button className="btn btn-secondary" onClick={handleEditToggle}>
                 <Edit2 size={18} />
                 Edit Profile
               </button>
             ) : (
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button className="btn-icon-save" onClick={handleSaveProfile}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <button className="btn btn-primary" onClick={handleSaveProfile} style={{ width: '100%' }}>
                   <Save size={18} />
                   Save
                 </button>
-                <button className="btn-icon-cancel" onClick={handleEditToggle}>
+                <button className="btn btn-secondary" onClick={handleEditToggle} style={{ width: '100%' }}>
                   <X size={18} />
                   Cancel
                 </button>
@@ -1073,20 +1073,20 @@ const Profile = () => {
                 />
               </div>
 
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setShowEditModal(false)}
-                >
-                  Cancel
-                </button>
+              <div className="form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={handleSaveEdit}
                 >
                   <Save size={18} /> Save Changes
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
                 </button>
               </div>
             </div>

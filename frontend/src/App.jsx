@@ -22,7 +22,7 @@ import ManageUsers from './pages/private/Manageusers'; // Note: lowercase 'u'
 import SurrenderRequest from './pages/private/SurrenderRequest'; // Added
 import AdminSurrenderRequests from './pages/private/AdminSurrenderRequests';
 import AdminAdoptionRequests from './pages/private/AdminAdoptionRequests';
-import AdminCreatePost from './pages/private/AdminCreatePost';
+
 import AdminEditPet from './pages/private/AdminEditPet';
 
 function App() {
@@ -54,7 +54,6 @@ function App() {
           <Route path="/admin/manage-users" element={<ManageUsers />} />
           <Route path="/admin/surrender-requests" element={<AdminSurrenderRequests />} />
           <Route path="/admin/adoption-requests" element={<AdminAdoptionRequests />} />
-          <Route path="/admin/create-post" element={<AdminCreatePost />} />
           <Route path="/admin/edit-pet/:id" element={<AdminEditPet />} />
         </Route>
 

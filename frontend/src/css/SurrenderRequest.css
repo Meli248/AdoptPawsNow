@@ -210,7 +210,18 @@
 }
 
 .form-actions .btn {
-    flex: 1;
+    flex: 1 1 0;
+    /* Ensures buttons distribute evenly regardless of content */
+    width: 100%;
+    height: 52px;
+    /* Exact same height regardless of border */
+    box-sizing: border-box;
+    /* Makes border count inside the height */
+    padding: 0 20px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    display: flex;
 }
 
 /* Responsive Design */

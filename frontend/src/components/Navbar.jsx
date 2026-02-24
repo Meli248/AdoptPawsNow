@@ -153,7 +153,7 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Link to="/login" className="btn-login">Login</Link>
+              <Link to="/login" className="btn btn-text">Login</Link>
               <Link to="/register" className="btn btn-primary">Get Started</Link>
             </>
           )}

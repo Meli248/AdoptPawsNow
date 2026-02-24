@@ -388,7 +388,7 @@ const PetDetail = () => {
                 />
               </div>
 
-              <div className="form-actions">
+              <div className="form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
                 <button type="submit" className="btn btn-primary">
                   Submit Application
                 </button>

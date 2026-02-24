@@ -369,26 +369,12 @@ const Adopt = () => {
 
                   {!userRole || userRole !== 'admin' ? (
                     <button
-                      className="adopt-btn-card"
+                      className="btn btn-primary"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigate(`/pet/${pet.pet_id || pet.id}`);
                       }}
-                      style={{
-                        marginTop: '15px',
-                        width: '100%',
-                        padding: '10px',
-                        backgroundColor: '#6b9b7f',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px'
-                      }}
+                      style={{ marginTop: '15px', width: '100%' }}
                     >
                       View Details
                     </button>
@@ -481,15 +467,15 @@ const Adopt = () => {
                   />
                 </div>
 
-                <div className="form-actions" style={{ display: 'flex', gap: '1rem' }}>
+                <div className="form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
                   <button type="submit" className="btn btn-primary" style={{
-                    flex: 1, padding: '0.8rem', backgroundColor: '#6b9b7f', color: 'white',
+                    backgroundColor: '#6b9b7f', color: 'white',
                     border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer'
                   }}>
                     Submit Application
                   </button>
-                  <button type="button" onClick={() => setShowModal(false)} style={{
-                    padding: '0.8rem 1.5rem', backgroundColor: '#6c757d', color: 'white',
+                  <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary" style={{
+                    backgroundColor: '#6c757d', color: 'white',
                     border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer'
                   }}>
                     Cancel

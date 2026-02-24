@@ -1,12 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Heart,
-  AlertTriangle,
-  MapPin,
-  Clock,
   PawPrint,
-  Activity,
   ArrowRight,
   Search,
   MessageSquare,
@@ -15,65 +11,20 @@ import {
   Dog,
   Cat
 } from 'lucide-react';
-import CreatePostModal from '../../components/Createpost';
 import '../../css/Home.css';
 
 const Home = () => {
-  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
-  const [featuredPets, setFeaturedPets] = useState([]);
   const [stats, setStats] = useState({
     petsAdopted: '0',
-
     dogs: '0',
     cats: '0'
   });
-  const [loading, setLoading] = useState(true);
-  const [imagesLoaded, setImagesLoaded] = useState({});
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('access_token');
-  const observerRef = useRef(null);
 
-  // Lazy loading intersection observer
-  const imageObserver = useCallback((node) => {
-    if (observerRef.current) observerRef.current.disconnect();
-
-    observerRef.current = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const img = entry.target;
-          if (img.dataset.src) {
-            img.src = img.dataset.src;
-            img.removeAttribute('data-src');
-            observerRef.current.unobserve(img);
-          }
-        }
-      });
-    });
-
-    if (node) observerRef.current.observe(node);
-  }, []);
-
-  // Fetch featured pets and stats from API
   useEffect(() => {
-    const fetchFeaturedPets = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/pets?status=available`);
-        const data = await response.json();
-
-        if (data.success && data.data.length > 0) {
-          // Get first 3 pets for featured section
-          setFeaturedPets(data.data.slice(0, 3));
-        }
-      } catch (error) {
-        console.error('Error fetching featured pets:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const fetchStats = async () => {
       try {
-        // ✅ FIXED: Use dedicated stats endpoint for better performance
         const response = await fetch(`${import.meta.env.VITE_API_URL}/stats/home`);
         const data = await response.json();
 
@@ -87,11 +38,9 @@ const Home = () => {
         }
       } catch (error) {
         console.error('Error fetching stats:', error);
-        // Keep default stats on error
       }
     };
 
-    fetchFeaturedPets();
     fetchStats();
   }, []);
 
@@ -140,104 +89,6 @@ const Home = () => {
     navigate(path);
   };
 
-  const handleCreatePost = (postData) => {
-    console.log('Post created:', postData);
-    // Here you would typically make an API call to save the post
-  };
-
-  const [favorites, setFavorites] = useState(new Set());
-
-  // Helper function to get image URL
-  const getImageUrl = (imageUrl) => {
-    if (!imageUrl) return 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
-    if (imageUrl.startsWith('http')) return imageUrl;
-
-    // Strip '/api' from the end of VITE_API_URL if it exists
-    const baseUrl = import.meta.env.VITE_API_URL.replace(/\/api$/, '');
-
-    // Ensure imageUrl starts with / if it doesn't
-    const cleanPath = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-
-    return `${baseUrl}${cleanPath}`;
-  };
-
-  // Fetch favorites on load
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchFavorites();
-    }
-  }, [isAuthenticated]);
-
-  const fetchFavorites = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      if (!token) return;
-
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/favorites`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.status === 401) {
-        localStorage.removeItem('access_token');
-        // Optionally refresh page or update state, but finding 401 is enough to stop
-        return;
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        // favorites from API returns pet objects joined with favorites
-        const favSet = new Set(data.data.map(pet => pet.pet_id));
-        setFavorites(favSet);
-      }
-    } catch (err) {
-      console.error("Error fetching favorites:", err);
-    }
-  };
-
-  const toggleFavorite = async (e, petId) => {
-    e.stopPropagation();
-    if (!isAuthenticated) {
-      alert('Please login to favorite pets');
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem('access_token');
-      const isFavorited = favorites.has(petId);
-      const method = isFavorited ? 'DELETE' : 'POST';
-      const url = isFavorited
-        ? `${import.meta.env.VITE_API_URL}/users/favorites/${petId}`
-        : `${import.meta.env.VITE_API_URL}/users/favorites`;
-
-      const body = isFavorited ? undefined : JSON.stringify({ pet_id: petId });
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body
-      });
-
-      if (response.ok) {
-        setFavorites(prev => {
-          const newFavs = new Set(prev);
-          if (isFavorited) newFavs.delete(petId);
-          else newFavs.add(petId);
-          return newFavs;
-        });
-      }
-    } catch (err) {
-      console.error("Error toggling favorite:", err);
-    }
-  };
-
-  // Handle image load
-  const handleImageLoad = (petId) => {
-    setImagesLoaded(prev => ({ ...prev, [petId]: true }));
-  };
-
   return (
     <div className="home-page">
       {/* Hero Section */}
@@ -270,21 +121,18 @@ const Home = () => {
             <div className="hero-actions">
               <button
                 onClick={handleCreatePostClick}
-                className="btn btn-primary btn-hero-large"
+                className="btn btn-hero btn-primary"
               >
                 <Plus size={20} />
                 Form
               </button>
-              <div className="hero-actions-secondary">
-                <button
-                  onClick={() => handleProtectedNavigation('/adopt')}
-                  className="btn btn-secondary"
-                >
-                  <Heart size={20} />
-                  Adopt a Pet
-                </button>
-
-              </div>
+              <button
+                onClick={() => handleProtectedNavigation('/adopt')}
+                className="btn btn-hero btn-secondary"
+              >
+                <Heart size={20} />
+                Adopt a Pet
+              </button>
             </div>
           </div>
 
@@ -315,93 +163,6 @@ const Home = () => {
                 <div className="stat-label">{stat.label}</div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Pets Section */}
-      <section className="featured-section">
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Featured Pets</h2>
-            <p className="section-subtitle">
-              Meet some of our adorable pets looking for homes
-            </p>
-          </div>
-
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <p>Loading pets...</p>
-            </div>
-          ) : featuredPets.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem' }}>
-              <p>No pets available at the moment. Check back soon!</p>
-            </div>
-          ) : (
-            <div className="pets-grid">
-              {featuredPets.map((pet, index) => {
-                const imgUrl = getImageUrl(pet.image_url);
-                console.log(`Pet ${pet.name} (${pet.pet_id}):`, pet, 'URL:', imgUrl);
-                return (
-                  <div key={pet.pet_id} className="pet-card fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                    <div className="pet-image-wrapper">
-                      <img
-                        src={imgUrl}
-                        alt={pet.name}
-                        className="pet-image"
-                        onError={(e) => {
-                          console.log('Image failed to load:', getImageUrl(pet.image_url));
-                          e.target.src = 'https://images.unsplash.com/photo-1415369629372-26f2fe60c467?w=400&h=400&fit=crop';
-                        }}
-                      />
-                      <div className={`pet-status ${pet.status?.toLowerCase() || 'available'}`}>
-                        {pet.status || 'Available'}
-                      </div>
-                      <button
-                        className="favorite-btn"
-                        onClick={(e) => toggleFavorite(e, pet.pet_id)}
-                      >
-                        <Heart
-                          size={20}
-                          fill={favorites.has(pet.pet_id) ? "red" : "none"}
-                          color={favorites.has(pet.pet_id) ? "red" : "currentColor"}
-                        />
-                      </button>
-                    </div>
-                    <div className="pet-info">
-                      <h3 className="pet-name">{pet.name}</h3>
-                      <p className="pet-breed">{pet.breed || 'Mixed'} • {pet.species || 'Pet'}</p>
-                      <div className="pet-details">
-                        <div className="pet-detail">
-                          <MapPin size={16} />
-                          <span>{pet.location || 'Location N/A'}</span>
-                        </div>
-                        <div className="pet-detail">
-                          <Clock size={16} />
-                          <span>{pet.age ? `${pet.age} yrs` : 'Age Unknown'}</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleProtectedNavigation(`/pet/${pet.pet_id}`)}
-                        className="btn btn-primary btn-adopt"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="view-all-container">
-            <button
-              onClick={() => handleProtectedNavigation('/adopt')}
-              className="btn btn-secondary"
-            >
-              View All Pets
-              <ArrowRight size={20} />
-            </button>
           </div>
         </div>
       </section>
@@ -439,27 +200,17 @@ const Home = () => {
               Whether you want to adopt a pet or help reunite lost animals with their families, you
               can make a difference today.
             </p>
-            <div className="cta-actions">
+            <div className="cta-actions" style={{ display: 'flex', justifyContent: 'center' }}>
               <button
                 onClick={() => handleProtectedNavigation('/adopt')}
-                className="btn btn-secondary"
+                className="btn btn-cta"
               >
                 Adopt a Pet
               </button>
-
             </div>
           </div>
         </div>
       </section>
-
-      {/* Create Post Modal - Only shown if authenticated */}
-      {isAuthenticated && (
-        <CreatePostModal
-          isOpen={showCreatePostModal}
-          onClose={() => setShowCreatePostModal(false)}
-          onSubmit={handleCreatePost}
-        />
-      )}
     </div>
   );
 };

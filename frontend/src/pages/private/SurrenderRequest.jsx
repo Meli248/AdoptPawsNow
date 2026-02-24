@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dog, Cat, Upload, AlertCircle, User, Phone, FileText, Calendar, Hash, MapPin } from 'lucide-react';
-import '../../css/CreatePost.css'; // Reusing existing styles or create new
+import '../../css/SurrenderRequest.css'; // Reusing existing styles or create new
 
 const surrenderSchema = z.object({
     pet_name: z.string().min(1, 'Pet name is required'),
@@ -358,20 +358,20 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
                     </div>
                 </div>
 
-                <div className="form-actions">
-                    <button
-                        type="button"
-                        onClick={() => navigate(-1)}
-                        className="btn btn-secondary"
-                    >
-                        Cancel
-                    </button>
+                <div className="form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
                     <button
                         type="submit"
                         className="btn btn-primary"
                         disabled={loading}
                     >
                         {loading ? 'Submitting...' : (isEdit ? 'Update Details' : 'Submit Request')}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => navigate(-1)}
+                        className="btn btn-secondary"
+                    >
+                        Cancel
                     </button>
                 </div>
             </form>
