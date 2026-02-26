@@ -1,8 +1,8 @@
 import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const AdminRoute = () => {
-  const isAuthenticated = !!localStorage.getItem('access_token');
-  const userRole = localStorage.getItem('user_role');
+  const { isAuthenticated, userRole } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

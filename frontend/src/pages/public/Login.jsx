@@ -4,10 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import '../../css/Login.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -30,14 +32,11 @@ const Login = () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // Store authentication data in localStorage
-        localStorage.setItem('access_token', result.data.access_token);
-        localStorage.setItem('user', result.data.user.username);
-        localStorage.setItem('user_role', result.data.user.role); // Store user role
-        localStorage.setItem('user_id', result.data.user.user_id); // Store user ID
-
-        // Notify other components (like Navbar) about the login
-        window.dispatchEvent(new Event('storage'));
+        // Use the login function from AuthContext
+        login({
+          access_token: result.data.access_token,
+          user: result.data.user
+        });
 
         // Redirect based on role
         if (result.data.user.role === 'admin' || result.data.user.email === 'admin@gmail.com') {

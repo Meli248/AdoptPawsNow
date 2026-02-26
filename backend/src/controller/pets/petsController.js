@@ -4,7 +4,7 @@ import { createNotification } from '../notification/notificationController.js';
 // Get all pets for adoption
 export const getAllPets = async (req, res) => {
   try {
-    const { species, status = 'available', size, gender } = req.query;
+    const { species, status = 'available', size, gender, limit, offset } = req.query;
 
     let query = "SELECT * FROM pets";
     const params = [];
@@ -35,6 +35,16 @@ export const getAllPets = async (req, res) => {
     }
 
     query += ' ORDER BY created_at DESC';
+
+    if (limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(parseInt(limit));
+    }
+
+    if (offset) {
+      query += ` OFFSET $${params.length + 1}`;
+      params.push(parseInt(offset));
+    }
 
     const result = await pool.query(query, params);
 
@@ -211,7 +221,9 @@ export const updatePet = async (req, res) => {
        RETURNING *`,
       [
         name, species, breed, age, gender, size, color, description,
-        image_url, status, vaccinated, neutered,
+        image_url, status,
+        vaccinated === 'true' || vaccinated === true,
+        neutered === 'true' || neutered === true,
         contact_name, contact_email, contact_phone, contact_type,
         location,
         id
@@ -334,7 +346,7 @@ export const getAllApplications = async (req, res) => {
     const params = [];
 
     if (status) {
-      query += ' WHERE a.status = $1';
+      query += ' WHERE LOWER(a.status) = LOWER($1)';
       params.push(status);
     }
 
@@ -431,8 +443,8 @@ export const updateApplicationStatus = async (req, res) => {
 
     // Notify the applicant
     try {
-      // Find user by email
-      const userRes = await pool.query('SELECT user_id FROM users WHERE email = $1', [application.email]);
+      // Find user by email (case-insensitive)
+      const userRes = await pool.query('SELECT user_id FROM users WHERE LOWER(email) = LOWER($1)', [application.email]);
 
       if (userRes.rows.length > 0) {
         const userId = userRes.rows[0].user_id;
@@ -441,9 +453,13 @@ export const updateApplicationStatus = async (req, res) => {
         const petRes = await pool.query('SELECT name, image_url FROM pets WHERE pet_id = $1', [application.pet_id]);
         const pet = petRes.rows[0];
 
+        const message = status === 'approved'
+          ? `Congratulations! Your adoption application for ${pet.name} has been approved. They are now officially your companion!`
+          : `We're sorry, your adoption application for ${pet.name} has been declined at this time.`;
+
         await createNotification(
           userId,
-          `Your adoption application for ${pet.name} has been ${status}.`,
+          message,
           'adoption_update',
           pet.image_url
         );

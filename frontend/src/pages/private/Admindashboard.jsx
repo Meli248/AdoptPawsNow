@@ -14,9 +14,7 @@ const AdminDashboard = () => {
     cats: 0
   });
   const [pets, setPets] = useState([]);
-  const [surrenderRequests, setSurrenderRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedItem, setSelectedItem] = useState(null); // For modal
 
   useEffect(() => {
     // Check if user is admin
@@ -42,29 +40,16 @@ const AdminDashboard = () => {
       const petsData = await petsResponse.json();
       const allPets = petsData.data || [];
 
-      setPets(allPets);
-
-      // Fetch Surrender Requests (Pending)
-      const surrenderResponse = await fetch(`${import.meta.env.VITE_API_URL}/surrender?status=pending`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const surrenderData = await surrenderResponse.json();
-      setSurrenderRequests(surrenderData.data || []);
+      setPets(allPets.filter(p => p.status?.toLowerCase() === 'available'));
 
       // Calculate stats
-      const adoptionPets = allPets.filter(p => !['missing', 'found', 'closed'].includes(p.status?.toLowerCase()));
-      const missingPets = allPets.filter(p => p.status?.toLowerCase() === 'missing');
-
-      const dogs = allPets.filter(p => p.species?.toLowerCase() === 'dog');
-      const cats = allPets.filter(p => p.species?.toLowerCase() === 'cat');
       const adopted = allPets.filter(p => p.status?.toLowerCase() === 'adopted');
+      const dogs = allPets.filter(p => p.species?.toLowerCase() === 'dog' && p.status?.toLowerCase() === 'available');
+      const cats = allPets.filter(p => p.species?.toLowerCase() === 'cat' && p.status?.toLowerCase() === 'available');
 
       setStats({
-        totalPosts: allPets.length,
+        totalPosts: allPets.filter(p => p.status?.toLowerCase() === 'available').length,
         adoptedPets: adopted.length,
-        missingPets: missingPets.length,
         dogs: dogs.length,
         cats: cats.length
       });
@@ -108,30 +93,6 @@ const AdminDashboard = () => {
 
   const handleViewPet = (petId) => {
     navigate(`/pet/${petId}`);
-  };
-
-  const handleSurrenderAction = async (id, status) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender/${id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ status })
-      });
-
-      if (response.ok) {
-        alert(`Request ${status === 'approved' ? 'accepted' : 'declined'} successfully`);
-        fetchDashboardData(); // Refresh data
-      } else {
-        alert('Failed to update request status');
-      }
-    } catch (error) {
-      console.error('Error updating surrender status:', error);
-      alert('Error updating status');
-    }
   };
 
   /* Search Logic */
@@ -191,7 +152,7 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <p className="stat-value">{stats.adoptedPets}</p>
-              <p className="stat-label">Adopted</p>
+              <p className="stat-label">Unavailable</p>
             </div>
           </div>
 
@@ -215,119 +176,6 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
-
-        {/* Detail Modal */}
-        {selectedItem && (
-          <div className="modal-overlay" onClick={() => setSelectedItem(null)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <button className="close-btn" onClick={() => setSelectedItem(null)}>×</button>
-
-              <div className="modal-header">
-                <h2>{selectedItem.pet_name || selectedItem.name} Details</h2>
-              </div>
-
-              <div className="modal-body">
-                <div className="modal-image-container">
-                  <img
-                    src={getImageUrl(selectedItem.image_url)}
-                    alt={selectedItem.pet_name || selectedItem.name}
-                    className="modal-image"
-                  />
-                </div>
-
-                <div className="modal-info">
-                  <p><strong>Type:</strong> {selectedItem.pet_type || selectedItem.species}</p>
-                  <p><strong>Breed:</strong> {selectedItem.breed || 'Unknown'}</p>
-                  <p><strong>Age:</strong> {selectedItem.age || 'Unknown'}</p>
-                  <p><strong>Gender:</strong> {selectedItem.gender || 'Unknown'}</p>
-                  <p><strong>Reason/Description:</strong> {selectedItem.reason || selectedItem.description}</p>
-                  <p><strong>Location:</strong> {selectedItem.location || 'N/A'}</p>
-                  <p><strong>Contact:</strong> {selectedItem.contact_phone || selectedItem.contact_email || 'N/A'}</p>
-                  <p><strong>Status:</strong> <span className={`status-badge ${selectedItem.status}`}>{selectedItem.status}</span></p>
-                  {selectedItem.user_name && <p><strong>Submitted by:</strong> {selectedItem.user_name} ({selectedItem.user_email})</p>}
-                </div>
-              </div>
-
-              <div className="modal-actions">
-                {selectedItem.application_id && selectedItem.status === 'pending' && (
-                  <>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => {
-                        handleSurrenderAction(selectedItem.application_id, 'approved');
-                        setSelectedItem(null);
-                      }}
-                    >
-                      Accept
-                    </button>
-                    <button
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        handleSurrenderAction(selectedItem.application_id, 'rejected');
-                        setSelectedItem(null);
-                      }}
-                    >
-                      Decline
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Surrender Requests Section */}
-        {surrenderRequests.length > 0 && (
-          <div className="surrender-section">
-            <h2 className="section-title">Pending Surrender Requests</h2>
-            <div className="requests-grid">
-              {surrenderRequests.map((request) => (
-                <div
-                  key={request.application_id}
-                  className="request-card"
-                  onClick={() => setSelectedItem(request)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div className="request-image-wrapper">
-                    <img
-                      src={getImageUrl(request.image_url)}
-                      alt={request.pet_name}
-                      className="request-image"
-                    />
-                    <div className="request-badge">Pending</div>
-                  </div>
-                  <div className="request-content">
-                    <h3>{request.pet_name} ({request.pet_type})</h3>
-                    <p className="request-detail"><strong>Breed:</strong> {request.breed || 'Unknown'}</p>
-                    <p className="request-detail"><strong>Age:</strong> {request.age} years</p>
-                    <p className="request-detail"><strong>Location:</strong> {request.location}</p>
-
-                    <div className="request-actions" onClick={e => e.stopPropagation()}>
-                      <button
-                        className="btn btn-primary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSurrenderAction(request.application_id, 'approved');
-                        }}
-                      >
-                        Accept
-                      </button>
-                      <button
-                        className="btn btn-secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSurrenderAction(request.application_id, 'rejected');
-                        }}
-                      >
-                        Decline
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* All Pet Posts */}
         <div className="all-pets-section">
@@ -357,7 +205,7 @@ const AdminDashboard = () => {
                     className="pet-image"
                   />
                   <div className={`pet-status ${pet.status}`}>
-                    {pet.status === 'available' ? 'For Adoption' : pet.status}
+                    {pet.status === 'available' ? 'Available' : 'Unavailable'}
                   </div>
                 </div>
                 <div className="pet-info">

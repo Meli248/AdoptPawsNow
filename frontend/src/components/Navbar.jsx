@@ -2,43 +2,19 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Bell, Menu, X } from 'lucide-react';
 import Notification from './Notification';
+import { useAuth } from '../context/AuthContext';
 import '../css/Navbar.css';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState(localStorage.getItem('user'));
-  const [userRole, setUserRole] = useState(localStorage.getItem('user_role'));
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'));
+  const { user, userRole, isAuthenticated, logout } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const token = localStorage.getItem('access_token');
-      const username = localStorage.getItem('user');
-      const role = localStorage.getItem('user_role');
-      setUser(username);
-      setUserRole(role);
-      setIsAuthenticated(!!token);
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    handleStorageChange();
-
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('user_role');
-
-    setUser(null);
-    setUserRole(null);
-    setIsAuthenticated(false);
-
-    window.dispatchEvent(new Event('storage'));
+    logout();
     navigate('/home');
   };
 
@@ -52,6 +28,43 @@ const Navbar = () => {
   };
 
   const isAdmin = userRole === 'admin';
+
+  useEffect(() => {
+    let intervalId;
+
+    const fetchUnreadCount = async () => {
+      if (!isAuthenticated || isAdmin) return;
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/notifications/unread-count`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUnreadCount(data.count);
+        }
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    if (isAuthenticated && !isAdmin) {
+      fetchUnreadCount();
+      intervalId = setInterval(fetchUnreadCount, 30000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isAuthenticated, isAdmin]);
+
+  const handleNotificationOpen = () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications) {
+      setUnreadCount(0); // Optimistically clear badge
+    }
+    if (isMenuOpen) setIsMenuOpen(false);
+  };
 
   return (
     <nav className="navbar">
@@ -152,14 +165,12 @@ const Navbar = () => {
               <div style={{ position: 'relative' }}>
                 {!isAdmin && (
                   <button
-                    onClick={() => {
-                      setShowNotifications(!showNotifications);
-                      if (isMenuOpen) setIsMenuOpen(false);
-                    }}
-                    className="btn-icon"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center' }}
+                    onClick={handleNotificationOpen}
+                    className={`btn-icon notification-bell-wrapper ${showNotifications ? 'active' : ''}`}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', position: 'relative' }}
                   >
-                    <Bell size={20} />
+                    <Bell size={21} />
+                    {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
                   </button>
                 )}
                 {!isAdmin && <Notification isOpen={showNotifications} onClose={() => setShowNotifications(false)} />}

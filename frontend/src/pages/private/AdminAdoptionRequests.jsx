@@ -6,6 +6,7 @@ const AdminAdoptionRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved', 'rejected'
+    const [selectedPet, setSelectedPet] = useState(null); // For pet detail modal
 
     useEffect(() => {
         fetchRequests();
@@ -81,25 +82,55 @@ const AdminAdoptionRequests = () => {
                 </div>
 
                 {/* Tabs */}
-                <div className="filter-tabs fade-in" style={{ justifyContent: 'flex-start', marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
+                <div className="filter-tabs fade-in" style={{ justifyContent: 'flex-start', marginBottom: '2rem', display: 'flex', gap: '1.25rem' }}>
                     <button
                         className={`filter-tab ${activeTab === 'pending' ? 'active' : ''}`}
                         onClick={() => setActiveTab('pending')}
-                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'pending' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'pending' ? '#6b9b7f' : 'white', color: activeTab === 'pending' ? 'white' : '#666', cursor: 'pointer' }}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '50px',
+                            border: activeTab === 'pending' ? 'none' : '2px solid var(--border-color)',
+                            backgroundColor: activeTab === 'pending' ? 'var(--primary-color)' : 'white',
+                            color: activeTab === 'pending' ? 'white' : 'var(--text-light)',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            transition: 'all 0.3s ease'
+                        }}
                     >
                         Pending
                     </button>
                     <button
                         className={`filter-tab ${activeTab === 'approved' ? 'active' : ''}`}
                         onClick={() => setActiveTab('approved')}
-                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'approved' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'approved' ? '#6b9b7f' : 'white', color: activeTab === 'approved' ? 'white' : '#666', cursor: 'pointer' }}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '50px',
+                            border: activeTab === 'approved' ? 'none' : '2px solid var(--border-color)',
+                            backgroundColor: activeTab === 'approved' ? 'var(--primary-color)' : 'white',
+                            color: activeTab === 'approved' ? 'white' : 'var(--text-light)',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            transition: 'all 0.3s ease'
+                        }}
                     >
                         Approved
                     </button>
                     <button
                         className={`filter-tab ${activeTab === 'rejected' ? 'active' : ''}`}
                         onClick={() => setActiveTab('rejected')}
-                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'rejected' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'rejected' ? '#6b9b7f' : 'white', color: activeTab === 'rejected' ? 'white' : '#666', cursor: 'pointer' }}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '50px',
+                            border: activeTab === 'rejected' ? 'none' : '2px solid var(--border-color)',
+                            backgroundColor: activeTab === 'rejected' ? 'var(--primary-color)' : 'white',
+                            color: activeTab === 'rejected' ? 'white' : 'var(--text-light)',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            transition: 'all 0.3s ease'
+                        }}
                     >
                         Rejected
                     </button>
@@ -125,7 +156,7 @@ const AdminAdoptionRequests = () => {
                             ) : (
                                 requests.map((req) => (
                                     <tr key={req.application_id || req.id}>
-                                        <td>
+                                        <td onClick={() => setSelectedPet(req)} style={{ cursor: 'pointer' }}>
                                             <div className="user-info">
                                                 <div className="user-details">
                                                     <p className="user-name">{req.applicant_name}</p>
@@ -135,7 +166,7 @@ const AdminAdoptionRequests = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>
+                                        <td onClick={() => setSelectedPet(req)} style={{ cursor: 'pointer' }}>
                                             <div className="user-info">
                                                 {req.pet_image && (
                                                     <div className="user-avatar">
@@ -202,6 +233,51 @@ const AdminAdoptionRequests = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pet Detail Modal */}
+                {selectedPet && (
+                    <div className="modal-overlay" onClick={() => setSelectedPet(null)} style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center',
+                        alignItems: 'center', zIndex: 1000, padding: '20px'
+                    }}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()} style={{
+                            backgroundColor: 'white', padding: '2rem', borderRadius: '15px',
+                            maxWidth: '600px', width: '100%', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                        }}>
+                            <button className="close-btn" onClick={() => setSelectedPet(null)} style={{
+                                position: 'absolute', top: '15px', right: '15px', border: 'none',
+                                background: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#666'
+                            }}>×</button>
+
+                            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                                <div style={{ flex: '1 1 200px' }}>
+                                    <img
+                                        src={selectedPet.pet_image?.startsWith('http') ? selectedPet.pet_image : `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${selectedPet.pet_image}`}
+                                        alt={selectedPet.pet_name}
+                                        style={{ width: '100%', borderRadius: '12px', objectFit: 'cover', height: '250px' }}
+                                    />
+                                </div>
+                                <div style={{ flex: '1 1 300px' }}>
+                                    <h2 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>{selectedPet.pet_name}</h2>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <p><strong>Species:</strong> {selectedPet.species}</p>
+                                        <p><strong>Breed:</strong> {selectedPet.breed}</p>
+                                        <p><strong>Status:</strong> <span className={`status-badge status-${selectedPet.status?.toLowerCase()}`} style={{
+                                            padding: '2px 8px', borderRadius: '4px', fontSize: '0.85rem',
+                                            backgroundColor: '#f0f4f2', color: '#6b9b7f'
+                                        }}>{selectedPet.status || activeTab}</span></p>
+                                        <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid #eee' }} />
+                                        <p><strong>Applicant:</strong> {selectedPet.applicant_name}</p>
+                                        <p><strong>Email:</strong> {selectedPet.email}</p>
+                                        <p><strong>Phone:</strong> {selectedPet.phone}</p>
+                                        <p><strong>Reason:</strong> {selectedPet.reason}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

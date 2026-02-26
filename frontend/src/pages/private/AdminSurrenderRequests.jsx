@@ -8,6 +8,7 @@ const AdminSurrenderRequests = () => {
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('pending'); // 'pending', 'approved', 'rejected'
+    const [selectedPet, setSelectedPet] = useState(null); // For pet detail modal
 
     useEffect(() => {
         fetchRequests();
@@ -124,7 +125,7 @@ const AdminSurrenderRequests = () => {
                             ) : (
                                 requests.map((req) => (
                                     <tr key={req.application_id}>
-                                        <td>
+                                        <td onClick={() => setSelectedPet(req)} style={{ cursor: 'pointer' }}>
                                             <div className="user-info">
                                                 {req.image_url && (
                                                     <div className="user-avatar">
@@ -137,8 +138,8 @@ const AdminSurrenderRequests = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>{req.pet_type}</td>
-                                        <td>
+                                        <td onClick={() => setSelectedPet(req)} style={{ cursor: 'pointer' }}>{req.pet_type}</td>
+                                        <td onClick={() => setSelectedPet(req)} style={{ cursor: 'pointer' }}>
                                             <div>{req.contact_phone}</div>
                                             <div style={{ fontSize: '0.8em', color: '#666' }}>{req.user_name}</div>
                                         </td>
@@ -182,6 +183,52 @@ const AdminSurrenderRequests = () => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pet Detail Modal */}
+                {selectedPet && (
+                    <div className="modal-overlay" onClick={() => setSelectedPet(null)} style={{
+                        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center',
+                        alignItems: 'center', zIndex: 1000, padding: '20px'
+                    }}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()} style={{
+                            backgroundColor: 'white', padding: '2rem', borderRadius: '15px',
+                            maxWidth: '600px', width: '100%', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
+                        }}>
+                            <button className="close-btn" onClick={() => setSelectedPet(null)} style={{
+                                position: 'absolute', top: '15px', right: '15px', border: 'none',
+                                background: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#666'
+                            }}>×</button>
+
+                            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                                <div style={{ flex: '1 1 200px' }}>
+                                    <img
+                                        src={selectedPet.image_url?.startsWith('http') ? selectedPet.image_url : `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${selectedPet.image_url}`}
+                                        alt={selectedPet.pet_name}
+                                        style={{ width: '100%', borderRadius: '12px', objectFit: 'cover', height: '250px' }}
+                                    />
+                                </div>
+                                <div style={{ flex: '1 1 300px' }}>
+                                    <h2 style={{ marginBottom: '1rem', color: 'var(--primary-color)' }}>{selectedPet.pet_name}</h2>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        <p><strong>Species:</strong> {selectedPet.pet_type}</p>
+                                        <p><strong>Breed:</strong> {selectedPet.breed}</p>
+                                        <p><strong>Age:</strong> {selectedPet.age}</p>
+                                        <p><strong>Gender:</strong> {selectedPet.gender}</p>
+                                        <p><strong>Location:</strong> {selectedPet.location}</p>
+                                        <p><strong>Status:</strong> <span className={`status-badge status-${selectedPet.status?.toLowerCase()}`} style={{
+                                            padding: '2px 8px', borderRadius: '4px', fontSize: '0.85rem',
+                                            backgroundColor: '#f0f4f2', color: '#6b9b7f'
+                                        }}>{selectedPet.status || activeTab}</span></p>
+                                        <hr style={{ margin: '1rem 0', border: 'none', borderTop: '1px solid #eee' }} />
+                                        <p><strong>Posted by:</strong> {selectedPet.user_name}</p>
+                                        <p><strong>Reason:</strong> {selectedPet.reason}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

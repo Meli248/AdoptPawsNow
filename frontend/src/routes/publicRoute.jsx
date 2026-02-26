@@ -1,11 +1,14 @@
 import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const PublicRoute = () => {
-  const token = localStorage.getItem('access_token');
+  const { isAuthenticated, userRole } = useAuth();
 
-  // If user is already logged in, redirect them to home
-  // If not logged in, show the public pages (Outlet)
-  return token ? <Navigate to="/home" replace /> : <Outlet />;
+  if (isAuthenticated) {
+    return userRole === 'admin' ? <Navigate to="/admin/dashboard" replace /> : <Navigate to="/home" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default PublicRoute;

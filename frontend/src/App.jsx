@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import PrivateRoute from './routes/privateRoute';
 import PublicRoute from './routes/publicRoute'; // Ensure this logic exists too
 import AdminRoute from './routes/Adminroute';
+import { AuthProvider } from './context/AuthContext';
 
 // Layout Components
 import Navbar from './components/Navbar';
@@ -27,42 +28,44 @@ import AdminEditPet from './pages/private/AdminEditPet';
 
 function App() {
   return (
-    <Router>
-      <Navbar />
-      <Routes>
-        {/* 1. Public Routes: Only for guest users */}
-        <Route element={<PublicRoute />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-        </Route>
+    <AuthProvider>
+      <Router>
+        <Navbar />
+        <Routes>
+          {/* 1. Public Routes: Only for guest users */}
+          <Route element={<PublicRoute />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
 
-        {/* 2. Open Routes: Accessible to everyone */}
-        <Route path="/home" element={<Home />} />
-        <Route path="/about" element={<About />} />
+          {/* 2. Open Routes: Accessible to everyone */}
+          <Route path="/home" element={<Home />} />
+          <Route path="/about" element={<About />} />
 
-        {/* 3. Private Routes: Requires any logged-in user */}
-        <Route element={<PrivateRoute />}>
-          <Route path="/pet/:petId" element={<PetDetail />} />
-          <Route path="/adopt" element={<Adopt />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/surrender-request" element={<SurrenderRequest />} /> {/* Added */}
-        </Route>
+          {/* 3. Private Routes: Requires any logged-in user */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/pet/:petId" element={<PetDetail />} />
+            <Route path="/adopt" element={<Adopt />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/surrender-request" element={<SurrenderRequest />} /> {/* Added */}
+          </Route>
 
-        {/* 4. Admin Routes: Requires logged-in user AND 'admin' role */}
-        <Route element={<AdminRoute />}>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/manage-users" element={<ManageUsers />} />
-          <Route path="/admin/surrender-requests" element={<AdminSurrenderRequests />} />
-          <Route path="/admin/adoption-requests" element={<AdminAdoptionRequests />} />
-          <Route path="/admin/edit-pet/:id" element={<AdminEditPet />} />
-        </Route>
+          {/* 4. Admin Routes: Requires logged-in user AND 'admin' role */}
+          <Route element={<AdminRoute />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/manage-users" element={<ManageUsers />} />
+            <Route path="/admin/surrender-requests" element={<AdminSurrenderRequests />} />
+            <Route path="/admin/adoption-requests" element={<AdminAdoptionRequests />} />
+            <Route path="/admin/edit-pet/:id" element={<AdminEditPet />} />
+          </Route>
 
-        {/* Redirects */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="*" element={<Navigate to="/home" replace />} />
-      </Routes>
-      <Footer />
-    </Router>
+          {/* Redirects */}
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+        <Footer />
+      </Router>
+    </AuthProvider>
   );
 }
 

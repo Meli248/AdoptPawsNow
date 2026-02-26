@@ -249,9 +249,10 @@
   color: var(--secondary-color);
 }
 
-.status-badge.adopted {
-  background-color: #f0f4f2;
-  color: var(--primary-color);
+.status-badge.adopted,
+.status-badge.unavailable {
+  background-color: #f0f0f0;
+  color: #718096;
 }
 
 .status-badge.rejected {
@@ -306,9 +307,11 @@
   font-weight: 600;
 }
 
-.pet-status.missing {
-  background-color: #ffc107;
-  color: #333;
+.pet-status.missing,
+.pet-status.adopted,
+.pet-status.unavailable {
+  background-color: #718096;
+  color: white;
 }
 
 .favorite-btn {

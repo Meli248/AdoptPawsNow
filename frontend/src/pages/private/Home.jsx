@@ -8,17 +8,21 @@ import {
   MessageSquare,
   Home as HomeIcon,
   Plus,
-  Dog,
-  Cat
+  Cat,
+  MapPin,
+  Dog
 } from 'lucide-react';
 import '../../css/Home.css';
 
 const Home = () => {
   const [stats, setStats] = useState({
+    totalPets: '0',
     petsAdopted: '0',
     dogs: '0',
     cats: '0'
   });
+  const [featuredPets, setFeaturedPets] = useState([]);
+  const [loadingPets, setLoadingPets] = useState(true);
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('access_token');
 
@@ -29,8 +33,9 @@ const Home = () => {
         const data = await response.json();
 
         if (data.success && data.data) {
-          const { petsAdopted, dogs, cats } = data.data;
+          const { totalPets, petsAdopted, dogs, cats } = data.data;
           setStats({
+            totalPets: totalPets > 0 ? `${totalPets}+` : '0',
             petsAdopted: petsAdopted > 0 ? `${petsAdopted}+` : '0',
             dogs: dogs > 0 ? `${dogs}+` : '0',
             cats: cats > 0 ? `${cats}+` : '0'
@@ -41,11 +46,28 @@ const Home = () => {
       }
     };
 
+    const fetchFeaturedPets = async () => {
+      try {
+        setLoadingPets(true);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/pets?limit=3`);
+        const data = await response.json();
+        if (data.success) {
+          setFeaturedPets(data.data.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error fetching featured pets:', error);
+      } finally {
+        setLoadingPets(false);
+      }
+    };
+
     fetchStats();
+    fetchFeaturedPets();
   }, []);
 
   const statsData = [
-    { icon: <PawPrint size={32} />, number: stats.petsAdopted, label: 'Pets Adopted' },
+    { icon: <PawPrint size={32} />, number: stats.totalPets, label: 'Total Pets' },
+    { icon: <Heart size={32} />, number: stats.petsAdopted, label: 'Adopted' },
     { icon: <Dog size={32} />, number: stats.dogs, label: 'Dogs' },
     { icon: <Cat size={32} />, number: stats.cats, label: 'Cats' }
   ];
@@ -164,6 +186,81 @@ const Home = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Featured Pets Section */}
+      <section className="featured-pets-section">
+        <div className="container">
+          <div className="section-header-inline">
+            <div>
+              <h2 className="section-title">Featured Pets</h2>
+              <p className="section-subtitle">Meet some of our adorable friends looking for a home</p>
+            </div>
+            <button
+              onClick={() => handleProtectedNavigation('/adopt')}
+              className="btn btn-secondary btn-sm"
+            >
+              View All <ArrowRight size={16} />
+            </button>
+          </div>
+
+          {loadingPets ? (
+            <div className="loading-pets">Loading featured friends...</div>
+          ) : (
+            <div className="pets-grid">
+              {featuredPets.map((pet, index) => (
+                <div
+                  key={pet.pet_id || pet.id}
+                  className="pet-card fade-in"
+                  style={{ animationDelay: `${index * 0.1}s`, cursor: 'pointer' }}
+                  onClick={() => handleProtectedNavigation(`/pet/${pet.pet_id || pet.id}`)}
+                >
+                  <div className="pet-image-wrapper">
+                    <img
+                      src={pet.image_url ? `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${pet.image_url}` : 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop'}
+                      alt={pet.name}
+                      className="pet-image"
+                    />
+                    <div className={`pet-status ${pet.status === 'available' || !pet.status ? 'available' : 'unavailable'}`}>
+                      {pet.status === 'available' || !pet.status ? 'Available' : 'Unavailable'}
+                    </div>
+                    {/* Basic Favorite button to match design */}
+                    <button
+                      className="favorite-btn"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Heart size={20} />
+                    </button>
+                  </div>
+                  <div className="pet-info">
+                    <h3 className="pet-name">{pet.name}</h3>
+                    <p className="pet-breed">
+                      {pet.breed || pet.species} • {pet.age ? `${pet.age} years` : 'Age unknown'}
+                    </p>
+                    <div className="pet-location">
+                      <MapPin size={16} />
+                      {pet.size || 'Medium'} • {pet.gender || 'Unknown'}
+                    </div>
+                    <p className="pet-description">
+                      {pet.description?.substring(0, 80) || 'A wonderful pet looking for a loving home.'}
+                      {pet.description?.length > 80 && '...'}
+                    </p>
+                    <button
+                      className="btn btn-primary btn-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleProtectedNavigation(`/pet/${pet.pet_id || pet.id}`);
+                      }}
+                      style={{ marginTop: '10px' }}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -257,9 +257,9 @@ const Profile = () => {
           const globalData = await globalResponse.json();
           if (globalData.success) {
             setStats({
-              totalPosts: globalData.count,
+              totalPosts: globalData.data.filter(p => p.status === 'available').length,
               adoptionPosts: globalData.data.filter(p => p.status === 'available').length,
-              surrenderPosts: allPosts.length - adoptionCount // System surrenders usually handled in dashboard
+              surrenderPosts: allPosts.length - adoptionCount
             });
             return;
           }
@@ -530,7 +530,7 @@ const Profile = () => {
             </div>
             <div className="stat-info">
               <div className="stat-number-dashboard">{stats.adoptionPosts}</div>
-              <div className="stat-label-dashboard">For Adoption</div>
+              <div className="stat-label-dashboard">Available</div>
             </div>
           </div>
 
@@ -719,8 +719,8 @@ const Profile = () => {
                     <div key={`${post.postType}-${post.id}`} className="pet-card fade-in">
                       <div className="pet-image-wrapper">
                         <img src={post.image} alt={post.petName} className="pet-image" />
-                        <div className="pet-status available">
-                          {post.postType === 'adoption' ? post.status : post.status}
+                        <div className={`pet-status ${post.status === 'available' || !post.status ? 'available' : 'unavailable'}`}>
+                          {post.status === 'available' || !post.status ? 'Available' : 'rehomed' ? 'Unavailable' : post.status}
                         </div>
                       </div>
                       <div className="pet-info">
@@ -782,8 +782,8 @@ const Profile = () => {
                     <div key={pet.id} className="pet-card fade-in">
                       <div className="pet-image-wrapper">
                         <img src={pet.image} alt={pet.petName} className="pet-image" />
-                        <div className="pet-status available">
-                          {pet.status || 'Available'}
+                        <div className={`pet-status ${pet.status === 'available' || !pet.status ? 'available' : 'unavailable'}`}>
+                          {pet.status === 'available' || !pet.status ? 'Available' : 'Unavailable'}
                         </div>
                       </div>
                       <div className="pet-info">

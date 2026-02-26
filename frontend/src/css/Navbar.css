@@ -5,7 +5,7 @@
   position: sticky;
   top: 0;
   z-index: 1000;
-  padding: 12px 0;
+  padding: 16px 0;
 }
 
 .navbar-container {
@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 700;
   color: var(--text-dark);
   transition: opacity 0.3s ease;
@@ -32,10 +32,10 @@
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   background-color: var(--primary-color);
-  border-radius: 10px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,9 +60,10 @@
 .nav-link {
   color: var(--text-light);
   font-weight: 500;
+  font-size: 1.05rem;
   position: relative;
   transition: color 0.3s ease;
-  padding: 8px 0;
+  padding: 10px 0;
 }
 
 .nav-link:hover {
@@ -144,12 +145,12 @@
 
   .navbar-menu {
     position: fixed;
-    top: 65px;
-    /* Height of navbar */
+    top: 81px;
+    /* Height of navbar: 48 + 16*2 + 1 = 81 */
     left: -100%;
     width: 80%;
     max-width: 300px;
-    height: calc(100vh - 65px);
+    height: calc(100vh - 81px);
     background-color: #fcfcfc;
     flex-direction: column;
     align-items: flex-start;
@@ -190,4 +191,40 @@
     width: 100%;
     background-color: var(--bg-light);
   }
+}
+
+.notification-bell-wrapper {
+  position: relative;
+  color: var(--text-light);
+  transition: color 0.3s ease;
+}
+
+.notification-bell-wrapper:hover,
+.notification-bell-wrapper.active {
+  color: #666;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #fcfcfc;
+  transform: translate(25%, -25%);
+  transition: all 0.3s ease;
+}
+
+.notification-bell-wrapper:hover .notification-badge,
+.notification-bell-wrapper.active .notification-badge {
+  background-color: var(--primary-color);
 }

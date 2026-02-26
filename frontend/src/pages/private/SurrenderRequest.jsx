@@ -85,14 +85,22 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
             const token = localStorage.getItem('access_token');
             const formData = new FormData();
 
-            formData.append('pet_name', data.pet_name);
-            formData.append('pet_type', data.pet_type);
-            formData.append('reason', data.reason);
+            const isPetUpdate = isEdit && !initialData?.application_id;
+
+            if (isPetUpdate) {
+                formData.append('name', data.pet_name);
+                formData.append('species', data.pet_type);
+                formData.append('description', data.reason);
+            } else {
+                formData.append('pet_name', data.pet_name);
+                formData.append('pet_type', data.pet_type);
+                formData.append('reason', data.reason);
+            }
+
             // Append new contact fields
             formData.append('contact_name', data.contact_name);
             formData.append('contact_email', data.contact_email);
             formData.append('contact_phone', data.contact_phone);
-
             formData.append('location', data.location);
 
             if (data.image && data.image instanceof FileList && data.image.length > 0) {

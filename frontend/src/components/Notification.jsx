@@ -51,7 +51,7 @@ const Notification = ({ isOpen, onClose }) => {
             });
 
             setNotifications(prev =>
-                prev.map(n => n.id === id ? { ...n, is_read: true } : n)
+                prev.map(n => n.notification_id === id ? { ...n, is_read: true } : n)
             );
         } catch (error) {
             console.error('Error marking notification as read:', error);
@@ -60,7 +60,7 @@ const Notification = ({ isOpen, onClose }) => {
 
     const handleNotificationClick = async (notification) => {
         if (!notification.is_read) {
-            await markAsRead(notification.id);
+            await markAsRead(notification.notification_id);
         }
         // Navigate based on notification type if needed
         // if (notification.type === 'surrender_update') navigate('/profile');
@@ -97,7 +97,7 @@ const Notification = ({ isOpen, onClose }) => {
                 ) : (
                     notifications.map(notification => (
                         <div
-                            key={notification.id}
+                            key={notification.notification_id}
                             className={`notification-item ${notification.is_read ? 'read' : 'unread'}`}
                             onClick={() => handleNotificationClick(notification)}
                         >

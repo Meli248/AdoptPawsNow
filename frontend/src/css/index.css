@@ -47,8 +47,15 @@ button {
 }
 
 input,
-textarea {
+textarea,
+select {
   font-family: 'Poppins', sans-serif;
+}
+
+/* Remove all input/textarea/select placeholders */
+input::placeholder,
+textarea::placeholder {
+  color: transparent;
 }
 
 .app {
@@ -85,29 +92,38 @@ textarea {
   font-size: 1.1rem;
 }
 
+/* =====================
+   UNIFIED BUTTON SYSTEM
+   ===================== */
 .btn {
-  padding: 12px 28px;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
   display: inline-flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  line-height: 1;
+  transition: all 0.3s ease;
   border: none;
   cursor: pointer;
   text-decoration: none;
   white-space: nowrap;
+  vertical-align: middle;
+  min-height: 44px;
 }
 
 .btn-primary {
   background-color: var(--primary-color);
   color: white;
+  border: 2px solid var(--primary-color);
 }
 
 .btn-primary:hover {
   background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
@@ -121,11 +137,13 @@ textarea {
 .btn-secondary:hover {
   background-color: var(--primary-color);
   color: white;
+  transform: translateY(-2px);
 }
 
 .btn-text {
   background-color: transparent;
   color: var(--text-dark);
+  border: 2px solid transparent;
 }
 
 .btn-text:hover {
@@ -135,7 +153,7 @@ textarea {
 .btn-outline {
   background-color: transparent;
   color: var(--text-dark);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
 }
 
 .btn-outline:hover {
@@ -146,14 +164,66 @@ textarea {
 .btn-orange {
   background-color: var(--secondary-color);
   color: white;
+  border: 2px solid var(--secondary-color);
 }
 
 .btn-orange:hover {
   background-color: #c77a38;
+  border-color: #c77a38;
   transform: translateY(-2px);
   box-shadow: var(--shadow-lg);
 }
 
+/* Size variants */
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  min-height: 36px;
+}
+
+.btn-lg {
+  padding: 14px 32px;
+  font-size: 1.05rem;
+  min-height: 52px;
+}
+
+/* Full width */
+.btn-full {
+  width: 100%;
+}
+
+/* Icon-only button */
+.btn-icon {
+  padding: 8px;
+  min-height: 36px;
+  min-width: 36px;
+  border-radius: 8px;
+  background: none;
+  border: none;
+  color: var(--text-dark);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.btn-icon:hover {
+  background-color: var(--bg-light);
+}
+
+/* Disabled state */
+.btn:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* =====================
+   CARD
+   ===================== */
 .card {
   background: white;
   border-radius: 12px;
@@ -167,7 +237,9 @@ textarea {
   box-shadow: var(--shadow-lg);
 }
 
-/* Animations */
+/* =====================
+   ANIMATIONS
+   ===================== */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -214,4 +286,132 @@ textarea {
 
 .slide-in-right {
   animation: slideInRight 0.6s ease-out;
+}
+
+/* =====================
+   RESPONSIVE HELPERS
+   ===================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+}
+
+/* Shared Pet Card components */
+
+.pet-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.pet-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pet-image-wrapper {
+  position: relative;
+  height: 280px;
+  overflow: hidden;
+}
+
+.pet-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.pet-card:hover .pet-image {
+  transform: scale(1.1);
+}
+
+.pet-status {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: var(--primary-color);
+  color: white;
+  z-index: 1;
+}
+
+.pet-status.available {
+  background-color: var(--primary-color);
+}
+
+.pet-status.adopted,
+.pet-status.unavailable {
+  background-color: #718096;
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease;
+  color: var(--text-light);
+  border: none;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.favorite-btn:hover {
+  transform: scale(1.1);
+  color: #e74c3c;
+}
+
+.pet-info {
+  padding: 24px;
+}
+
+.pet-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-dark);
+}
+
+.pet-breed {
+  color: var(--text-light);
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+.pet-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+}
+
+.pet-location svg {
+  color: var(--primary-color);
+}
+
+.pet-description {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
 }

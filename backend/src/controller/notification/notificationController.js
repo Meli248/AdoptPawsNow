@@ -35,7 +35,7 @@ export const markNotificationAsRead = async (req, res) => {
         const result = await pool.query(
             `UPDATE notifications 
              SET is_read = TRUE 
-             WHERE id = $1 AND user_id = $2 
+             WHERE notification_id = $1 AND user_id = $2 
              RETURNING *`,
             [id, userId]
         );
@@ -53,6 +53,29 @@ export const markNotificationAsRead = async (req, res) => {
         });
     } catch (error) {
         console.error('Error marking notification as read:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+// Get unread notification count
+export const getUnreadCount = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        const result = await pool.query(
+            'SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE',
+            [userId]
+        );
+
+        res.status(200).json({
+            success: true,
+            count: parseInt(result.rows[0].count)
+        });
+    } catch (error) {
+        console.error('Error fetching unread count:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'

@@ -139,10 +139,14 @@ export const updateSurrenderStatus = async (req, res) => {
             );
         }
 
+        const message = status === 'approved'
+            ? `Your surrender request for ${surrenderRequest.pet_name} has been approved. The pet is now listed as Available for adoption.`
+            : `Your surrender request for ${surrenderRequest.pet_name} has been ${status}.`;
+
         // Notify the user
         await createNotification(
             surrenderRequest.user_id,
-            `Your surrender request for ${surrenderRequest.pet_name} has been ${status}.`,
+            message,
             'surrender_update',
             surrenderRequest.image_url
         );

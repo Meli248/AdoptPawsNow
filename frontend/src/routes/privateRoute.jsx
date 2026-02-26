@@ -1,12 +1,12 @@
 import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const PrivateRoute = () => {
-  // Check if token exists in Local Storage
-  const token = localStorage.getItem('access_token');
+  const { isAuthenticated } = useAuth();
 
   // If no token, redirect to login
   // If token exists, render the child routes (Outlet)
-  return token ? <Outlet /> : <Navigate to="/login" replace />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default PrivateRoute;

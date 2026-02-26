@@ -177,6 +177,7 @@ const Adopt = () => {
   };
 
   const filteredPets = pets.filter(pet => {
+    if (pet.status && pet.status.toLowerCase() !== 'available') return false;
     if (!searchTerm) return true;
 
     const search = searchTerm.toLowerCase();
@@ -268,7 +269,7 @@ const Adopt = () => {
       <section className="pets-section">
         <div className="container">
           <div className="pets-info">
-            <p>Showing <strong>{filteredPets.length}</strong> pets for adoption</p>
+            <p>Showing <strong>{filteredPets.length}</strong> available pets</p>
           </div>
 
           <div className="pets-grid">
@@ -285,8 +286,8 @@ const Adopt = () => {
                     alt={pet.name}
                     className="pet-image"
                   />
-                  <div className="pet-status available">
-                    {pet.status || 'Available'}
+                  <div className={`pet-status ${pet.status || 'available'}`}>
+                    {pet.status === 'available' || !pet.status ? 'Available' : 'Unavailable'}
                   </div>
                   <button
                     className="favorite-btn"

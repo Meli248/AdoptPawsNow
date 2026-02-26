@@ -5,6 +5,11 @@ import pool from '../../database/index.js';
 ====================================== */
 export const getHomeStats = async (req, res) => {
   try {
+    // Count total pets
+    const totalPets = await pool.query(
+      `SELECT COUNT(*) FROM pets`
+    );
+
     // Count adopted pets (status = 'adopted')
     const adoptedPets = await pool.query(
       `SELECT COUNT(*) FROM pets WHERE LOWER(status) = 'adopted'`
@@ -23,6 +28,7 @@ export const getHomeStats = async (req, res) => {
     res.json({
       success: true,
       data: {
+        totalPets: parseInt(totalPets.rows[0].count),
         petsAdopted: parseInt(adoptedPets.rows[0].count),
         dogs: parseInt(dogsCount.rows[0].count),
         cats: parseInt(catsCount.rows[0].count)

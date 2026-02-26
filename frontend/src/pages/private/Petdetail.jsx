@@ -201,8 +201,8 @@ const PetDetail = () => {
               alt={pet.name}
               className="detail-image"
             />
-            <div className="detail-status adoption">
-              For Adoption
+            <div className={`detail-status ${pet.status === 'available' ? 'adoption' : 'unavailable'}`}>
+              {pet.status === 'available' ? 'Available' : 'Unavailable'}
             </div>
             <button
               className="favorite-btn-detail"
