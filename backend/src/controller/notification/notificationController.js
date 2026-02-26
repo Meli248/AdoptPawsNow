@@ -61,12 +61,12 @@ export const markNotificationAsRead = async (req, res) => {
 };
 
 // Helper function to create notification (for internal use)
-export const createNotification = async (userId, message, type = 'info') => {
+export const createNotification = async (userId, message, type = 'info', imageUrl = null) => {
     try {
         await pool.query(
-            `INSERT INTO notifications (user_id, message, type) 
-             VALUES ($1, $2, $3)`,
-            [userId, message, type]
+            `INSERT INTO notifications (user_id, message, type, image_url) 
+             VALUES ($1, $2, $3, $4)`,
+            [userId, message, type, imageUrl]
         );
     } catch (error) {
         console.error('Error creating notification:', error);

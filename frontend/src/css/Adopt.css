@@ -236,7 +236,18 @@
   width: 100%;
 }
 
+@media (max-width: 1200px) {
+  .pets-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
 @media (max-width: 992px) {
+  .adopt-hero {
+    padding: 60px 0 40px;
+  }
+
   .page-title {
     font-size: 2.5rem;
   }
@@ -247,18 +258,70 @@
 }
 
 @media (max-width: 768px) {
+  .adopt-hero {
+    padding: 40px 0 30px;
+  }
+
   .page-title {
     font-size: 2rem;
   }
 
+  .page-subtitle {
+    font-size: 1rem;
+    padding: 0 16px;
+  }
+
+  .search-section {
+    padding: 24px 0;
+  }
+
+  .search-bar {
+    padding: 0 16px;
+    margin-bottom: 20px;
+  }
+
+  .search-input {
+    padding: 12px 16px 12px 48px;
+    font-size: 0.9rem;
+  }
+
+  .search-icon {
+    left: 32px;
+  }
+
+  .filter-button {
+    width: 44px;
+    height: 44px;
+  }
+
   .pets-grid {
     grid-template-columns: 1fr;
+    padding: 0 16px;
   }
 
   .filter-tabs {
     justify-content: flex-start;
+    padding: 0 16px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    gap: 8px;
+    padding-bottom: 4px;
+    /* for scrollbar */
+  }
+
+  .filter-tab {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .modal-content {
+    padding: 24px;
+    width: 95%;
   }
 }
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;

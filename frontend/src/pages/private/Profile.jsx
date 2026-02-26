@@ -27,7 +27,7 @@ const Profile = () => {
   const [stats, setStats] = useState({
     totalPosts: 0,
     adoptionPosts: 0,
-    adoptionPosts: 0
+    surrenderPosts: 0
   });
 
   useEffect(() => {
@@ -165,6 +165,7 @@ const Profile = () => {
         return;
       }
 
+      // If admin, fetch global counts for stats
       const [petsResponse, surrenderResponse] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, {
           headers: {
@@ -246,10 +247,29 @@ const Profile = () => {
       allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setUserPosts(allPosts);
+
+      // If admin, get total count from all pets for the stats
+      if (isAdmin) {
+        try {
+          const globalResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets?status=all`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const globalData = await globalResponse.json();
+          if (globalData.success) {
+            setStats({
+              totalPosts: globalData.count,
+              adoptionPosts: globalData.data.filter(p => p.status === 'available').length,
+              surrenderPosts: allPosts.length - adoptionCount // System surrenders usually handled in dashboard
+            });
+            return;
+          }
+        } catch (e) { console.error("Error fetching global stats", e); }
+      }
+
       setStats({
         totalPosts: allPosts.length,
         adoptionPosts: adoptionCount,
-        adoptionPosts: adoptionCount
+        surrenderPosts: allPosts.length - adoptionCount
       });
     } catch (error) {
       console.error('Error fetching user posts:', error);
@@ -283,6 +303,13 @@ const Profile = () => {
   };
 
   const handleSaveProfile = async () => {
+    // Phone validation: exactly 10 digits
+    const phoneRegex = /^\d{10}$/;
+    if (editedData.phone && !phoneRegex.test(editedData.phone)) {
+      alert('Phone number must be exactly 10 digits.');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -588,9 +615,13 @@ const Profile = () => {
                     <input
                       type="tel"
                       value={editedData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        handleInputChange('phone', val);
+                      }}
                       className="form-input"
-                      placeholder="Your phone number"
+                      placeholder="Your 10-digit phone number"
+                      maxLength={10}
                       style={{
                         width: '100%',
                         padding: '8px 12px',

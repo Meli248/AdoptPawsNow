@@ -1,4 +1,5 @@
 import pool from '../../database/index.js';
+import { createNotification } from '../notification/notificationController.js';
 
 // Get all pets for adoption
 export const getAllPets = async (req, res) => {
@@ -418,21 +419,43 @@ export const updateApplicationStatus = async (req, res) => {
       });
     }
 
+    const application = result.rows[0];
+
     // If approved, update pet status to 'adopted'
     if (status === 'approved') {
-      const appId = result.rows[0].application_id;
-      const petId = result.rows[0].pet_id;
-
       await pool.query(
         `UPDATE pets SET status = 'adopted' WHERE pet_id = $1`,
-        [petId]
+        [application.pet_id]
       );
+    }
+
+    // Notify the applicant
+    try {
+      // Find user by email
+      const userRes = await pool.query('SELECT user_id FROM users WHERE email = $1', [application.email]);
+
+      if (userRes.rows.length > 0) {
+        const userId = userRes.rows[0].user_id;
+
+        // Get pet info for the notification message and image
+        const petRes = await pool.query('SELECT name, image_url FROM pets WHERE pet_id = $1', [application.pet_id]);
+        const pet = petRes.rows[0];
+
+        await createNotification(
+          userId,
+          `Your adoption application for ${pet.name} has been ${status}.`,
+          'adoption_update',
+          pet.image_url
+        );
+      }
+    } catch (notifError) {
+      console.error('Error sending adoption notification:', notifError);
     }
 
     res.json({
       success: true,
       message: 'Application status updated successfully',
-      data: result.rows[0]
+      data: application
     });
   } catch (error) {
     console.error('Error updating application status:', error);

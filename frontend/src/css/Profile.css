@@ -459,13 +459,25 @@
 }
 
 /* Responsive Design */
+@media (max-width: 992px) {
+  .user-posts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-page {
-    padding: 20px 16px;
+    padding: 20px 12px;
   }
 
   .dashboard-header {
     flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .header-content {
+    text-align: center;
   }
 
   .btn-create-post {
@@ -474,7 +486,18 @@
   }
 
   .stats-grid-dashboard {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card-dashboard {
+    padding: 16px;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .stat-icon-wrapper {
+    margin: 0 auto;
   }
 
   .dashboard-title {
@@ -484,43 +507,81 @@
   .profile-avatar-section {
     flex-direction: column;
     text-align: center;
+    gap: 16px;
   }
 
   .profile-details-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .user-posts-grid {
     grid-template-columns: 1fr;
   }
 
-  .btn-icon-edit {
+  .btn-icon-edit,
+  .btn-icon-save,
+  .btn-icon-cancel {
     width: 100%;
     justify-content: center;
   }
 
   .section-header-dashboard {
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     align-items: stretch;
+    text-align: center;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px 20px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
+  .stats-grid-dashboard {
+    grid-template-columns: 1fr;
+  }
+
   .profile-card {
     padding: 24px 16px;
   }
 
   .no-posts-container {
-    padding: 60px 24px;
+    padding: 40px 16px;
+  }
+
+  .profile-name {
+    font-size: 1.25rem;
   }
 }
+
 .profile-basic-info-section {
   padding-bottom: 32px;
   border-bottom: 1px solid #e5e7eb;
   margin-bottom: 32px;
   text-align: center;
 }
+
 /* Edit Post Modal Styles */
 .modal-overlay {
   position: fixed;
@@ -697,19 +758,19 @@
   .form-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-content {
     max-height: 95vh;
   }
-  
+
   .modal-header {
     padding: 20px;
   }
-  
+
   .modal-body {
     padding: 20px;
   }
-  
+
   .modal-footer {
     padding: 16px 20px;
   }

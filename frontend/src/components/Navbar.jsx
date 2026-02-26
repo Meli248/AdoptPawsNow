@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 import Notification from './Notification';
 import '../css/Navbar.css';
 
@@ -11,6 +11,7 @@ const Navbar = () => {
   const [userRole, setUserRole] = useState(localStorage.getItem('user_role'));
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('access_token'));
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -41,6 +42,15 @@ const Navbar = () => {
     navigate('/home');
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+    if (showNotifications) setShowNotifications(false);
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
   const isAdmin = userRole === 'admin';
 
   return (
@@ -59,12 +69,17 @@ const Navbar = () => {
           </span>
         </Link>
 
-        <ul className="navbar-menu">
+        <button className="mobile-menu-toggle" onClick={toggleMenu}>
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <ul className={`navbar-menu ${isMenuOpen ? 'mobile-active' : ''}`}>
           {isAdmin ? (
             <>
               <li>
                 <Link
                   to="/admin/dashboard"
+                  onClick={closeMenu}
                   className={location.pathname === '/admin/dashboard' ? 'nav-link active' : 'nav-link'}
                 >
                   Dashboard
@@ -73,6 +88,7 @@ const Navbar = () => {
               <li>
                 <Link
                   to="/admin/surrender-requests"
+                  onClick={closeMenu}
                   className={location.pathname === '/admin/surrender-requests' ? 'nav-link active' : 'nav-link'}
                 >
                   Surrender Requests
@@ -81,6 +97,7 @@ const Navbar = () => {
               <li>
                 <Link
                   to="/admin/adoption-requests"
+                  onClick={closeMenu}
                   className={location.pathname === '/admin/adoption-requests' ? 'nav-link active' : 'nav-link'}
                 >
                   Adoption Requests
@@ -92,6 +109,7 @@ const Navbar = () => {
               <li>
                 <Link
                   to="/home"
+                  onClick={closeMenu}
                   className={location.pathname === '/' || location.pathname === '/home' ? 'nav-link active' : 'nav-link'}
                 >
                   Home
@@ -100,6 +118,7 @@ const Navbar = () => {
               <li>
                 <Link
                   to="/adopt"
+                  onClick={closeMenu}
                   className={location.pathname === '/adopt' ? 'nav-link active' : 'nav-link'}
                 >
                   Adopt
@@ -108,6 +127,7 @@ const Navbar = () => {
               <li>
                 <Link
                   to="/surrender-request"
+                  onClick={closeMenu}
                   className={location.pathname === '/surrender-request' ? 'nav-link active' : 'nav-link'}
                 >
                   Form
@@ -116,6 +136,7 @@ const Navbar = () => {
               <li>
                 <Link
                   to="/about"
+                  onClick={closeMenu}
                   className={location.pathname === '/about' ? 'nav-link active' : 'nav-link'}
                 >
                   About
@@ -125,13 +146,16 @@ const Navbar = () => {
           )}
         </ul>
 
-        <div className="navbar-actions">
+        <div className={`navbar-actions ${isMenuOpen ? 'mobile-active' : ''}`}>
           {isAuthenticated ? (
             <>
               <div style={{ position: 'relative' }}>
                 {!isAdmin && (
                   <button
-                    onClick={() => setShowNotifications(!showNotifications)}
+                    onClick={() => {
+                      setShowNotifications(!showNotifications);
+                      if (isMenuOpen) setIsMenuOpen(false);
+                    }}
                     className="btn-icon"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center' }}
                   >
@@ -141,23 +165,26 @@ const Navbar = () => {
                 {!isAdmin && <Notification isOpen={showNotifications} onClose={() => setShowNotifications(false)} />}
               </div>
 
-              <Link to="/profile" className="user-profile">
+              <Link to="/profile" className="user-profile" onClick={closeMenu}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor" />
                 </svg>
                 <span>{user}</span>
               </Link>
-              <button onClick={handleLogout} className="btn btn-secondary">
+              <button onClick={() => { handleLogout(); closeMenu(); }} className="btn btn-secondary">
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="btn btn-text">Login</Link>
-              <Link to="/register" className="btn btn-primary">Get Started</Link>
+              <Link to="/login" className="btn btn-text" onClick={closeMenu}>Login</Link>
+              <Link to="/register" className="btn btn-primary" onClick={closeMenu}>Get Started</Link>
             </>
           )}
         </div>
+
+        {/* Mobile Backdrop */}
+        {isMenuOpen && <div className="navbar-backdrop" onClick={closeMenu}></div>}
       </div>
     </nav>
   );

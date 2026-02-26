@@ -360,24 +360,48 @@
 }
 
 @media (max-width: 768px) {
+  .about-hero {
+    padding: 60px 0 40px;
+  }
+
   .about-title {
+    font-size: 2.2rem;
+  }
+
+  .about-subtitle {
+    font-size: 1rem;
+    padding: 0 16px;
+  }
+
+  .hero-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .mission-section,
+  .stats-section,
+  .values-section,
+  .help-section,
+  .features-section,
+  .team-section,
+  .story-section {
+    padding: 40px 0;
+  }
+
+  .about-cta-section {
+    padding: 60px 0;
+  }
+
+  .about-cta-section .cta-title {
     font-size: 2rem;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .about-cta-section .cta-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .about-cta-section .btn {
-    width: 100%;
-    max-width: 300px;
+  .about-cta-section .cta-subtitle {
+    font-size: 1rem;
+    padding: 0 16px;
   }
 }
+
 /* Additional responsive styles for new sections */
 @media (max-width: 992px) {
   .features-grid {

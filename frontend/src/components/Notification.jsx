@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { getImageUrl } from '../utils/imageHelper';
 import '../css/Notification.css';
 
 const Notification = ({ isOpen, onClose }) => {
@@ -100,6 +101,11 @@ const Notification = ({ isOpen, onClose }) => {
                             className={`notification-item ${notification.is_read ? 'read' : 'unread'}`}
                             onClick={() => handleNotificationClick(notification)}
                         >
+                            {notification.image_url && (
+                                <div className="notification-image">
+                                    <img src={getImageUrl(notification.image_url)} alt="Preview" />
+                                </div>
+                            )}
                             <div className="notification-content">
                                 <p>{notification.message}</p>
                                 <span className="notification-time">{formatDate(notification.created_at)}</span>

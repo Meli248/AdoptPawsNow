@@ -133,11 +133,18 @@ const createTables = async () => {
         user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
         message TEXT NOT NULL,
         type VARCHAR(50) DEFAULT 'info',
+        image_url TEXT,
         is_read BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log('✅ Notifications table checked/created');
+
+    // Ensure image_url column exists for existing installations
+    await pool.query(`
+      ALTER TABLE notifications 
+      ADD COLUMN IF NOT EXISTS image_url TEXT;
+    `);
+    console.log('✅ Notifications table checked/created/updated');
 
     // Add location column to pets if not exists
     await pool.query(`

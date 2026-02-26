@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid, CheckCircle, AlertTriangle, Dog, Cat, Users, Clock } from 'lucide-react';
+import { Grid, CheckCircle, AlertTriangle, Dog, Cat, Users, Clock, Plus, MapPin, Search } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 import '../../css/AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -146,7 +147,10 @@ const AdminDashboard = () => {
     return (
       <div className="admin-dashboard">
         <div className="dashboard-container">
-          <h1>Loading...</h1>
+          <div className="loading-state">
+            <Clock className="animate-spin" size={48} />
+            <p>Loading dashboard data...</p>
+          </div>
         </div>
       </div>
     );
@@ -164,7 +168,8 @@ const AdminDashboard = () => {
             className="btn btn-primary"
             onClick={() => navigate('/surrender-request')}
           >
-            + Surrender Form
+            <Plus size={20} />
+            Surrender Form
           </button>
         </div>
 
@@ -175,7 +180,7 @@ const AdminDashboard = () => {
               <Grid size={24} />
             </div>
             <div className="stat-info">
-              <p className="stat-value">{stats.totalPosts}+</p>
+              <p className="stat-value">{stats.totalPosts}</p>
               <p className="stat-label">Total Posts</p>
             </div>
           </div>
@@ -185,7 +190,7 @@ const AdminDashboard = () => {
               <CheckCircle size={24} />
             </div>
             <div className="stat-info">
-              <p className="stat-value">{stats.adoptedPets}+</p>
+              <p className="stat-value">{stats.adoptedPets}</p>
               <p className="stat-label">Adopted</p>
             </div>
           </div>
@@ -195,7 +200,7 @@ const AdminDashboard = () => {
               <Dog size={24} />
             </div>
             <div className="stat-info">
-              <p className="stat-value">{stats.dogs}+</p>
+              <p className="stat-value">{stats.dogs}</p>
               <p className="stat-label">Dogs</p>
             </div>
           </div>
@@ -205,7 +210,7 @@ const AdminDashboard = () => {
               <Cat size={24} />
             </div>
             <div className="stat-info">
-              <p className="stat-value">{stats.cats}+</p>
+              <p className="stat-value">{stats.cats}</p>
               <p className="stat-label">Cats</p>
             </div>
           </div>
@@ -224,7 +229,7 @@ const AdminDashboard = () => {
               <div className="modal-body">
                 <div className="modal-image-container">
                   <img
-                    src={selectedItem.image_url ? `http://localhost:5000${selectedItem.image_url}` : 'https://via.placeholder.com/400'}
+                    src={getImageUrl(selectedItem.image_url)}
                     alt={selectedItem.pet_name || selectedItem.name}
                     className="modal-image"
                   />
@@ -233,12 +238,12 @@ const AdminDashboard = () => {
                 <div className="modal-info">
                   <p><strong>Type:</strong> {selectedItem.pet_type || selectedItem.species}</p>
                   <p><strong>Breed:</strong> {selectedItem.breed || 'Unknown'}</p>
-                  <p><strong>Age:</strong> {selectedItem.age || 'Unknown'} years</p>
+                  <p><strong>Age:</strong> {selectedItem.age || 'Unknown'}</p>
                   <p><strong>Gender:</strong> {selectedItem.gender || 'Unknown'}</p>
                   <p><strong>Reason/Description:</strong> {selectedItem.reason || selectedItem.description}</p>
-                  <p><strong>Location:</strong> {selectedItem.location}</p>
+                  <p><strong>Location:</strong> {selectedItem.location || 'N/A'}</p>
                   <p><strong>Contact:</strong> {selectedItem.contact_phone || selectedItem.contact_email || 'N/A'}</p>
-                  <p><strong>Status:</strong> {selectedItem.status}</p>
+                  <p><strong>Status:</strong> <span className={`status-badge ${selectedItem.status}`}>{selectedItem.status}</span></p>
                   {selectedItem.user_name && <p><strong>Submitted by:</strong> {selectedItem.user_name} ({selectedItem.user_email})</p>}
                 </div>
               </div>
@@ -285,7 +290,7 @@ const AdminDashboard = () => {
                 >
                   <div className="request-image-wrapper">
                     <img
-                      src={request.image_url ? `http://localhost:5000${request.image_url}` : 'https://via.placeholder.com/300'}
+                      src={getImageUrl(request.image_url)}
                       alt={request.pet_name}
                       className="request-image"
                     />
@@ -295,12 +300,11 @@ const AdminDashboard = () => {
                     <h3>{request.pet_name} ({request.pet_type})</h3>
                     <p className="request-detail"><strong>Breed:</strong> {request.breed || 'Unknown'}</p>
                     <p className="request-detail"><strong>Age:</strong> {request.age} years</p>
-                    <p className="request-detail"><strong>Reason:</strong> {request.reason}</p>
                     <p className="request-detail"><strong>Location:</strong> {request.location}</p>
 
                     <div className="request-actions" onClick={e => e.stopPropagation()}>
                       <button
-                        className="btn-accept"
+                        className="btn btn-primary"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSurrenderAction(request.application_id, 'approved');
@@ -309,7 +313,7 @@ const AdminDashboard = () => {
                         Accept
                       </button>
                       <button
-                        className="btn-decline"
+                        className="btn btn-secondary"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSurrenderAction(request.application_id, 'rejected');
@@ -327,47 +331,34 @@ const AdminDashboard = () => {
 
         {/* All Pet Posts */}
         <div className="all-pets-section">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 className="section-title" style={{ marginBottom: 0 }}>All Pet Posts</h2>
-            <div className="search-bar" style={{ position: 'relative' }}>
-              <input
-                type="text"
-                placeholder="Search pets..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  padding: '10px 16px',
-                  borderRadius: '20px',
-                  border: '1px solid #ddd',
-                  width: '300px',
-                  fontSize: '0.9rem'
-                }}
-              />
+          <div className="section-header">
+            <h2 className="section-title">All Pet Posts</h2>
+            <div className="search-bar-wrapper">
+              <div className="search-bar">
+                <Search size={20} className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search pets by name, breed, or species..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
+                />
+              </div>
             </div>
           </div>
 
           <div className="pets-grid">
-            {filteredPets.slice(0, 8).map((pet) => (
+            {filteredPets.slice(0, 12).map((pet) => (
               <div key={pet.pet_id} className="pet-card" onClick={() => handleViewPet(pet.pet_id)}>
                 <div className="pet-image-wrapper">
                   <img
-                    src={pet.image_url ? `http://localhost:5000${pet.image_url}` : 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop'}
+                    src={getImageUrl(pet.image_url)}
                     alt={pet.name}
                     className="pet-image"
                   />
-                  <div className="pet-status adoption">
-                    For Adoption
+                  <div className={`pet-status ${pet.status}`}>
+                    {pet.status === 'available' ? 'For Adoption' : pet.status}
                   </div>
-                  <button
-                    className="favorite-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.27 2 8.5C2 5.41 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5C22 12.27 18.6 15.36 13.45 20.03L12 21.35Z" fill="currentColor" />
-                    </svg>
-                  </button>
                 </div>
                 <div className="pet-info">
                   <h3 className="pet-name">{pet.name}</h3>
@@ -375,25 +366,26 @@ const AdminDashboard = () => {
                     {pet.breed || pet.species} • {pet.age ? `${pet.age} years` : 'Age unknown'}
                   </p>
                   <div className="pet-location">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor" />
-                    </svg>
+                    <MapPin size={16} />
                     {pet.location || 'Location not specified'}
                   </div>
                   <p className="pet-description">
                     {pet.description?.substring(0, 80) || 'No description available'}...
                   </p>
-                  <p className="pet-posted-by">Posted by {pet.username || 'Admin User'}</p>
+                  <p className="pet-posted-by">
+                    <Users size={14} />
+                    Posted by {pet.username || 'Admin User'}
+                  </p>
 
                   <div className="pet-actions" onClick={(e) => e.stopPropagation()}>
                     <button
-                      className="btn-edit"
+                      className="btn btn-primary btn-sm"
                       onClick={() => handleEditPet(pet.pet_id)}
                     >
                       Edit
                     </button>
                     <button
-                      className="btn-delete"
+                      className="btn btn-secondary btn-sm"
                       onClick={() => handleDeletePet(pet.pet_id)}
                     >
                       Delete

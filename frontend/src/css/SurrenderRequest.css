@@ -226,6 +226,19 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .modal-content {
+        max-height: 95vh;
+        border-radius: 16px;
+    }
+
+    .modal-header {
+        padding: 20px;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+    }
+
     .image-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -236,15 +249,7 @@
 
     .form-actions {
         flex-direction: column;
-    }
-
-    .modal-content {
-        margin: 20px;
-    }
-
-    .modal-header,
-    .create-post-form {
-        padding: 20px;
+        gap: 12px;
     }
 
     .form-row {
@@ -252,9 +257,26 @@
     }
 
     .image-preview {
-        height: 200px;
+        height: 220px;
     }
 
+    .create-post-form {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .image-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-header {
+        padding: 16px;
+    }
+
+    .create-post-form {
+        padding: 16px;
+    }
 }
 
 /* ============================================

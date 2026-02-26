@@ -143,7 +143,8 @@ export const updateSurrenderStatus = async (req, res) => {
         await createNotification(
             surrenderRequest.user_id,
             `Your surrender request for ${surrenderRequest.pet_name} has been ${status}.`,
-            'surrender_update'
+            'surrender_update',
+            surrenderRequest.image_url
         );
 
         res.status(200).json({

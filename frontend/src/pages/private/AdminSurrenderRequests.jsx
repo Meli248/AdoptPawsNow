@@ -169,8 +169,8 @@ const AdminSurrenderRequests = () => {
                                             ) : (
                                                 <span className={`status-badge ${activeTab === 'approved' ? 'status-active' : 'status-inactive'}`} style={{
                                                     padding: '4px 8px', borderRadius: '4px', fontSize: '0.85rem',
-                                                    backgroundColor: activeTab === 'approved' ? '#e6f4ea' : '#fce8e6',
-                                                    color: activeTab === 'approved' ? '#1e7e34' : '#c53030'
+                                                    backgroundColor: activeTab === 'approved' ? '#f0f4f2' : '#fff5f5',
+                                                    color: activeTab === 'approved' ? '#6b9b7f' : '#e53e3e'
                                                 }}>
                                                     {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
                                                 </span>
