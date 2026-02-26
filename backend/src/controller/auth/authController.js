@@ -1,29 +1,24 @@
 import pool from '../../database/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { registerSchema, loginSchema, updateProfileSchema } from '../../validation/schemas.js';
 
 /* ======================================
    REGISTER USER
 ====================================== */
 export const register = async (req, res) => {
   try {
-    const { fullName, email, password } = req.body;
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: parsed.error.errors
+      });
+    }
+    const { fullName, email, password } = parsed.data;
 
     console.log('📝 Registration attempt:', { fullName, email });
-
-    if (!fullName || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'All fields are required'
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 6 characters'
-      });
-    }
 
     const existingUser = await pool.query(
       'SELECT user_id FROM users WHERE email = $1',
@@ -91,14 +86,15 @@ export const register = async (req, res) => {
 ====================================== */
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: 'Validation error',
+        errors: parsed.error.errors
       });
     }
+    const { email, password } = parsed.data;
 
     const result = await pool.query(
       'SELECT user_id, username, email, password_hash, full_name, role FROM users WHERE email = $1',
@@ -264,7 +260,15 @@ export const getUserProfile = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { name, username, phone, location } = req.body;
+    const parsed = updateProfileSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: parsed.error.errors
+      });
+    }
+    const { name, username, phone, location } = parsed.data;
 
     const newFullName = name || username;
 

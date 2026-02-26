@@ -1,10 +1,21 @@
 import pool from '../../database/index.js';
 import { createNotification } from '../notification/notificationController.js';
+import { surrenderRequestSchema } from '../../validation/schemas.js';
 
 // Submit a surrender request
 export const createSurrenderRequest = async (req, res) => {
     try {
         const userId = req.user.userId;
+
+        const parsed = surrenderRequestSchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({
+                success: false,
+                message: 'Validation error',
+                errors: parsed.error.errors
+            });
+        }
+
         const {
             pet_name,
             pet_type,
@@ -12,23 +23,14 @@ export const createSurrenderRequest = async (req, res) => {
             age,
             gender,
             reason,
-            image_url, // Allow URL string directly or handle file upload in route
             contact_name,
             contact_email,
             contact_phone,
             location
-        } = req.body;
-
-        // Validate required fields
-        if (!pet_name || !pet_type || !reason || !location) {
-            return res.status(400).json({
-                success: false,
-                message: 'Pet name, type, reason, and location are required'
-            });
-        }
+        } = parsed.data;
 
         // Handle image if file uploaded (middleware should handle this before controller)
-        const finalImage = req.file ? `/uploads/${req.file.filename}` : image_url;
+        const finalImage = req.file ? `/uploads/${req.file.filename}` : (req.body.image_url || null);
 
         const result = await pool.query(
             `INSERT INTO surrender_applications 

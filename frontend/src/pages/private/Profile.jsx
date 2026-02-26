@@ -26,7 +26,7 @@ const Profile = () => {
   const [editFormData, setEditFormData] = useState({});
   const [stats, setStats] = useState({
     totalPosts: 0,
-    adoptionPosts: 0,
+    adopted: 0,
     surrenderPosts: 0
   });
 
@@ -34,6 +34,26 @@ const Profile = () => {
     fetchUserProfile();
     fetchUserPosts();
   }, []);
+
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/users/dashboard/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStats({
+          totalPosts: Number(data.data.totalPosts) || 0,
+          adopted: Number(data.data.adopted) || 0,
+          surrenderPosts: 0
+        });
+      }
+    } catch (e) {
+      console.error('Error fetching stats:', e);
+    }
+  };
 
   const fetchUserProfile = async () => {
     try {
@@ -114,12 +134,13 @@ const Profile = () => {
   };
 
   const [favorites, setFavorites] = useState([]);
-  const [activeTab, setActiveTab] = useState('favorites'); // Default to favorites per user request
+  const [activeTab, setActiveTab] = useState('favorites');
 
   useEffect(() => {
     fetchUserProfile();
     fetchUserPosts();
     fetchUserFavorites();
+    fetchStats();
   }, []);
   /* Restore fetchUserFavorites and fetchUserPosts */
   const fetchUserFavorites = async () => {
@@ -247,30 +268,6 @@ const Profile = () => {
       allPosts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setUserPosts(allPosts);
-
-      // If admin, get total count from all pets for the stats
-      if (isAdmin) {
-        try {
-          const globalResponse = await fetch(`${import.meta.env.VITE_API_URL}/pets?status=all`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          const globalData = await globalResponse.json();
-          if (globalData.success) {
-            setStats({
-              totalPosts: globalData.data.filter(p => p.status === 'available').length,
-              adoptionPosts: globalData.data.filter(p => p.status === 'available').length,
-              surrenderPosts: allPosts.length - adoptionCount
-            });
-            return;
-          }
-        } catch (e) { console.error("Error fetching global stats", e); }
-      }
-
-      setStats({
-        totalPosts: allPosts.length,
-        adoptionPosts: adoptionCount,
-        surrenderPosts: allPosts.length - adoptionCount
-      });
     } catch (error) {
       console.error('Error fetching user posts:', error);
     } finally {
@@ -513,28 +510,29 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="stats-grid-dashboard">
-          <div className="stat-card-dashboard">
-            <div className="stat-icon-wrapper">
-              <Dog size={24} />
+        {/* Stats Grid - only for regular users */}
+        {!isAdmin && (
+          <div className="stats-grid-dashboard">
+            <div className="stat-card-dashboard">
+              <div className="stat-icon-wrapper">
+                <Dog size={24} />
+              </div>
+              <div className="stat-info">
+                <div className="stat-number-dashboard">{stats.totalPosts}</div>
+                <div className="stat-label-dashboard">Total Posts</div>
+              </div>
             </div>
-            <div className="stat-info">
-              <div className="stat-number-dashboard">{stats.totalPosts}</div>
-              <div className="stat-label-dashboard">Total Posts</div>
+            <div className="stat-card-dashboard">
+              <div className="stat-icon-wrapper">
+                <Heart size={24} />
+              </div>
+              <div className="stat-info">
+                <div className="stat-number-dashboard">{stats.adopted}</div>
+                <div className="stat-label-dashboard">Adopted</div>
+              </div>
             </div>
           </div>
-          <div className="stat-card-dashboard">
-            <div className="stat-icon-wrapper">
-              <Heart size={24} />
-            </div>
-            <div className="stat-info">
-              <div className="stat-number-dashboard">{stats.adoptionPosts}</div>
-              <div className="stat-label-dashboard">Available</div>
-            </div>
-          </div>
-
-        </div>
+        )}
 
         {/* Profile Section */}
         <div className="profile-section">
@@ -716,11 +714,16 @@ const Profile = () => {
               ) : (
                 <div className="pets-grid">
                   {userPosts.map((post) => (
-                    <div key={`${post.postType}-${post.id}`} className="pet-card fade-in">
+                    <div
+                      key={`${post.postType}-${post.id}`}
+                      className="pet-card fade-in"
+                      onClick={() => post.postType === 'adoption' && navigate(`/pet/${post.id}`)}
+                      style={{ cursor: post.postType === 'adoption' ? 'pointer' : 'default' }}
+                    >
                       <div className="pet-image-wrapper">
                         <img src={post.image} alt={post.petName} className="pet-image" />
                         <div className={`pet-status ${post.status === 'available' || !post.status ? 'available' : 'unavailable'}`}>
-                          {post.status === 'available' || !post.status ? 'Available' : 'rehomed' ? 'Unavailable' : post.status}
+                          {post.status === 'available' || !post.status ? 'Available' : post.status}
                         </div>
                       </div>
                       <div className="pet-info">
@@ -739,25 +742,16 @@ const Profile = () => {
                         </p>
 
                         <div className="post-actions">
-                          {post.postType === 'adoption' && (
-                            <button
-                              onClick={() => navigate(`/pet/${post.id}`)}
-                              className="btn btn-sm btn-outline"
-                            >
-                              <Dog size={16} />
-                              View
-                            </button>
-                          )}
                           <button
                             className="btn btn-sm btn-outline"
-                            onClick={() => handleEditPost(post)}
+                            onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
                           >
                             <Edit2 size={16} />
                             Edit
                           </button>
                           <button
                             className="btn btn-sm btn-outline"
-                            onClick={() => handleDeletePost(post.id, post.postType)}
+                            onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id, post.postType); }}
                             style={{ color: '#dc2626' }}
                           >
                             <X size={16} />

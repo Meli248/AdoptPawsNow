@@ -100,8 +100,8 @@
 }
 
 .stat-icon-cat {
-  background-color: #fdf8f4;
-  color: var(--secondary-color);
+  background-color: #f0f4f2;
+  color: var(--primary-color);
 }
 
 .stat-info {

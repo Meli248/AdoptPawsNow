@@ -1,5 +1,6 @@
 import pool from '../../database/index.js';
 import { createNotification } from '../notification/notificationController.js';
+import { petSchema, updatePetSchema, adoptionApplicationSchema } from '../../validation/schemas.js';
 
 // Get all pets for adoption
 export const getAllPets = async (req, res) => {
@@ -97,42 +98,30 @@ export const getPetById = async (req, res) => {
 // Create new pet (for adoption) - FIXED with user_id
 export const createPet = async (req, res) => {
   try {
-    const userId = req.user?.userId; // Get authenticated user ID
+    const userId = req.user?.userId;
+
+    // Get image URL from uploaded file
+    const image_url = req.file ? `/uploads/${req.file.filename}` : null;
+
+    if (!image_url) {
+      return res.status(400).json({ success: false, message: 'Pet image is required' });
+    }
+
+    const parsed = petSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: parsed.error.errors
+      });
+    }
 
     const {
       name, species, breed, age, gender, size, color, description,
       vaccinated, neutered, status,
       contact_name, contact_email, contact_phone, contact_type,
-      location // Added location
-    } = req.body;
-
-    // Get image URL from uploaded file
-    const image_url = req.file
-      ? `/uploads/${req.file.filename}`
-      : null;
-
-    // Validate required fields
-    if (!name || !species) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name and species are required'
-      });
-    }
-
-    if (!image_url) {
-      return res.status(400).json({
-        success: false,
-        message: 'Pet image is required'
-      });
-    }
-
-    // Validate contact information
-    if (!contact_name || !contact_email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Contact name and email are required'
-      });
-    }
+      location
+    } = parsed.data;
 
     const result = await pool.query(
       `INSERT INTO pets (
@@ -185,17 +174,25 @@ export const createPet = async (req, res) => {
 export const updatePet = async (req, res) => {
   try {
     const { id } = req.params;
+
+    const parsed = updatePetSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: parsed.error.errors
+      });
+    }
+
     const {
       name, species, breed, age, gender, size, color, description,
       status, vaccinated, neutered,
       contact_name, contact_email, contact_phone, contact_type,
-      location // Added
-    } = req.body;
+      location
+    } = parsed.data;
 
     // Get image URL if new file uploaded
-    const image_url = req.file
-      ? `/uploads/${req.file.filename}`
-      : undefined;
+    const image_url = req.file ? `/uploads/${req.file.filename}` : undefined;
 
     const result = await pool.query(
       `UPDATE pets 
@@ -286,15 +283,15 @@ export const deletePet = async (req, res) => {
 // Submit adoption application
 export const createAdoptionApplication = async (req, res) => {
   try {
-    const { pet_id, applicant_name, email, phone, address, reason } = req.body;
-
-    // Validate required fields
-    if (!pet_id || !applicant_name || !email) {
+    const parsed = adoptionApplicationSchema.safeParse(req.body);
+    if (!parsed.success) {
       return res.status(400).json({
         success: false,
-        message: 'Pet ID, applicant name, and email are required'
+        message: 'Validation error',
+        errors: parsed.error.errors
       });
     }
+    const { pet_id, applicant_name, email, phone, address, reason } = parsed.data;
 
     // Check if pet exists and is available
     const petCheck = await pool.query(
