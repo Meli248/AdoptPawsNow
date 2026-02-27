@@ -158,19 +158,21 @@ const createTables = async () => {
   }
 };
 
-app.listen(PORT, async () => {
-  await createTables();
-  console.log('='.repeat(50));
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}`);
-  console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-  console.log('='.repeat(50));
-  console.log('Available routes:');
-  console.log('  Auth:    /api/auth/*');
-  console.log('  Pets:    /api/pets/*');
-  console.log('  Notifications: /api/notifications/*');
-  console.log('='.repeat(50));
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, async () => {
+    await createTables();
+    console.log('='.repeat(50));
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 API URL: http://localhost:${PORT}`);
+    console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+    console.log('='.repeat(50));
+    console.log('Available routes:');
+    console.log('  Auth:    /api/auth/*');
+    console.log('  Pets:    /api/pets/*');
+    console.log('  Notifications: /api/notifications/*');
+    console.log('='.repeat(50));
+  });
+}
 
 export default app;

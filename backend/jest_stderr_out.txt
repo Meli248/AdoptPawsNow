@@ -1,0 +1,45 @@
+﻿node : (node:6008) 
+ExperimentalWarning: 
+VM Modules is an 
+experimental feature 
+and might change at 
+any time
+At line:1 char:17
++ ... :CI="true"; node 
+--experimental-vm-modul
+es node_modules/jest/bi
+n/jest ...
++                 ~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ((node:6008) E   
+ xp...nge at any ti    
+me:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+(Use `node 
+--trace-warnings ...` 
+to show where the 
+warning was created)
+PASS test/Application.t
+est.js
+PASS test/Post.test.js
+PASS test/Notification.
+test.js
+PASS test/Pet.test.js
+PASS test/User.test.js
+
+Test Suites: 5 passed, 
+5 total
+Tests:       11 
+passed, 11 total
+Snapshots:   0 total
+Time:        0.544 s, 
+estimated 1 s
+Ran all test suites.

@@ -1,36 +1,23 @@
-import pool from '../../database/index.js';
 import { petSchema, updatePetSchema } from '../../validation/schemas.js';
+import Pet from '../../models/Pet.js';
+import User from '../../models/User.js';
 
 // Get User Dashboard Stats
 export const getDashboardStats = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const totalPosts = await pool.query(
-      'SELECT COUNT(*) FROM pets WHERE user_id = $1',
-      [userId]
-    );
-
-    const adoptedPets = await pool.query(
-      'SELECT COUNT(*) FROM pets WHERE user_id = $1 AND status = $2',
-      [userId, 'adopted']
-    );
-
-    // Missing pets functionality removed
-    const missingPets = { rows: [{ count: 0 }] };
-
-    const availablePets = await pool.query(
-      'SELECT COUNT(*) FROM pets WHERE user_id = $1 AND status = $2',
-      [userId, 'available']
-    );
+    const totalPosts = await Pet.countByUserIdAndStatus(userId);
+    const adoptedPets = await Pet.countByUserIdAndStatus(userId, 'adopted');
+    const availablePets = await Pet.countByUserIdAndStatus(userId, 'available');
 
     res.status(200).json({
       success: true,
       data: {
-        totalPosts: totalPosts.rows[0].count,
-        adopted: adoptedPets.rows[0].count,
+        totalPosts: totalPosts,
+        adopted: adoptedPets,
         missing: 0,
-        available: availablePets.rows[0].count
+        available: availablePets
       }
     });
   } catch (error) {
@@ -47,18 +34,11 @@ export const getUserPosts = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const result = await pool.query(
-      `SELECT p.*, u.full_name as owner_name 
-       FROM pets p 
-       JOIN users u ON p.user_id = u.id 
-       WHERE p.user_id = $1 
-       ORDER BY p.created_at DESC`,
-      [userId]
-    );
+    const posts = await Pet.findByUserId(userId);
 
     res.status(200).json({
       success: true,
-      data: result.rows
+      data: posts
     });
   } catch (error) {
     console.error('Get user posts error:', error);
@@ -75,29 +55,15 @@ export const createPetPost = async (req, res) => {
     const validatedData = petSchema.parse(req.body);
     const userId = req.user.userId;
 
-    const {
-      name,
-      breed,
-      type,
-      age,
-      location,
-      description,
-      status,
-      image,
-      petType
-    } = validatedData;
-
-    const result = await pool.query(
-      `INSERT INTO pets (user_id, name, breed, type, age, location, description, status, image, pet_type) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
-       RETURNING *`,
-      [userId, name, breed, type, age, location, description, status, image, petType]
-    );
+    const pet = await Pet.create({
+      userId,
+      ...validatedData
+    });
 
     res.status(201).json({
       success: true,
       message: 'Pet post created successfully',
-      data: result.rows[0]
+      data: pet
     });
   } catch (error) {
     if (error.name === 'ZodError') {
@@ -122,45 +88,21 @@ export const updatePetPost = async (req, res) => {
     const userId = req.user.userId;
     const validatedData = updatePetSchema.parse(req.body);
 
-    // Check if pet belongs to user
-    const petCheck = await pool.query(
-      'SELECT * FROM pets WHERE id = $1 AND user_id = $2',
-      [id, userId]
-    );
+    const petCheck = await Pet.findById(id);
 
-    if (petCheck.rows.length === 0) {
+    if (!petCheck || petCheck.user_id !== userId) {
       return res.status(404).json({
         success: false,
         message: 'Pet not found or unauthorized'
       });
     }
 
-    const fields = [];
-    const values = [];
-    let paramCount = 1;
-
-    Object.keys(validatedData).forEach(key => {
-      if (validatedData[key] !== undefined) {
-        fields.push(`${key} = $${paramCount}`);
-        values.push(validatedData[key]);
-        paramCount++;
-      }
-    });
-
-    values.push(id);
-    values.push(userId);
-
-    const result = await pool.query(
-      `UPDATE pets SET ${fields.join(', ')}, updated_at = NOW() 
-       WHERE id = $${paramCount} AND user_id = $${paramCount + 1} 
-       RETURNING *`,
-      values
-    );
+    const updatedPet = await Pet.update(id, validatedData);
 
     res.status(200).json({
       success: true,
       message: 'Pet post updated successfully',
-      data: result.rows[0]
+      data: updatedPet
     });
   } catch (error) {
     if (error.name === 'ZodError') {
@@ -184,12 +126,9 @@ export const deletePetPost = async (req, res) => {
     const { id } = req.params;
     const userId = req.user.userId;
 
-    const result = await pool.query(
-      'DELETE FROM pets WHERE id = $1 AND user_id = $2 RETURNING *',
-      [id, userId]
-    );
+    const deletedPet = await Pet.delete(id, userId);
 
-    if (result.rows.length === 0) {
+    if (!deletedPet) {
       return res.status(404).json({
         success: false,
         message: 'Pet not found or unauthorized'
@@ -216,15 +155,11 @@ export const deletePetPost = async (req, res) => {
 // Get all users (Admin only)
 export const getAllUsers = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT user_id, username, email, full_name, role, status, created_at, 
-      (SELECT COUNT(*) FROM pets WHERE pets.user_id = users.user_id) as posts_count 
-      FROM users ORDER BY created_at DESC`
-    );
+    const users = await User.findAllWithStats();
 
     res.status(200).json({
       success: true,
-      data: result.rows
+      data: users
     });
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -248,12 +183,9 @@ export const blockUser = async (req, res) => {
       });
     }
 
-    const result = await pool.query(
-      'UPDATE users SET status = $1 WHERE user_id = $2 RETURNING *',
-      ['blocked', id]
-    );
+    const updatedUser = await User.updateStatus(id, 'blocked');
 
-    if (result.rows.length === 0) {
+    if (!updatedUser) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -278,12 +210,9 @@ export const unblockUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await pool.query(
-      'UPDATE users SET status = $1 WHERE user_id = $2 RETURNING *',
-      ['active', id]
-    );
+    const updatedUser = await User.updateStatus(id, 'active');
 
-    if (result.rows.length === 0) {
+    if (!updatedUser) {
       return res.status(404).json({
         success: false,
         message: 'User not found'

@@ -1,7 +1,7 @@
-import pool from '../../database/index.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { registerSchema, loginSchema, updateProfileSchema } from '../../validation/schemas.js';
+import User from '../../models/User.js';
 
 /* ======================================
    REGISTER USER
@@ -20,12 +20,9 @@ export const register = async (req, res) => {
 
     console.log('📝 Registration attempt:', { fullName, email });
 
-    const existingUser = await pool.query(
-      'SELECT user_id FROM users WHERE email = $1',
-      [email]
-    );
+    const existingUser = await User.findByEmail(email);
 
-    if (existingUser.rows.length > 0) {
+    if (existingUser) {
       return res.status(400).json({
         success: false,
         message: 'User with this email already exists'
@@ -35,15 +32,13 @@ export const register = async (req, res) => {
     const username = email.split('@')[0];
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const insertQuery = `
-      INSERT INTO users (username, email, password_hash, full_name, role)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING user_id, username, email, full_name, role, created_at
-    `;
-
-    const values = [username, email, hashedPassword, fullName, 'user'];
-    const result = await pool.query(insertQuery, values);
-    const user = result.rows[0];
+    const user = await User.create({
+      username,
+      email,
+      hashedPassword,
+      fullName,
+      role: 'user'
+    });
 
     const token = jwt.sign(
       {
@@ -96,24 +91,19 @@ export const login = async (req, res) => {
     }
     const { email, password } = parsed.data;
 
-    const result = await pool.query(
-      'SELECT user_id, username, email, password_hash, full_name, role FROM users WHERE email = $1',
-      [email]
-    );
+    let user = await User.findByEmail(email);
 
-    if (result.rows.length === 0) {
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
 
-    const user = result.rows[0];
-
     // AUTO-PROMOTE HARDCODED ADMIN FOR DEMO/USER REQUEST
     if (user.email === 'admin@gmail.com' && user.role !== 'admin') {
       console.log('👑 Auto-promoting admin@gmail.com to admin role');
-      await pool.query("UPDATE users SET role = 'admin' WHERE user_id = $1", [user.user_id]);
+      await User.updateRole(user.user_id, 'admin');
       user.role = 'admin'; // Update local object for token generation
     }
 
@@ -136,10 +126,7 @@ export const login = async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    await pool.query(
-      'UPDATE users SET updated_at = NOW() WHERE user_id = $1',
-      [user.user_id]
-    );
+    await User.updateLastLogin(user.user_id);
 
     res.status(200).json({
       success: true,
@@ -172,20 +159,14 @@ export const login = async (req, res) => {
 export const getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.userId;
+    const user = await User.findById(userId);
 
-    const result = await pool.query(
-      'SELECT user_id, full_name, username, email, role, phone, location, created_at FROM users WHERE user_id = $1',
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-
-    const user = result.rows[0];
 
     res.status(200).json({
       success: true,
@@ -216,20 +197,14 @@ export const getCurrentUser = async (req, res) => {
 export const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
+    const user = await User.findById(userId);
 
-    const result = await pool.query(
-      'SELECT user_id, full_name, username, email, role, phone, location, created_at FROM users WHERE user_id = $1',
-      [userId]
-    );
-
-    if (result.rows.length === 0) {
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
-
-    const user = result.rows[0];
 
     res.status(200).json({
       success: true,
@@ -268,77 +243,29 @@ export const updateUserProfile = async (req, res) => {
         errors: parsed.error.errors
       });
     }
-    const { name, username, phone, location } = parsed.data;
 
-    const newFullName = name || username;
+    // Call User model to handle dynamic query creation
+    const user = await User.updateProfile(userId, parsed.data);
 
-    const updates = [];
-    const values = [];
-    let paramCount = 1;
-
-    if (newFullName) {
-      updates.push(`full_name = $${paramCount}`);
-      values.push(newFullName);
-      paramCount++;
-
-      updates.push(`username = $${paramCount}`);
-      values.push(newFullName);
-      paramCount++;
-    }
-
-    // ✅ ADD phone update
-    if (phone !== undefined) {
-      updates.push(`phone = $${paramCount}`);
-      values.push(phone || null);
-      paramCount++;
-    }
-
-    // ✅ ADD location update
-    if (location !== undefined) {
-      updates.push(`location = $${paramCount}`);
-      values.push(location || null);
-      paramCount++;
-    }
-
-    if (updates.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'No fields to update'
-      });
-    }
-
-    updates.push(`updated_at = NOW()`);
-    values.push(userId);
-
-    const result = await pool.query(
-      `UPDATE users 
-       SET ${updates.join(', ')} 
-       WHERE user_id = $${paramCount} 
-       RETURNING user_id, full_name, username, email, role, phone, location, created_at`,
-      values
-    );
-
-    if (result.rows.length === 0) {
+    if (!user) {
       return res.status(404).json({
         success: false,
         message: 'User not found'
       });
     }
 
-    const updatedUser = result.rows[0];
-
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
       user: {
-        user_id: updatedUser.user_id,
-        name: updatedUser.full_name,
-        username: updatedUser.username,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        phone: updatedUser.phone || '',
-        location: updatedUser.location || '',
-        created_at: updatedUser.created_at
+        user_id: user.user_id,
+        name: user.full_name,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        phone: user.phone || '',
+        location: user.location || '',
+        created_at: user.created_at
       }
     });
 
@@ -346,8 +273,7 @@ export const updateUserProfile = async (req, res) => {
     console.error('❌ Update profile error:', error);
     res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: error.message
+      message: 'Internal server error'
     });
   }
 };

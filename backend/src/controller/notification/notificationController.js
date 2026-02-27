@@ -1,21 +1,15 @@
-import pool from '../../database/index.js';
+import Notification from '../../models/Notification.js';
 
 // Get user notifications
 export const getUserNotifications = async (req, res) => {
     try {
         const userId = req.user.userId;
 
-        const result = await pool.query(
-            `SELECT * FROM notifications 
-             WHERE user_id = $1 
-             ORDER BY created_at DESC 
-             LIMIT 50`,
-            [userId]
-        );
+        const notifications = await Notification.findByUserId(userId);
 
         res.status(200).json({
             success: true,
-            data: result.rows
+            data: notifications
         });
     } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -32,15 +26,9 @@ export const markNotificationAsRead = async (req, res) => {
         const { id } = req.params;
         const userId = req.user.userId;
 
-        const result = await pool.query(
-            `UPDATE notifications 
-             SET is_read = TRUE 
-             WHERE notification_id = $1 AND user_id = $2 
-             RETURNING *`,
-            [id, userId]
-        );
+        const notification = await Notification.markAsRead(id, userId);
 
-        if (result.rows.length === 0) {
+        if (!notification) {
             return res.status(404).json({
                 success: false,
                 message: 'Notification not found'
@@ -49,7 +37,7 @@ export const markNotificationAsRead = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            data: result.rows[0]
+            data: notification
         });
     } catch (error) {
         console.error('Error marking notification as read:', error);
@@ -65,14 +53,11 @@ export const getUnreadCount = async (req, res) => {
     try {
         const userId = req.user.userId;
 
-        const result = await pool.query(
-            'SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = FALSE',
-            [userId]
-        );
+        const count = await Notification.countUnread(userId);
 
         res.status(200).json({
             success: true,
-            count: parseInt(result.rows[0].count)
+            count: count
         });
     } catch (error) {
         console.error('Error fetching unread count:', error);
@@ -86,11 +71,7 @@ export const getUnreadCount = async (req, res) => {
 // Helper function to create notification (for internal use)
 export const createNotification = async (userId, message, type = 'info', imageUrl = null) => {
     try {
-        await pool.query(
-            `INSERT INTO notifications (user_id, message, type, image_url) 
-             VALUES ($1, $2, $3, $4)`,
-            [userId, message, type, imageUrl]
-        );
+        await Notification.create(userId, message, type, imageUrl);
     } catch (error) {
         console.error('Error creating notification:', error);
     }
