@@ -63,7 +63,7 @@ const Notification = ({ isOpen, onClose }) => {
             await markAsRead(notification.notification_id);
         }
         // Navigate based on notification type if needed
-        // if (notification.type === 'surrender_update') navigate('/profile');
+        // if (notification.type === 'post_update') navigate('/profile');
     };
 
     const formatDate = (dateString) => {

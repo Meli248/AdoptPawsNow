@@ -299,4 +299,31 @@
   .users-table td {
     padding: 0.75rem 1rem;
   }
+
+  .users-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-container {
+    padding: 0 0.75rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .users-title {
+    font-size: 1.25rem;
+  }
+
+  .users-subtitle {
+    font-size: 0.875rem;
+  }
 }

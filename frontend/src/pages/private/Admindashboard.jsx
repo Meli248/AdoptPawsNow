@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Grid, CheckCircle, AlertTriangle, Dog, Cat, Users, Clock, Plus, MapPin, Search } from 'lucide-react';
+import { Grid, CheckCircle, Dog, Cat, Users, Clock, Plus, MapPin, Search, X, Filter, PawPrint } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageHelper';
 import '../../css/AdminDashboard.css';
 
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
       const cats = allPets.filter(p => p.species?.toLowerCase() === 'cat' && p.status?.toLowerCase() === 'available');
 
       setStats({
-        totalPosts: allPets.filter(p => p.status?.toLowerCase() === 'available').length,
+        totalPosts: allPets.length,
         adoptedPets: adopted.length,
         dogs: dogs.length,
         cats: cats.length
@@ -95,14 +95,20 @@ const AdminDashboard = () => {
     navigate(`/pet/${petId}`);
   };
 
-  /* Search Logic */
+  /* Search & Filter Logic */
   const [searchTerm, setSearchTerm] = useState('');
+  const [speciesFilter, setSpeciesFilter] = useState('all');
 
-  const filteredPets = pets.filter(pet =>
-    pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (pet.breed && pet.breed.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (pet.species && pet.species.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredPets = pets.filter(pet => {
+    const matchesSearch =
+      pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (pet.breed && pet.breed.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (pet.species && pet.species.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSpecies =
+      speciesFilter === 'all' ||
+      (pet.species && pet.species.toLowerCase() === speciesFilter);
+    return matchesSearch && matchesSpecies;
+  });
 
   if (loading) {
     return (
@@ -127,10 +133,10 @@ const AdminDashboard = () => {
           </div>
           <button
             className="btn btn-primary"
-            onClick={() => navigate('/surrender-request')}
+            onClick={() => navigate('/post-request')}
           >
             <Plus size={20} />
-            Surrender Form
+            Post Form
           </button>
         </div>
 
@@ -152,7 +158,7 @@ const AdminDashboard = () => {
             </div>
             <div className="stat-info">
               <p className="stat-value">{stats.adoptedPets}</p>
-              <p className="stat-label">Unavailable</p>
+              <p className="stat-label">Adopted</p>
             </div>
           </div>
 
@@ -179,19 +185,47 @@ const AdminDashboard = () => {
 
         {/* All Pet Posts */}
         <div className="all-pets-section">
-          <div className="section-header">
-            <h2 className="section-title">All Pet Posts</h2>
-            <div className="search-bar-wrapper">
-              <div className="search-bar">
-                <Search size={20} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search pets by name, breed, or species..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
-              </div>
+          <h2 className="section-title">All Pet Posts</h2>
+
+          {/* Search bar */}
+          <div className="search-bar">
+            <Search size={20} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search by name, breed, or species..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            {searchTerm && (
+              <button onClick={() => setSearchTerm('')} className="search-clear-btn" title="Clear">
+                <X size={16} />
+              </button>
+            )}
+          </div>
+
+          {/* Filter row */}
+          <div className="filter-row">
+            <Filter size={18} className="filter-row-icon" />
+            <div className="filter-tabs">
+              <button
+                className={`filter-tab ${speciesFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setSpeciesFilter('all')}
+              >
+                <PawPrint size={16} /> All Pets
+              </button>
+              <button
+                className={`filter-tab ${speciesFilter === 'dog' ? 'active' : ''}`}
+                onClick={() => setSpeciesFilter('dog')}
+              >
+                <Dog size={16} /> Dogs
+              </button>
+              <button
+                className={`filter-tab ${speciesFilter === 'cat' ? 'active' : ''}`}
+                onClick={() => setSpeciesFilter('cat')}
+              >
+                <Cat size={16} /> Cats
+              </button>
             </div>
           </div>
 

@@ -299,6 +299,51 @@ button:disabled {
   .section-title {
     font-size: 1.8rem;
   }
+
+  .section-subtitle {
+    font-size: 1rem;
+    margin-bottom: 30px;
+  }
+
+  .section {
+    padding: 40px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .btn {
+    padding: 10px 18px;
+    font-size: 0.9rem;
+  }
+
+  .btn-lg {
+    padding: 12px 24px;
+    font-size: 0.95rem;
+  }
+
+  .pet-image-wrapper {
+    height: 220px;
+  }
+
+  .pet-info {
+    padding: 16px;
+  }
+
+  .pet-name {
+    font-size: 1.2rem;
+  }
 }
 
 /* Shared Pet Card components */

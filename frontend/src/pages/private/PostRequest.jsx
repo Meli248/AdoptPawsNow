@@ -4,9 +4,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dog, Cat, Upload, AlertCircle, User, Phone, FileText, Calendar, Hash, MapPin } from 'lucide-react';
-import '../../css/SurrenderRequest.css'; // Reusing existing styles or create new
+import '../../css/PostRequest.css'; // Reusing existing styles or create new
 
-const surrenderSchema = z.object({
+const postSchema = z.object({
     pet_name: z.string().min(1, 'Pet name is required'),
     pet_type: z.enum(['dog', 'cat'], {
         errorMap: () => ({ message: 'Please select either Dog or Cat' }),
@@ -32,7 +32,7 @@ const surrenderSchema = z.object({
     ])
 });
 
-const SurrenderRequest = ({ initialData, isEdit = false }) => {
+const PostRequest = ({ initialData, isEdit = false }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(null);
@@ -45,7 +45,7 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
         watch,
         reset
     } = useForm({
-        resolver: zodResolver(surrenderSchema),
+        resolver: zodResolver(postSchema),
         defaultValues: {
             pet_type: 'dog',
             gender: 'unknown'
@@ -113,19 +113,19 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
 
             let response;
             if (isEdit && initialData) {
-                // Determine if updating a Pet (Admin) or Surrender Request (User)
+                // Determine if updating a Pet (Admin) or Post Request (User)
                 const id = initialData.pet_id || initialData.id || initialData.application_id;
-                // If it has application_id, likely a surrender request. If id/pet_id, likely a pet.
+                // If it has application_id, likely a post request. If id/pet_id, likely a pet.
                 // However, AdminEditPet passes 'id' from params.
 
                 // If updating a PET (Admin side usually), endpoint is /pets/:id
-                // If updating a Surrender Request (User side), endpoint is /surrender/:id
+                // If updating a Post Request (User side), endpoint is /post/:id
 
                 // Let's guess based on where it came from or structure.
-                // Surrender requests have 'application_id'. Pets have 'id'.
+                // Post requests have 'application_id'. Pets have 'id'.
 
                 const endpoint = initialData.application_id
-                    ? `${import.meta.env.VITE_API_URL}/surrender/${initialData.application_id}` // Update request
+                    ? `${import.meta.env.VITE_API_URL}/post/${initialData.application_id}` // Update request
                     : `${import.meta.env.VITE_API_URL}/pets/${id}`;   // Update pet
 
                 response = await fetch(endpoint, {
@@ -134,7 +134,7 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
                     body: formData
                 });
             } else {
-                response = await fetch(`${import.meta.env.VITE_API_URL}/surrender`, {
+                response = await fetch(`${import.meta.env.VITE_API_URL}/post`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
@@ -161,7 +161,7 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
                 alert(result.message || 'Failed to submit request');
             }
         } catch (error) {
-            console.error('Error submitting surrender request:', error);
+            console.error('Error submitting post request:', error);
             alert('An error occurred. Please try again.');
         } finally {
             setLoading(false);
@@ -182,7 +182,7 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
 
     return (
         <div className="create-post-page" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-            <h1 className="page-title">{isEdit ? 'Edit Details' : 'Surrender Form'}</h1>
+            <h1 className="page-title">{isEdit ? 'Edit Details' : 'Post Form'}</h1>
             <p className="page-subtitle">
                 {isEdit ? 'Update the details below.' : 'Help this pet find a loving forever home. Please provide details below.'}
             </p>
@@ -317,7 +317,7 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
                         <textarea
                             {...register('reason')}
                             rows="4"
-                            placeholder="Please explain why you are surrendering this pet or maintain a description..."
+                            placeholder="Please explain why you are posting this pet or maintain a description..."
                             className={`form-textarea ${errors.reason ? 'error' : ''}`}
                         />
                         {errors.reason && <span className="error-msg">{errors.reason.message}</span>}
@@ -387,4 +387,4 @@ const SurrenderRequest = ({ initialData, isEdit = false }) => {
     );
 };
 
-export default SurrenderRequest;
+export default PostRequest;

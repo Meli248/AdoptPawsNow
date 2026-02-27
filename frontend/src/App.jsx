@@ -20,8 +20,8 @@ import Profile from './pages/private/Profile';
 import PetDetail from './pages/private/Petdetail'; // Note: lowercase 'd' in filename
 import AdminDashboard from './pages/private/Admindashboard'; // Note: lowercase 'd'
 import ManageUsers from './pages/private/Manageusers'; // Note: lowercase 'u'
-import SurrenderRequest from './pages/private/SurrenderRequest'; // Added
-import AdminSurrenderRequests from './pages/private/AdminSurrenderRequests';
+import PostRequest from './pages/private/PostRequest'; // Added
+import AdminPostRequests from './pages/private/AdminPostRequests';
 import AdminAdoptionRequests from './pages/private/AdminAdoptionRequests';
 
 import AdminEditPet from './pages/private/AdminEditPet';
@@ -47,14 +47,14 @@ function App() {
             <Route path="/pet/:petId" element={<PetDetail />} />
             <Route path="/adopt" element={<Adopt />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/surrender-request" element={<SurrenderRequest />} /> {/* Added */}
+            <Route path="/post-request" element={<PostRequest />} /> {/* Added */}
           </Route>
 
           {/* 4. Admin Routes: Requires logged-in user AND 'admin' role */}
           <Route element={<AdminRoute />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/manage-users" element={<ManageUsers />} />
-            <Route path="/admin/surrender-requests" element={<AdminSurrenderRequests />} />
+            <Route path="/admin/post-requests" element={<AdminPostRequests />} />
             <Route path="/admin/adoption-requests" element={<AdminAdoptionRequests />} />
             <Route path="/admin/edit-pet/:id" element={<AdminEditPet />} />
           </Route>

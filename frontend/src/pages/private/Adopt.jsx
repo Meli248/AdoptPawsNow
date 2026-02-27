@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, PawPrint, Dog, Cat, MapPin, Heart, User, Mail, Phone } from 'lucide-react';
+import { Search, Filter, PawPrint, Dog, Cat, MapPin, Heart, User, Mail, Phone, X } from 'lucide-react';
 import { adoptionAPI } from '../../services/api';
 import '../../css/Adopt.css';
 
@@ -226,6 +226,7 @@ const Adopt = () => {
 
       <section className="search-section">
         <div className="container">
+          {/* Search bar - standalone, full width */}
           <div className="search-bar fade-in">
             <Search className="search-icon" size={20} />
             <input
@@ -235,33 +236,43 @@ const Adopt = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
             />
-            <button className="filter-button">
-              <Filter size={20} />
-            </button>
+            {searchTerm && (
+              <button
+                className="search-clear-btn"
+                onClick={() => setSearchTerm('')}
+                title="Clear"
+              >
+                <X size={16} />
+              </button>
+            )}
           </div>
 
-          <div className="filter-tabs fade-in">
-            <button
-              className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
-              onClick={() => setFilter('all')}
-            >
-              <PawPrint size={20} />
-              All Pets
-            </button>
-            <button
-              className={`filter-tab ${filter === 'dogs' ? 'active' : ''}`}
-              onClick={() => setFilter('dogs')}
-            >
-              <Dog size={20} />
-              Dogs
-            </button>
-            <button
-              className={`filter-tab ${filter === 'cats' ? 'active' : ''}`}
-              onClick={() => setFilter('cats')}
-            >
-              <Cat size={20} />
-              Cats
-            </button>
+          {/* Filter row: funnel icon + tabs */}
+          <div className="filter-row fade-in">
+            <Filter size={18} className="filter-row-icon" />
+            <div className="filter-tabs">
+              <button
+                className={`filter-tab ${filter === 'all' ? 'active' : ''}`}
+                onClick={() => setFilter('all')}
+              >
+                <PawPrint size={16} />
+                All Pets
+              </button>
+              <button
+                className={`filter-tab ${filter === 'dogs' ? 'active' : ''}`}
+                onClick={() => setFilter('dogs')}
+              >
+                <Dog size={16} />
+                Dogs
+              </button>
+              <button
+                className={`filter-tab ${filter === 'cats' ? 'active' : ''}`}
+                onClick={() => setFilter('cats')}
+              >
+                <Cat size={16} />
+                Cats
+              </button>
+            </div>
           </div>
         </div>
       </section>

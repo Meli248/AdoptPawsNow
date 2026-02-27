@@ -1,13 +1,13 @@
 import pool from '../../database/index.js';
 import { createNotification } from '../notification/notificationController.js';
-import { surrenderRequestSchema } from '../../validation/schemas.js';
+import { postRequestSchema } from '../../validation/schemas.js';
 
-// Submit a surrender request
-export const createSurrenderRequest = async (req, res) => {
+// Submit a post request
+export const createPostRequest = async (req, res) => {
     try {
         const userId = req.user.userId;
 
-        const parsed = surrenderRequestSchema.safeParse(req.body);
+        const parsed = postRequestSchema.safeParse(req.body);
         if (!parsed.success) {
             return res.status(400).json({
                 success: false,
@@ -33,7 +33,7 @@ export const createSurrenderRequest = async (req, res) => {
         const finalImage = req.file ? `/uploads/${req.file.filename}` : (req.body.image_url || null);
 
         const result = await pool.query(
-            `INSERT INTO surrender_applications 
+            `INSERT INTO post_applications 
       (user_id, pet_name, pet_type, breed, age, gender, reason, image_url, contact_name, contact_email, contact_phone, location)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *`,
@@ -42,11 +42,11 @@ export const createSurrenderRequest = async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: 'Surrender request submitted successfully. We will review it shortly.',
+            message: 'Post request submitted successfully. We will review it shortly.',
             data: result.rows[0]
         });
     } catch (error) {
-        console.error('Error creating surrender request:', error);
+        console.error('Error creating post request:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to submit request',
@@ -55,14 +55,14 @@ export const createSurrenderRequest = async (req, res) => {
     }
 };
 
-// Get all surrender requests (Admin only)
-export const getAllSurrenderRequests = async (req, res) => {
+// Get all post requests (Admin only)
+export const getAllPostRequests = async (req, res) => {
     try {
         const { status } = req.query;
 
         let query = `
       SELECT s.*, u.full_name as user_name, u.email as user_email
-      FROM surrender_applications s
+      FROM post_applications s
       JOIN users u ON s.user_id = u.user_id
     `;
 
@@ -82,7 +82,7 @@ export const getAllSurrenderRequests = async (req, res) => {
             data: result.rows
         });
     } catch (error) {
-        console.error('Error fetching surrender requests:', error);
+        console.error('Error fetching post requests:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -90,8 +90,8 @@ export const getAllSurrenderRequests = async (req, res) => {
     }
 };
 
-// Update surrender request status
-export const updateSurrenderStatus = async (req, res) => {
+// Update post request status
+export const updatePostStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -104,7 +104,7 @@ export const updateSurrenderStatus = async (req, res) => {
         }
 
         const result = await pool.query(
-            'UPDATE surrender_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE application_id = $2 RETURNING *',
+            'UPDATE post_applications SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE application_id = $2 RETURNING *',
             [status, id]
         );
 
@@ -115,7 +115,7 @@ export const updateSurrenderStatus = async (req, res) => {
             });
         }
 
-        const surrenderRequest = result.rows[0];
+        const postRequest = result.rows[0];
 
         // If approved, create a new pet listing
         if (status === 'approved') {
@@ -125,41 +125,41 @@ export const updateSurrenderStatus = async (req, res) => {
                     image_url, contact_phone, contact_type, location, status
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
                 [
-                    surrenderRequest.user_id,
-                    surrenderRequest.pet_name,
-                    surrenderRequest.pet_type,
-                    surrenderRequest.breed,
-                    surrenderRequest.age,
-                    surrenderRequest.gender,
-                    surrenderRequest.reason, // Use reason as description
-                    surrenderRequest.image_url,
-                    surrenderRequest.contact_phone,
+                    postRequest.user_id,
+                    postRequest.pet_name,
+                    postRequest.pet_type,
+                    postRequest.breed,
+                    postRequest.age,
+                    postRequest.gender,
+                    postRequest.reason, // Use reason as description
+                    postRequest.image_url,
+                    postRequest.contact_phone,
                     'individual', // Default contact type
-                    surrenderRequest.location,
+                    postRequest.location,
                     'available'
                 ]
             );
         }
 
         const message = status === 'approved'
-            ? `Your surrender request for ${surrenderRequest.pet_name} has been approved. The pet is now listed as Available for adoption.`
-            : `Your surrender request for ${surrenderRequest.pet_name} has been ${status}.`;
+            ? `Your post request for ${postRequest.pet_name} has been approved. The pet is now listed as Available for adoption.`
+            : `Your post request for ${postRequest.pet_name} has been ${status}.`;
 
         // Notify the user
         await createNotification(
-            surrenderRequest.user_id,
+            postRequest.user_id,
             message,
-            'surrender_update',
-            surrenderRequest.image_url
+            'post_update',
+            postRequest.image_url
         );
 
         res.status(200).json({
             success: true,
             message: 'Status updated successfully',
-            data: surrenderRequest
+            data: postRequest
         });
     } catch (error) {
-        console.error('Error updating surrender status:', error);
+        console.error('Error updating post status:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -167,13 +167,13 @@ export const updateSurrenderStatus = async (req, res) => {
     }
 };
 
-// Get user's surrender requests
-export const getUserSurrenderRequests = async (req, res) => {
+// Get user's post requests
+export const getUserPostRequests = async (req, res) => {
     try {
         const userId = req.user.userId;
 
         const result = await pool.query(
-            `SELECT * FROM surrender_applications 
+            `SELECT * FROM post_applications 
              WHERE user_id = $1 
              ORDER BY created_at DESC`,
             [userId]
@@ -184,17 +184,17 @@ export const getUserSurrenderRequests = async (req, res) => {
             data: result.rows
         });
     } catch (error) {
-        console.error('Error fetching user surrender requests:', error);
+        console.error('Error fetching user post requests:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to fetch surrender requests',
+            message: 'Failed to fetch post requests',
             error: error.message
         });
     }
 };
 
-// Update surrender request (User)
-export const updateSurrenderRequest = async (req, res) => {
+// Update post request (User)
+export const updatePostRequest = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.userId;
@@ -213,7 +213,7 @@ export const updateSurrenderRequest = async (req, res) => {
 
         // Check if request exists and belongs to user
         const checkResult = await pool.query(
-            'SELECT * FROM surrender_applications WHERE application_id = $1 AND user_id = $2',
+            'SELECT * FROM post_applications WHERE application_id = $1 AND user_id = $2',
             [id, userId]
         );
 
@@ -228,7 +228,7 @@ export const updateSurrenderRequest = async (req, res) => {
         const image_url = req.file ? `/uploads/${req.file.filename}` : undefined;
 
         let query = `
-            UPDATE surrender_applications 
+            UPDATE post_applications 
             SET pet_name = COALESCE($1, pet_name),
                 pet_type = COALESCE($2, pet_type),
                 breed = COALESCE($3, breed),
@@ -260,7 +260,7 @@ export const updateSurrenderRequest = async (req, res) => {
             data: result.rows[0]
         });
     } catch (error) {
-        console.error('Error updating surrender request:', error);
+        console.error('Error updating post request:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to update request',
@@ -269,14 +269,14 @@ export const updateSurrenderRequest = async (req, res) => {
     }
 };
 
-// Delete surrender request (User)
-export const deleteSurrenderRequest = async (req, res) => {
+// Delete post request (User)
+export const deletePostRequest = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.userId;
 
         const result = await pool.query(
-            'DELETE FROM surrender_applications WHERE application_id = $1 AND user_id = $2 RETURNING *',
+            'DELETE FROM post_applications WHERE application_id = $1 AND user_id = $2 RETURNING *',
             [id, userId]
         );
 
@@ -292,7 +292,7 @@ export const deleteSurrenderRequest = async (req, res) => {
             message: 'Request deleted successfully'
         });
     } catch (error) {
-        console.error('Error deleting surrender request:', error);
+        console.error('Error deleting post request:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to delete request',

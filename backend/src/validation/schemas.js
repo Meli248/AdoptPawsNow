@@ -1,8 +1,5 @@
 import { z } from 'zod';
 
-/* ======================================
-   AUTH SCHEMAS
-====================================== */
 export const registerSchema = z.object({
   fullName: z.string()
     .min(2, 'Full name must be at least 2 characters')
@@ -26,9 +23,6 @@ export const updateProfileSchema = z.object({
   location: z.string().max(200, 'Location must not exceed 200 characters').optional().nullable(),
 });
 
-/* ======================================
-   PET SCHEMAS
-====================================== */
 export const petSchema = z.object({
   name: z.string().min(1, 'Pet name is required').max(100),
   species: z.string().min(1, 'Species is required'),
@@ -67,9 +61,6 @@ export const updatePetSchema = z.object({
   location: z.string().optional(),
 });
 
-/* ======================================
-   ADOPTION APPLICATION SCHEMA
-====================================== */
 export const adoptionApplicationSchema = z.object({
   pet_id: z.union([z.string(), z.number()]).refine(v => !isNaN(Number(v)), {
     message: 'Pet ID is required',
@@ -82,9 +73,9 @@ export const adoptionApplicationSchema = z.object({
 });
 
 /* ======================================
-   SURRENDER REQUEST SCHEMA
+   POST REQUEST SCHEMA
 ====================================== */
-export const surrenderRequestSchema = z.object({
+export const postRequestSchema = z.object({
   pet_name: z.string().min(1, 'Pet name is required'),
   pet_type: z.string().min(1, 'Pet type is required'),
   breed: z.string().optional(),

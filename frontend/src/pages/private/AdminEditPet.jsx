@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import SurrenderRequest from './SurrenderRequest';
+import PostRequest from './PostRequest';
 
 const AdminEditPet = () => {
     const { id } = useParams();
@@ -34,7 +34,7 @@ const AdminEditPet = () => {
 
     return (
         <div className="admin-page-container">
-            <SurrenderRequest
+            <PostRequest
                 initialData={petData}
                 isEdit={true}
             />

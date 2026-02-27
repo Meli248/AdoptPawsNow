@@ -27,7 +27,7 @@ const Profile = () => {
   const [stats, setStats] = useState({
     totalPosts: 0,
     adopted: 0,
-    surrenderPosts: 0
+    postPosts: 0
   });
 
   useEffect(() => {
@@ -47,7 +47,7 @@ const Profile = () => {
         setStats({
           totalPosts: Number(data.data.totalPosts) || 0,
           adopted: Number(data.data.adopted) || 0,
-          surrenderPosts: 0
+          postPosts: 0
         });
       }
     } catch (e) {
@@ -187,14 +187,14 @@ const Profile = () => {
       }
 
       // If admin, fetch global counts for stats
-      const [petsResponse, surrenderResponse] = await Promise.all([
+      const [petsResponse, postResponse] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_URL}/pets/my-posts`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }),
-        fetch(`${import.meta.env.VITE_API_URL}/surrender/my-requests`, {
+        fetch(`${import.meta.env.VITE_API_URL}/post/my-requests`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -202,7 +202,7 @@ const Profile = () => {
         })
       ]);
 
-      if (petsResponse.status === 401 || surrenderResponse.status === 401) {
+      if (petsResponse.status === 401 || postResponse.status === 401) {
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
         navigate('/login');
@@ -210,7 +210,7 @@ const Profile = () => {
       }
 
       const petsData = petsResponse.ok ? await petsResponse.json() : { success: false, data: [] };
-      const surrenderData = surrenderResponse.ok ? await surrenderResponse.json() : { success: false, data: [] };
+      const postData = postResponse.ok ? await postResponse.json() : { success: false, data: [] };
 
       const allPosts = [];
       let adoptionCount = 0;
@@ -242,15 +242,15 @@ const Profile = () => {
         adoptionCount = adoptionPosts.length;
       }
 
-      if (surrenderData?.success && surrenderData.data) {
-        const surrenderPosts = surrenderData.data.map(req => ({
+      if (postData?.success && postData.data) {
+        const postPosts = postData.data.map(req => ({
           id: req.application_id,
           petName: req.pet_name,
           breed: req.breed || 'Mixed',
           petType: req.pet_type,
-          location: req.location || 'Surrender Request',
+          location: req.location || 'Post Request',
           image: getImageUrl(req.image_url),
-          postType: 'surrender',
+          postType: 'post',
           status: req.status, // pending, approved, rejected
           age: req.age,
           gender: req.gender,
@@ -261,7 +261,7 @@ const Profile = () => {
           contact_phone: req.contact_phone,
           createdAt: req.created_at
         }));
-        allPosts.push(...surrenderPosts);
+        allPosts.push(...postPosts);
       }
 
       // Sort by newest first
@@ -346,7 +346,7 @@ const Profile = () => {
 
   const handleEditPost = (post) => {
     setEditingPost(post);
-    if (post.postType === 'surrender') {
+    if (post.postType === 'post') {
       setEditFormData({
         petName: post.petName || '',
         petType: post.petType?.toLowerCase() || 'dog',
@@ -390,8 +390,8 @@ const Profile = () => {
       let endpoint;
       let updateData;
 
-      if (editingPost.postType === 'surrender') {
-        endpoint = `${import.meta.env.VITE_API_URL}/surrender/${editingPost.id}`;
+      if (editingPost.postType === 'post') {
+        endpoint = `${import.meta.env.VITE_API_URL}/post/${editingPost.id}`;
         updateData = {
           pet_name: editFormData.petName,
           pet_type: editFormData.petType,
@@ -455,8 +455,8 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('access_token');
-      const endpoint = postType === 'surrender'
-        ? `${import.meta.env.VITE_API_URL}/surrender/${postId}`
+      const endpoint = postType === 'post'
+        ? `${import.meta.env.VITE_API_URL}/post/${postId}`
         : `${import.meta.env.VITE_API_URL}/pets/pets/${postId}`;
 
       const response = await fetch(endpoint, {
@@ -738,7 +738,7 @@ const Profile = () => {
                         <p className="pet-description">
                           {post.description && post.description.length > 50
                             ? `${post.description.substring(0, 50)}...`
-                            : post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Surrender Request')}
+                            : post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Post Request')}
                         </p>
 
                         <div className="post-actions">
@@ -817,7 +817,7 @@ const Profile = () => {
               <div>
                 <h2 className="modal-title">
                   <Edit2 size={24} />
-                  Edit {editingPost.postType === 'adoption' ? 'Adoption' : 'Surrender'} Post
+                  Edit {editingPost.postType === 'adoption' ? 'Adoption' : 'Post'} Post
                 </h2>
                 <p className="modal-subtitle">Update the details of your post</p>
               </div>
@@ -849,8 +849,8 @@ const Profile = () => {
                   </label>
                   <select
                     className="form-input"
-                    value={editingPost.postType === 'surrender' ? editFormData.petType : editFormData.species}
-                    onChange={(e) => handleEditFormChange(editingPost.postType === 'surrender' ? 'petType' : 'species', e.target.value)}
+                    value={editingPost.postType === 'post' ? editFormData.petType : editFormData.species}
+                    onChange={(e) => handleEditFormChange(editingPost.postType === 'post' ? 'petType' : 'species', e.target.value)}
                   >
                     <option value="dog">Dog</option>
                     <option value="cat">Cat</option>
@@ -1027,7 +1027,7 @@ const Profile = () => {
                 </>
               )}
 
-              {editingPost.postType === 'surrender' && (
+              {editingPost.postType === 'post' && (
                 <>
                   <div className="form-group">
                     <label className="form-label">
@@ -1045,7 +1045,7 @@ const Profile = () => {
                   <div className="form-group">
                     <label className="form-label">
                       <FileText size={18} />
-                      Reason for Surrender
+                      Reason for Post
                     </label>
                     <textarea
                       className="form-textarea"

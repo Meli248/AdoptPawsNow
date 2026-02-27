@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, CheckCircle, XCircle, Clock } from 'lucide-react';
 import '../../css/ManageUsers.css'; // Reusing table styles
 
-const AdminSurrenderRequests = () => {
+const AdminPostRequests = () => {
     const navigate = useNavigate();
     const [requests, setRequests] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -22,11 +22,11 @@ const AdminSurrenderRequests = () => {
             // Backend might allow filtering by status. If not, we might need to fetch all and filter client side.
             // Assuming backend supports ?status=... which I saw in earlier files it did for applications at least.
             // Let's try fetching by status. 
-            // NOTE: Early code had /surrender?status=pending. 
+            // NOTE: Early code had /post?status=pending. 
             // We'll update to use the activeTab state, mapping 'approved' to 'reviewed' maybe if that was the old term, but user wants 'approved'.
             // I'll stick to 'pending', 'approved', 'rejected' as status values.
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender?status=${activeTab}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/post?status=${activeTab}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -49,7 +49,7 @@ const AdminSurrenderRequests = () => {
 
         try {
             const token = localStorage.getItem('access_token');
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/surrender/${id}/status`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/post/${id}/status`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -75,8 +75,8 @@ const AdminSurrenderRequests = () => {
             <div className="users-container">
                 <div className="users-header">
                     <div>
-                        <h1 className="users-title">Surrender Requests</h1>
-                        <p className="users-subtitle">Review and manage pet surrender applications.</p>
+                        <h1 className="users-title">Post Requests</h1>
+                        <p className="users-subtitle">Review and manage pet post applications.</p>
                     </div>
                 </div>
 
@@ -234,4 +234,4 @@ const AdminSurrenderRequests = () => {
     );
 };
 
-export default AdminSurrenderRequests;
+export default AdminPostRequests;

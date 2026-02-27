@@ -99,7 +99,7 @@ const Home = () => {
       navigate('/login');
       return;
     }
-    navigate('/surrender-request');
+    navigate('/post-request');
   };
 
   // Handle navigation to protected routes

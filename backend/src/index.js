@@ -9,7 +9,7 @@ import pool from './database/index.js';
 import authRoutes from './route/auth/authRoute.js';
 import petsRoutes from './route/pets/petsRoute.js';
 import userRoutes from './route/user/userRoute.js';
-import surrenderRoutes from './route/surrender/surrenderRoute.js';
+import postRoutes from './route/post/postRoute.js';
 import statsRoutes from './route/stats/statsRoute.js';
 import notificationRoutes from './route/notification/notificationRoute.js';
 
@@ -65,7 +65,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/pets', petsRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/surrender', surrenderRoutes);
+app.use('/api/post', postRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/notifications', notificationRoutes);
 

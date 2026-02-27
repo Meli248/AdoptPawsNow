@@ -100,11 +100,11 @@ const Navbar = () => {
               </li>
               <li>
                 <Link
-                  to="/admin/surrender-requests"
+                  to="/admin/post-requests"
                   onClick={closeMenu}
-                  className={location.pathname === '/admin/surrender-requests' ? 'nav-link active' : 'nav-link'}
+                  className={location.pathname === '/admin/post-requests' ? 'nav-link active' : 'nav-link'}
                 >
-                  Surrender Requests
+                  Post Requests
                 </Link>
               </li>
               <li>
@@ -139,9 +139,9 @@ const Navbar = () => {
               </li>
               <li>
                 <Link
-                  to="/surrender-request"
+                  to="/post-request"
                   onClick={closeMenu}
-                  className={location.pathname === '/surrender-request' ? 'nav-link active' : 'nav-link'}
+                  className={location.pathname === '/post-request' ? 'nav-link active' : 'nav-link'}
                 >
                   Form
                 </Link>
