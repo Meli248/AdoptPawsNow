@@ -13,8 +13,9 @@
 .dashboard-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 2rem;
+  gap: 2rem;
 }
 
 .dashboard-title {
@@ -347,9 +348,29 @@
 
 .pets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
+  /* Exactly 4 columns desktop */
   gap: 1.5rem;
   margin-top: 1.5rem;
+}
+
+/* Responsiveness to adapt 4 -> 3 -> 2 -> 1 */
+@media (max-width: 1200px) {
+  .pets-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .pets-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .pets-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
 }
 
 .pet-card {
@@ -359,6 +380,9 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   cursor: pointer;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
 }
 
 .pet-card:hover {
@@ -464,9 +488,23 @@
 }
 
 .pet-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  display: flex !important;
+  gap: 0.75rem !important;
+  margin-top: 1rem !important;
+  align-items: stretch !important;
+}
+
+.pet-actions button {
+  flex: 1 !important;
+  width: 50% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  min-height: 44px !important;
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  line-height: normal !important;
 }
 
 .btn-edit {

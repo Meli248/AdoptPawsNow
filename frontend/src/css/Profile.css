@@ -108,6 +108,13 @@
   margin-bottom: 20px;
 }
 
+.section-header-dashboard .btn {
+  white-space: nowrap;
+  width: auto !important;
+  max-width: max-content !important;
+  padding: 10px 24px;
+}
+
 .section-title-dashboard {
   font-size: 1.5rem;
   font-weight: 700;

@@ -23,8 +23,18 @@ const Home = () => {
   });
   const [featuredPets, setFeaturedPets] = useState([]);
   const [loadingPets, setLoadingPets] = useState(true);
+  const [favorites, setFavorites] = useState([]);
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem('access_token');
+
+  const toggleFavorite = (e, petId) => {
+    e.stopPropagation();
+    if (favorites.includes(petId)) {
+      setFavorites(favorites.filter(id => id !== petId));
+    } else {
+      setFavorites([...favorites, petId]);
+    }
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -192,74 +202,80 @@ const Home = () => {
       {/* Featured Pets Section */}
       <section className="featured-pets-section">
         <div className="container">
-          <div className="section-header-inline">
-            <div>
-              <h2 className="section-title">Featured Pets</h2>
-              <p className="section-subtitle">Meet some of our adorable friends looking for a home</p>
-            </div>
-            <button
-              onClick={() => handleProtectedNavigation('/adopt')}
-              className="btn btn-secondary btn-sm"
-            >
-              View All <ArrowRight size={16} />
-            </button>
+          <div className="section-header-centered">
+            <h2 className="section-title">Featured Pets</h2>
+            <p className="section-subtitle">Meet some of our adorable friends looking for a home</p>
           </div>
 
           {loadingPets ? (
             <div className="loading-pets">Loading featured friends...</div>
           ) : (
-            <div className="pets-grid">
-              {featuredPets.map((pet, index) => (
-                <div
-                  key={pet.pet_id || pet.id}
-                  className="pet-card fade-in"
-                  style={{ animationDelay: `${index * 0.1}s`, cursor: 'pointer' }}
-                  onClick={() => handleProtectedNavigation(`/pet/${pet.pet_id || pet.id}`)}
+            <>
+              <div className="pets-grid">
+                {featuredPets.map((pet, index) => {
+                  const petId = pet.pet_id || pet.id;
+                  const isFav = favorites.includes(petId);
+                  return (
+                    <div
+                      key={petId}
+                      className="pet-card fade-in"
+                      style={{ animationDelay: `${index * 0.1}s`, cursor: 'pointer' }}
+                      onClick={() => handleProtectedNavigation(`/pet/${petId}`)}
+                    >
+                      <div className="pet-image-wrapper">
+                        <img
+                          src={pet.image_url ? `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${pet.image_url}` : 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop'}
+                          alt={pet.name}
+                          className="pet-image"
+                        />
+                        <div className={`pet-status ${pet.status === 'available' || !pet.status ? 'available' : 'unavailable'}`}>
+                          {pet.status === 'available' || !pet.status ? 'Available' : 'Unavailable'}
+                        </div>
+                        {/* Interactive Favorite button */}
+                        <button
+                          className={`favorite-btn ${isFav ? 'active' : ''}`}
+                          onClick={(e) => toggleFavorite(e, petId)}
+                        >
+                          <Heart size={20} fill={isFav ? "#e74c3c" : "none"} color={isFav ? "#e74c3c" : "currentColor"} />
+                        </button>
+                      </div>
+                      <div className="pet-info">
+                        <h3 className="pet-name">{pet.name}</h3>
+                        <p className="pet-breed">
+                          {pet.breed || pet.species} • {pet.age ? `${pet.age} years` : 'Age unknown'}
+                        </p>
+                        <div className="pet-location">
+                          <MapPin size={16} />
+                          {pet.size || 'Medium'} • {pet.gender || 'Unknown'}
+                        </div>
+                        <p className="pet-description">
+                          {pet.description?.substring(0, 80) || 'A wonderful pet looking for a loving home.'}
+                          {pet.description?.length > 80 && '...'}
+                        </p>
+                        <button
+                          className="btn btn-primary btn-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProtectedNavigation(`/pet/${petId}`);
+                          }}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="view-all-container">
+                <button
+                  onClick={() => handleProtectedNavigation('/adopt')}
+                  className="btn btn-secondary view-all-btn"
                 >
-                  <div className="pet-image-wrapper">
-                    <img
-                      src={pet.image_url ? `${import.meta.env.VITE_API_URL.replace(/\/api$/, '')}${pet.image_url}` : 'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop'}
-                      alt={pet.name}
-                      className="pet-image"
-                    />
-                    <div className={`pet-status ${pet.status === 'available' || !pet.status ? 'available' : 'unavailable'}`}>
-                      {pet.status === 'available' || !pet.status ? 'Available' : 'Unavailable'}
-                    </div>
-                    {/* Basic Favorite button to match design */}
-                    <button
-                      className="favorite-btn"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Heart size={20} />
-                    </button>
-                  </div>
-                  <div className="pet-info">
-                    <h3 className="pet-name">{pet.name}</h3>
-                    <p className="pet-breed">
-                      {pet.breed || pet.species} • {pet.age ? `${pet.age} years` : 'Age unknown'}
-                    </p>
-                    <div className="pet-location">
-                      <MapPin size={16} />
-                      {pet.size || 'Medium'} • {pet.gender || 'Unknown'}
-                    </div>
-                    <p className="pet-description">
-                      {pet.description?.substring(0, 80) || 'A wonderful pet looking for a loving home.'}
-                      {pet.description?.length > 80 && '...'}
-                    </p>
-                    <button
-                      className="btn btn-primary btn-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleProtectedNavigation(`/pet/${pet.pet_id || pet.id}`);
-                      }}
-                      style={{ marginTop: '10px' }}
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  View All <ArrowRight size={16} />
+                </button>
+              </div>
+            </>
           )}
         </div>
       </section>

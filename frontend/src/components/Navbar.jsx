@@ -83,115 +83,124 @@ const Navbar = () => {
         </Link>
 
         <button className="mobile-menu-toggle" onClick={toggleMenu}>
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          <Menu size={24} />
         </button>
 
-        <ul className={`navbar-menu ${isMenuOpen ? 'mobile-active' : ''}`}>
-          {isAdmin ? (
-            <>
-              <li>
-                <Link
-                  to="/admin/dashboard"
-                  onClick={closeMenu}
-                  className={location.pathname === '/admin/dashboard' ? 'nav-link active' : 'nav-link'}
-                >
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/post-requests"
-                  onClick={closeMenu}
-                  className={location.pathname === '/admin/post-requests' ? 'nav-link active' : 'nav-link'}
-                >
-                  Post Requests
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/admin/adoption-requests"
-                  onClick={closeMenu}
-                  className={location.pathname === '/admin/adoption-requests' ? 'nav-link active' : 'nav-link'}
-                >
-                  Adoption Requests
-                </Link>
-              </li>
-            </>
-          ) : (
-            <>
-              <li>
-                <Link
-                  to="/home"
-                  onClick={closeMenu}
-                  className={location.pathname === '/' || location.pathname === '/home' ? 'nav-link active' : 'nav-link'}
-                >
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/adopt"
-                  onClick={closeMenu}
-                  className={location.pathname === '/adopt' ? 'nav-link active' : 'nav-link'}
-                >
-                  Adopt
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/post-request"
-                  onClick={closeMenu}
-                  className={location.pathname === '/post-request' ? 'nav-link active' : 'nav-link'}
-                >
-                  Form
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about"
-                  onClick={closeMenu}
-                  className={location.pathname === '/about' ? 'nav-link active' : 'nav-link'}
-                >
-                  About
-                </Link>
-              </li>
-            </>
-          )}
-        </ul>
+        <div className={`sidebar-overlay ${isMenuOpen ? 'active' : ''}`}>
+          <div className="sidebar-header">
+            <span className="logo-text" style={{ color: 'white' }}>Adopt<span style={{ color: 'white', opacity: 0.8 }}>Paws</span>Now</span>
+            <button className="mobile-menu-close" onClick={closeMenu}>
+              <X size={28} color="white" />
+            </button>
+          </div>
 
-        <div className={`navbar-actions ${isMenuOpen ? 'mobile-active' : ''}`}>
-          {isAuthenticated ? (
-            <>
-              <div style={{ position: 'relative' }}>
-                {!isAdmin && (
-                  <button
-                    onClick={handleNotificationOpen}
-                    className={`btn-icon notification-bell-wrapper ${showNotifications ? 'active' : ''}`}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', position: 'relative' }}
+          <ul className="navbar-menu">
+            {isAdmin ? (
+              <>
+                <li>
+                  <Link
+                    to="/admin/dashboard"
+                    onClick={closeMenu}
+                    className={location.pathname === '/admin/dashboard' ? 'nav-link active' : 'nav-link'}
                   >
-                    <Bell size={21} />
-                    {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
-                  </button>
-                )}
-                {!isAdmin && <Notification isOpen={showNotifications} onClose={() => setShowNotifications(false)} />}
-              </div>
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/admin/post-requests"
+                    onClick={closeMenu}
+                    className={location.pathname === '/admin/post-requests' ? 'nav-link active' : 'nav-link'}
+                  >
+                    Post Requests
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/admin/adoption-requests"
+                    onClick={closeMenu}
+                    className={location.pathname === '/admin/adoption-requests' ? 'nav-link active' : 'nav-link'}
+                  >
+                    Adoption Requests
+                  </Link>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <Link
+                    to="/home"
+                    onClick={closeMenu}
+                    className={location.pathname === '/' || location.pathname === '/home' ? 'nav-link active' : 'nav-link'}
+                  >
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/adopt"
+                    onClick={closeMenu}
+                    className={location.pathname === '/adopt' ? 'nav-link active' : 'nav-link'}
+                  >
+                    Adopt
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/post-request"
+                    onClick={closeMenu}
+                    className={location.pathname === '/post-request' ? 'nav-link active' : 'nav-link'}
+                  >
+                    Form
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/about"
+                    onClick={closeMenu}
+                    className={location.pathname === '/about' ? 'nav-link active' : 'nav-link'}
+                  >
+                    About
+                  </Link>
+                </li>
+              </>
+            )}
+          </ul>
 
-              <Link to="/profile" className="user-profile" onClick={closeMenu}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor" />
-                </svg>
-                <span>{user}</span>
-              </Link>
-              <button onClick={() => { handleLogout(); closeMenu(); }} className="btn btn-secondary">
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-text" onClick={closeMenu}>Login</Link>
-              <Link to="/register" className="btn btn-primary" onClick={closeMenu}>Get Started</Link>
-            </>
-          )}
+          <div className="navbar-actions">
+            {isAuthenticated ? (
+              <>
+                <div style={{ position: 'relative', width: '100%' }}>
+                  {!isAdmin && (
+                    <button
+                      onClick={handleNotificationOpen}
+                      className={`btn-icon notification-bell-wrapper ${showNotifications ? 'active' : ''}`}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', position: 'relative' }}
+                    >
+                      <Bell size={21} />
+                      {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
+                    </button>
+                  )}
+                  {!isAdmin && <Notification isOpen={showNotifications} onClose={() => setShowNotifications(false)} />}
+                </div>
+
+                <Link to="/profile" className="user-profile" onClick={closeMenu}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="currentColor" />
+                  </svg>
+                  <span>{user}</span>
+                </Link>
+                <button onClick={() => { handleLogout(); closeMenu(); }} className="btn btn-secondary">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-text" onClick={closeMenu}>Login</Link>
+                <Link to="/register" className="btn btn-primary" onClick={closeMenu}>Get Started</Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Mobile Backdrop */}

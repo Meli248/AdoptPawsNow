@@ -97,19 +97,22 @@ const PostRequest = ({ initialData, isEdit = false }) => {
                 formData.append('reason', data.reason);
             }
 
-            // Append new contact fields
-            formData.append('contact_name', data.contact_name);
-            formData.append('contact_email', data.contact_email);
-            formData.append('contact_phone', data.contact_phone);
-            formData.append('location', data.location);
+            // Append new contact fields conditionally to avoid empty string validation errors
+            if (data.contact_name && data.contact_name.trim() !== '') formData.append('contact_name', data.contact_name);
+            if (data.contact_email && data.contact_email.trim() !== '') formData.append('contact_email', data.contact_email);
+            if (data.contact_phone && data.contact_phone.trim() !== '') formData.append('contact_phone', data.contact_phone);
+            if (data.location && data.location.trim() !== '') formData.append('location', data.location);
 
             if (data.image && data.image instanceof FileList && data.image.length > 0) {
                 formData.append('image', data.image[0]);
             }
 
-            if (data.breed) formData.append('breed', data.breed);
-            if (data.age) formData.append('age', data.age);
-            if (data.gender) formData.append('gender', data.gender);
+            if (data.breed && data.breed.trim() !== '') formData.append('breed', data.breed);
+            if (data.age && String(data.age).trim() !== '') formData.append('age', data.age);
+            if (data.gender && data.gender.trim() !== '') {
+                const capitalizedGender = data.gender.charAt(0).toUpperCase() + data.gender.slice(1);
+                formData.append('gender', capitalizedGender);
+            }
 
             let response;
             if (isEdit && initialData) {
@@ -181,10 +184,10 @@ const PostRequest = ({ initialData, isEdit = false }) => {
     };
 
     return (
-        <div className="create-post-page" style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-            <h1 className="page-title">{isEdit ? 'Edit Details' : 'Post Form'}</h1>
+        <div className="create-post-page" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+            <h1 className="page-title">{isEdit ? 'Edit Details' : 'Rehome Your Pet'}</h1>
             <p className="page-subtitle">
-                {isEdit ? 'Update the details below.' : 'Help this pet find a loving forever home. Please provide details below.'}
+                {isEdit ? 'Update the details below.' : 'Help your pet find a safe and loving home. Please provide details below.'}
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="create-post-form">
@@ -366,7 +369,7 @@ const PostRequest = ({ initialData, isEdit = false }) => {
                     </div>
                 </div>
 
-                <div className="form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
+                <div className="form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem', alignItems: 'center' }}>
                     <button
                         type="submit"
                         className="btn btn-primary"

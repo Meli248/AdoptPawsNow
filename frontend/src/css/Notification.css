@@ -135,13 +135,15 @@
     border-radius: 3px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .notification-dropdown {
-        position: fixed;
-        top: 60px;
-        left: 10px;
-        right: 10px;
-        width: auto;
-        max-height: calc(100vh - 100px);
+        position: fixed !important;
+        top: 80px !important;
+        left: 20px !important;
+        right: 20px !important;
+        width: auto !important;
+        max-height: calc(100vh - 120px) !important;
+        z-index: 10005 !important;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2) !important;
     }
 }

@@ -119,8 +119,8 @@ const About = () => {
               <Link to="/adopt" className="btn btn-primary">
                 Browse Pets
               </Link>
-              <Link to="/register" className="btn btn-secondary">
-                Create Account
+              <Link to="/post-request" className="btn btn-secondary">
+                Find a New Home
               </Link>
             </div>
           </div>

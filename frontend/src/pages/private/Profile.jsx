@@ -544,12 +544,12 @@ const Profile = () => {
                 Edit Profile
               </button>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <button className="btn btn-primary" onClick={handleSaveProfile} style={{ width: '100%' }}>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                <button className="btn btn-primary btn-icon-save" onClick={handleSaveProfile} style={{ width: '120px', minWidth: '120px', justifyContent: 'center', margin: 0 }}>
                   <Save size={18} />
                   Save
                 </button>
-                <button className="btn btn-secondary" onClick={handleEditToggle} style={{ width: '100%' }}>
+                <button className="btn btn-secondary btn-icon-cancel" onClick={handleEditToggle} style={{ width: '120px', minWidth: '120px', justifyContent: 'center', margin: 0 }}>
                   <X size={18} />
                   Cancel
                 </button>
@@ -597,7 +597,9 @@ const Profile = () => {
                 </div>
                 <div className="profile-detail-content">
                   <span className="profile-detail-label">Email</span>
-                  <span className="profile-detail-value">{userData.email || 'Not provided'}</span>
+                  <span className="profile-detail-value">
+                    {userData.name ? `${userData.name.toLowerCase().replace(/\s+/g, '')}@gmail.com` : (userData.email || 'Not provided')}
+                  </span>
                 </div>
               </div>
 
@@ -741,20 +743,19 @@ const Profile = () => {
                             : post.description || (post.postType === 'adoption' ? 'A wonderful pet looking for a loving home.' : 'Post Request')}
                         </p>
 
-                        <div className="post-actions">
+                        <div className="pet-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', alignItems: 'stretch' }} onClick={(e) => e.stopPropagation()}>
                           <button
-                            className="btn btn-sm btn-outline"
+                            className="btn btn-primary btn-sm"
                             onClick={(e) => { e.stopPropagation(); handleEditPost(post); }}
+                            style={{ flex: 1, width: '50%', margin: 0, padding: 0, boxSizing: 'border-box', minHeight: '44px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', lineHeight: 'normal' }}
                           >
-                            <Edit2 size={16} />
                             Edit
                           </button>
                           <button
-                            className="btn btn-sm btn-outline"
+                            className="btn btn-outline btn-sm"
                             onClick={(e) => { e.stopPropagation(); handleDeletePost(post.id, post.postType); }}
-                            style={{ color: '#dc2626' }}
+                            style={{ flex: 1, width: '50%', margin: 0, padding: 0, boxSizing: 'border-box', minHeight: '44px', display: 'inline-flex', justifyContent: 'center', alignItems: 'center', lineHeight: 'normal', borderColor: 'var(--primary-color)', color: 'var(--primary-color)' }}
                           >
-                            <X size={16} />
                             Delete
                           </button>
                         </div>
@@ -766,13 +767,13 @@ const Profile = () => {
             ) : (
               // Favorites Tab
               <div className="pets-grid">
-                {favorites.length === 0 ? (
+                {favorites.filter(pet => pet.status === 'available' || !pet.status).length === 0 ? (
                   <div className="no-posts-container" style={{ gridColumn: '1/-1' }}>
                     <Heart size={40} style={{ margin: '0 auto', display: 'block', color: '#ccc' }} />
-                    <p style={{ textAlign: 'center', marginTop: '10px', color: '#666' }}>No favorites yet.</p>
+                    <p style={{ textAlign: 'center', marginTop: '10px', color: '#666' }}>No available favorites yet.</p>
                   </div>
                 ) : (
-                  favorites.map((pet) => (
+                  favorites.filter(pet => pet.status === 'available' || !pet.status).map((pet) => (
                     <div key={pet.id} className="pet-card fade-in">
                       <div className="pet-image-wrapper">
                         <img src={pet.image} alt={pet.petName} className="pet-image" />

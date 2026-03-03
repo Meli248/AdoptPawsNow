@@ -75,31 +75,61 @@ const AdminPostRequests = () => {
             <div className="users-container">
                 <div className="users-header">
                     <div>
-                        <h1 className="users-title">Post Requests</h1>
-                        <p className="users-subtitle">Review and manage pet post applications.</p>
+                        <h1 className="users-title">Rehome Requests</h1>
+                        <p className="users-subtitle">Review and manage pet rehome applications.</p>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="filter-tabs fade-in" style={{ justifyContent: 'flex-start', marginBottom: '1.5rem', display: 'flex', gap: '1rem' }}>
+                <div className="filter-tabs fade-in" style={{ justifyContent: 'flex-start', marginBottom: '2rem', display: 'flex', gap: '1.25rem' }}>
                     <button
                         className={`filter-tab ${activeTab === 'pending' ? 'active' : ''}`}
                         onClick={() => setActiveTab('pending')}
-                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'pending' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'pending' ? '#6b9b7f' : 'white', color: activeTab === 'pending' ? 'white' : '#666', cursor: 'pointer' }}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '50px',
+                            border: activeTab === 'pending' ? 'none' : '2px solid var(--border-color)',
+                            backgroundColor: activeTab === 'pending' ? 'var(--primary-color)' : 'white',
+                            color: activeTab === 'pending' ? 'white' : 'var(--text-light)',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            transition: 'all 0.3s ease'
+                        }}
                     >
                         Pending
                     </button>
                     <button
                         className={`filter-tab ${activeTab === 'approved' ? 'active' : ''}`}
                         onClick={() => setActiveTab('approved')}
-                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'approved' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'approved' ? '#6b9b7f' : 'white', color: activeTab === 'approved' ? 'white' : '#666', cursor: 'pointer' }}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '50px',
+                            border: activeTab === 'approved' ? 'none' : '2px solid var(--border-color)',
+                            backgroundColor: activeTab === 'approved' ? 'var(--primary-color)' : 'white',
+                            color: activeTab === 'approved' ? 'white' : 'var(--text-light)',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            transition: 'all 0.3s ease'
+                        }}
                     >
                         Approved
                     </button>
                     <button
                         className={`filter-tab ${activeTab === 'rejected' ? 'active' : ''}`}
                         onClick={() => setActiveTab('rejected')}
-                        style={{ padding: '0.5rem 1.5rem', borderRadius: '20px', border: activeTab === 'rejected' ? 'none' : '1px solid #ddd', backgroundColor: activeTab === 'rejected' ? '#6b9b7f' : 'white', color: activeTab === 'rejected' ? 'white' : '#666', cursor: 'pointer' }}
+                        style={{
+                            padding: '0.75rem 2rem',
+                            borderRadius: '50px',
+                            border: activeTab === 'rejected' ? 'none' : '2px solid var(--border-color)',
+                            backgroundColor: activeTab === 'rejected' ? 'var(--primary-color)' : 'white',
+                            color: activeTab === 'rejected' ? 'white' : 'var(--text-light)',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            fontSize: '0.95rem',
+                            transition: 'all 0.3s ease'
+                        }}
                     >
                         Rejected
                     </button>

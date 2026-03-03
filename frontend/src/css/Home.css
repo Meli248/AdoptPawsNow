@@ -121,15 +121,23 @@
 }
 
 .hero-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  display: flex !important;
+  gap: 16px !important;
   max-width: 420px;
+  align-items: stretch !important;
 }
 
-/* Standardize hero buttons */
+/* Standardize hero buttons explicitly identical */
+.hero-actions button,
 .btn-hero {
-  min-width: 180px;
+  flex: 1 !important;
+  width: 50% !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  min-height: 52px !important;
+  display: inline-flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 
 .hero-images {
@@ -447,17 +455,47 @@
   background-color: var(--bg-light);
 }
 
-.section-header-inline {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+.section-header-centered {
+  text-align: center;
   margin-bottom: 40px;
   animation: fadeIn 0.8s ease-out;
 }
 
-.pets-grid {
+.section-header-centered .section-title {
+  margin-bottom: 8px;
+}
+
+.section-header-centered .section-subtitle {
+  margin-bottom: 0;
+}
+
+.view-all-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.view-all-btn {
+  grid-column: 2;
+  width: 100%;
+}
+
+@media (max-width: 992px) {
+  .view-all-container {
+    display: flex;
+    justify-content: center;
+  }
+
+  .view-all-btn {
+    grid-column: auto;
+    max-width: 300px;
+  }
+}
+
+.pets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important;
   gap: 24px;
 }
 
@@ -470,13 +508,13 @@
 
 @media (max-width: 1200px) {
   .pets-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 }
 
 @media (max-width: 992px) {
   .pets-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
@@ -489,7 +527,7 @@
   }
 
   .pets-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
     max-width: 400px;
     margin: 0 auto;
   }
@@ -503,5 +541,23 @@
   .hero-badge {
     padding: 8px 16px;
     font-size: 0.8rem;
+  }
+}
+
+/* Global Grid Restructurings for Stats and Steps */
+@media (max-width: 992px) {
+
+  .stats-grid,
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+
+  .stats-grid,
+  .steps-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 }

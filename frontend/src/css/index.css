@@ -22,6 +22,7 @@ body {
   color: var(--text-dark);
   background-color: var(--bg-white);
   line-height: 1.6;
+  overflow-x: hidden;
 }
 
 h1,
@@ -71,7 +72,7 @@ textarea::placeholder {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 50px;
 }
 
 .section {
@@ -426,6 +427,9 @@ button:disabled {
 
 .pet-info {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .pet-name {
@@ -459,4 +463,10 @@ button:disabled {
   font-size: 0.95rem;
   margin-bottom: 20px;
   line-height: 1.6;
+}
+
+/* Force bottom alignment globally */
+.btn-full,
+.pet-actions {
+  margin-top: auto !important;
 }

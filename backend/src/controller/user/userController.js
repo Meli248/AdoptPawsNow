@@ -1,5 +1,6 @@
 import { petSchema, updatePetSchema } from '../../validation/schemas.js';
 import Pet from '../../models/Pet.js';
+import Post from '../../models/Post.js';
 import User from '../../models/User.js';
 
 // Get User Dashboard Stats
@@ -7,7 +8,13 @@ export const getDashboardStats = async (req, res) => {
   try {
     const userId = req.user.userId;
 
-    const totalPosts = await Pet.countByUserIdAndStatus(userId);
+    const petPostsCount = await Pet.countByUserIdAndStatus(userId);
+    const postRequests = await Post.findByUserId(userId);
+    const postRequestsCount = postRequests.length;
+
+    // Total posts includes both listings and requests
+    const totalPosts = petPostsCount + postRequestsCount;
+
     const adoptedPets = await Pet.countByUserIdAndStatus(userId, 'adopted');
     const availablePets = await Pet.countByUserIdAndStatus(userId, 'available');
 
