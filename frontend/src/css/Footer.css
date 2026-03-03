@@ -1,15 +1,115 @@
 .footer {
   background-color: var(--bg-white);
   border-top: 1px solid var(--border-color);
-  padding: 40px 0 20px;
+  padding: 48px 0 28px;
   margin-top: 60px;
 }
 
 .footer-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 100px;
 }
+
+/* Centered layout */
+.footer-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.footer-brand h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.footer-paw {
+  color: var(--primary-color);
+}
+
+.footer-tagline {
+  color: var(--text-light);
+  font-size: 0.95rem;
+  margin: 0;
+  max-width: 420px;
+}
+
+.footer-copyright {
+  color: var(--text-light);
+  font-size: 0.875rem;
+  margin: 8px 0 0;
+}
+
+/* ── Responsive Breakpoints ── */
+
+/* Laptop */
+@media (max-width: 1280px) {
+  .footer-container {
+    padding: 0 60px;
+  }
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .footer-container {
+    padding: 0 40px;
+  }
+
+  .footer {
+    padding: 40px 0 24px;
+  }
+
+  .footer-brand h3 {
+    font-size: 1.25rem;
+  }
+}
+
+/* Large Mobile */
+@media (max-width: 600px) {
+  .footer {
+    padding: 32px 0 20px;
+    margin-top: 40px;
+  }
+
+  .footer-container {
+    padding: 0 20px;
+  }
+
+  .footer-brand h3 {
+    font-size: 1.1rem;
+  }
+
+  .footer-tagline {
+    font-size: 0.875rem;
+  }
+
+  .footer-copyright {
+    font-size: 0.8rem;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 380px) {
+  .footer-container {
+    padding: 0 16px;
+  }
+
+  .footer-brand {
+    gap: 6px;
+  }
+}
+
 
 .footer-new-layout {
   display: flex;
@@ -56,10 +156,57 @@
   margin: 0;
 }
 
-@media (max-width: 768px) {
+/* Laptop */
+@media (max-width: 1280px) {
+  .footer-container {
+    padding: 0 60px;
+  }
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+  .footer-container {
+    padding: 0 40px;
+  }
+
   .footer-new-layout {
     flex-direction: column;
     text-align: center;
-    gap: 24px;
+    gap: 20px;
+  }
+
+  .footer-brand-info h3 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .footer {
+    padding: 30px 0 16px;
+    margin-top: 40px;
+  }
+
+  .footer-container {
+    padding: 0 20px;
+  }
+
+  .footer-new-layout {
+    gap: 16px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  .footer-brand-info h3 {
+    font-size: 1.1rem;
+  }
+
+  .footer-brand-info p,
+  .footer-contact-info p {
+    font-size: 0.875rem;
+  }
+
+  .footer-copyright {
+    font-size: 0.8rem;
   }
 }

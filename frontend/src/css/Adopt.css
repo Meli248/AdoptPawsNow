@@ -35,7 +35,7 @@
   background: white;
   border: 1.5px solid #d1d5db;
   border-radius: 14px;
-  padding: 0 18px;
+  padding: 0 14px;
   margin-bottom: 14px;
   transition: border-color 0.2s, box-shadow 0.2s;
   overflow: hidden;
@@ -154,13 +154,13 @@
 /* Shared Pet Card components moved to index.css */
 .pets-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 30px;
 }
 
 @media (max-width: 1200px) {
   .pets-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
   }
 }

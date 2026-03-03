@@ -3,7 +3,7 @@ import pool from '../database/index.js';
 class User {
   static async findByEmail(email) {
     const result = await pool.query(
-      'SELECT user_id, username, email, password_hash, full_name, role FROM users WHERE email = $1',
+      'SELECT user_id, username, email, password_hash, full_name, role FROM users WHERE LOWER(email) = LOWER($1)',
       [email]
     );
     return result.rows[0];

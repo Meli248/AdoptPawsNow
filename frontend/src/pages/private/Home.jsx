@@ -63,10 +63,10 @@ const Home = () => {
     const fetchFeaturedPets = async () => {
       try {
         setLoadingPets(true);
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/pets?limit=3`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/pets?limit=4`);
         const data = await response.json();
         if (data.success) {
-          setFeaturedPets(data.data.slice(0, 3));
+          setFeaturedPets(data.data.slice(0, 4));
         }
       } catch (error) {
         console.error('Error fetching featured pets:', error);

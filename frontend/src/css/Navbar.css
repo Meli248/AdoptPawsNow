@@ -9,12 +9,13 @@
 }
 
 .navbar-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 100px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
 }
 
 .navbar-logo {
@@ -54,9 +55,9 @@
 .sidebar-overlay {
   display: flex;
   flex: 1;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  margin-left: 100px;
+  margin-left: 0;
 }
 
 .sidebar-header {
@@ -69,6 +70,10 @@
   list-style: none;
   align-items: center;
   width: auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
 }
 
 .nav-link {
@@ -218,6 +223,8 @@
     padding: 24px;
     gap: 16px;
     width: 100%;
+    position: static;
+    transform: none;
   }
 
   .navbar-menu .nav-link {

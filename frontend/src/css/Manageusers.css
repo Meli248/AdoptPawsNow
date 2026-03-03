@@ -113,7 +113,7 @@
 }
 
 .users-table thead {
-  background-color: var(--bg-light);
+  background-color: #5a8a6f;
 }
 
 .users-table th {
@@ -121,13 +121,14 @@
   text-align: left;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #4a5568;
+  color: white;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .users-table tbody tr {
   border-bottom: 1px solid #e2e8f0;
+  background-color: white;
   transition: background-color 0.2s ease;
 }
 

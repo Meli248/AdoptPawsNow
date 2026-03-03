@@ -5,9 +5,9 @@
 }
 
 .dashboard-container {
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 100px;
 }
 
 .dashboard-header {
@@ -189,7 +189,7 @@
   background: white;
   border: 1.5px solid #d1d5db;
   border-radius: 14px;
-  padding: 0 18px;
+  padding: 0 14px;
   margin-bottom: 14px;
   transition: border-color 0.2s, box-shadow 0.2s;
   overflow: hidden;
@@ -354,20 +354,20 @@
   margin-top: 1.5rem;
 }
 
-/* Responsiveness to adapt 4 -> 3 -> 2 -> 1 */
+/* Responsiveness to adapt 4 -> 2 -> 1 */
 @media (max-width: 1200px) {
   .pets-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 992px) {
   .pets-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 480px) {
   .pets-grid {
     grid-template-columns: repeat(1, 1fr);
   }

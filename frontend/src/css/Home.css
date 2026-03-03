@@ -72,9 +72,9 @@
 }
 
 .hero-content {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 100px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
@@ -495,7 +495,7 @@
 
 .pets-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr) !important;
+  grid-template-columns: repeat(4, 1fr) !important;
   gap: 24px;
 }
 
@@ -508,7 +508,7 @@
 
 @media (max-width: 1200px) {
   .pets-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(4, 1fr) !important;
   }
 }
 
@@ -526,6 +526,14 @@
     gap: 20px;
   }
 
+  .pets-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
   .pets-grid {
     grid-template-columns: 1fr !important;
     max-width: 400px;

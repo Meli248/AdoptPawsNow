@@ -131,13 +131,7 @@ const AdminDashboard = () => {
             <h1 className="dashboard-title">Welcome, Admin User!</h1>
             <p className="dashboard-subtitle">Manage all pets and users from your admin dashboard.</p>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate('/post-request')}
-          >
-            <Plus size={20} />
-            Post Form
-          </button>
+
         </div>
 
         {/* Stats Cards */}

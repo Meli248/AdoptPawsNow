@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Dog, Cat, Upload, AlertCircle, User, Phone, FileText, Calendar, Hash, MapPin } from 'lucide-react';
-import '../../css/PostRequest.css'; // Reusing existing styles or create new
+import { Dog, Cat, Upload, AlertCircle, User, Phone, FileText, Calendar, Hash, MapPin, Crop } from 'lucide-react';
+import ImageCropper from '../../components/ImageCropper';
+import '../../css/PostRequest.css';
 
 const postSchema = z.object({
     pet_name: z.string().min(1, 'Pet name is required'),
@@ -36,6 +37,9 @@ const PostRequest = ({ initialData, isEdit = false }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [preview, setPreview] = useState(null);
+    const [cropSrc, setCropSrc] = useState(null);      // raw src for cropper
+    const [showCropper, setShowCropper] = useState(false);
+    const [croppedFile, setCroppedFile] = useState(null); // final cropped File blob
 
     const {
         register,
@@ -103,7 +107,9 @@ const PostRequest = ({ initialData, isEdit = false }) => {
             if (data.contact_phone && data.contact_phone.trim() !== '') formData.append('contact_phone', data.contact_phone);
             if (data.location && data.location.trim() !== '') formData.append('location', data.location);
 
-            if (data.image && data.image instanceof FileList && data.image.length > 0) {
+            if (croppedFile) {
+                formData.append('image', croppedFile, 'pet-image.jpg');
+            } else if (data.image && data.image instanceof FileList && data.image.length > 0) {
                 formData.append('image', data.image[0]);
             }
 
@@ -174,13 +180,26 @@ const PostRequest = ({ initialData, isEdit = false }) => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setValue('image', e.target.files);
             const reader = new FileReader();
             reader.onloadend = () => {
-                setPreview(reader.result);
+                setCropSrc(reader.result);
+                setShowCropper(true);
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const handleCropComplete = (file, url) => {
+        setCroppedFile(file);
+        setPreview(url);
+        setValue('image', 'cropped'); // satisfy zod validation
+        setShowCropper(false);
+        setCropSrc(null);
+    };
+
+    const handleCancelCrop = () => {
+        setShowCropper(false);
+        setCropSrc(null);
     };
 
     return (
@@ -350,6 +369,7 @@ const PostRequest = ({ initialData, isEdit = false }) => {
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 setPreview(null);
+                                                setCroppedFile(null);
                                                 setValue('image', null);
                                             }}
                                         >
@@ -360,7 +380,7 @@ const PostRequest = ({ initialData, isEdit = false }) => {
                                     <>
                                         <Upload size={48} color="var(--primary-color)" />
                                         <span className="upload-text">Click to upload photo</span>
-                                        <span className="upload-hint">JPG, PNG up to 5MB</span>
+                                        <span className="upload-hint">JPG, PNG up to 5MB — you can crop after selecting</span>
                                     </>
                                 )}
                             </label>
@@ -386,6 +406,15 @@ const PostRequest = ({ initialData, isEdit = false }) => {
                     </button>
                 </div>
             </form>
+
+            {/* Image Cropper Modal */}
+            {showCropper && cropSrc && (
+                <ImageCropper
+                    imageSrc={cropSrc}
+                    onCropComplete={handleCropComplete}
+                    onCancel={handleCancelCrop}
+                />
+            )}
         </div>
     );
 };
