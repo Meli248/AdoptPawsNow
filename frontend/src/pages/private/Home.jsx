@@ -29,6 +29,10 @@ const Home = () => {
 
   const toggleFavorite = (e, petId) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
     if (favorites.includes(petId)) {
       setFavorites(favorites.filter(id => id !== petId));
     } else {

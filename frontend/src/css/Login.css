@@ -65,7 +65,7 @@
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 5px;
 }
 
 .form-group {
@@ -75,6 +75,9 @@
 }
 
 .form-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   color: #2d3748;
   font-size: 0.95rem;
@@ -82,7 +85,7 @@
   /* Label stays left, but content inside is centered */
 }
 
-.input-wrapper {
+.password-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
@@ -98,8 +101,8 @@
 
 .form-input {
   width: 100%;
-  padding: 14px 16px 14px 48px;
-  /* Extra left padding for the icon */
+  padding: 14px 48px 14px 16px;
+  /* Extra right padding for the eye icon */
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;

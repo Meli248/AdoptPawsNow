@@ -60,7 +60,7 @@
 .register-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0px;
 }
 
 .form-group {
@@ -70,13 +70,16 @@
 }
 
 .form-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   color: var(--text-dark);
   font-size: 0.95rem;
   text-align: left;
 }
 
-.input-wrapper {
+.password-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
@@ -91,7 +94,7 @@
 
 .form-input {
   width: 100%;
-  padding: 14px 16px 14px 48px;
+  padding: 14px 48px 14px 16px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   font-size: 1rem;
