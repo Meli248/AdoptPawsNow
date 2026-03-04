@@ -1,7 +1,9 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { registerSchema, loginSchema, updateProfileSchema } from '../../validation/schemas.js';
+import crypto from 'crypto';
+import { registerSchema, loginSchema, updateProfileSchema, forgotPasswordSchema, resetPasswordSchema } from '../../validation/schemas.js';
 import User from '../../models/User.js';
+import { sendPasswordResetEmail } from '../../utils/emailService.js';
 
 /* ======================================
    REGISTER USER
@@ -271,6 +273,107 @@ export const updateUserProfile = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/* ======================================
+   FORGOT PASSWORD
+====================================== */
+export const forgotPassword = async (req, res) => {
+  try {
+    const parsed = forgotPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: parsed.error.errors
+      });
+    }
+
+    const { email } = parsed.data;
+    const user = await User.findByEmail(email);
+
+    if (!user) {
+      // Do not reveal if email exists or not
+      return res.status(200).json({
+        success: true,
+        message: 'If the email exists, a password reset link has been sent.'
+      });
+    }
+
+    // Generate token and expiry (1 hour)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 3600000); // 1 hour
+
+    await User.saveResetToken(user.email, resetToken, expiry);
+
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+
+    // Send Email
+    const emailSent = await sendPasswordResetEmail(user.email, resetUrl);
+
+    if (!emailSent) {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send reset email. Please try again later.'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'If the email exists, a password reset link has been sent.'
+    });
+
+  } catch (error) {
+    console.error('❌ Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};
+
+/* ======================================
+   RESET PASSWORD
+====================================== */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation error',
+        errors: parsed.error.errors
+      });
+    }
+
+    const { password } = parsed.data;
+
+    const user = await User.findByResetToken(token);
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired reset token.'
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await User.updatePassword(user.user_id, hashedPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password has been reset successfully. You can now log in.'
+    });
+
+  } catch (error) {
+    console.error('❌ Reset password error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error'

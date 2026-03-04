@@ -48,11 +48,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ============================================
-// ROUTES
-// ============================================
 
-// Health check route
 app.get('/', (req, res) => {
   res.json({
     success: true,

@@ -12,6 +12,8 @@ import Footer from './components/Footer';
 import Login from './pages/public/Login';
 import Register from './pages/public/Register';
 import About from './pages/public/About';
+import ForgotPassword from './pages/public/ForgotPassword'; // Added
+import ResetPassword from './pages/public/ResetPassword'; // Added
 
 // Pages from the 'private' folder (based on your VS Code explorer)
 import Home from './pages/private/Home';
@@ -36,6 +38,8 @@ function App() {
           <Route element={<PublicRoute />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
           </Route>
 
           {/* 2. Open Routes: Accessible to everyone */}

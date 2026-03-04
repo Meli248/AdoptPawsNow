@@ -30,3 +30,23 @@ export const loginSchema = z.object({
     .string()
     .nonempty({ message: "Password is Required" }),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .nonempty({ message: "Email is Required" })
+    .email({ message: "Invalid email format" }),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .nonempty({ message: "Password is Required" })
+    .min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z
+    .string()
+    .nonempty({ message: "Please confirm your password" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});

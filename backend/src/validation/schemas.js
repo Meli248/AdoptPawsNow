@@ -16,6 +16,20 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  password: z.string()
+    .min(6, 'Password must be at least 6 characters')
+    .max(100, 'Password must not exceed 100 characters'),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"], // path of error
+});
+
 export const updateProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').optional(),
   username: z.string().min(2, 'Username must be at least 2 characters').optional(),
@@ -72,9 +86,7 @@ export const adoptionApplicationSchema = z.object({
   reason: z.string().optional(),
 });
 
-/* ======================================
-   POST REQUEST SCHEMA
-====================================== */
+
 export const postRequestSchema = z.object({
   pet_name: z.string().min(1, 'Pet name is required'),
   pet_type: z.string().min(1, 'Pet type is required'),

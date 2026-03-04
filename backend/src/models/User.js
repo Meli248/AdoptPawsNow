@@ -111,6 +111,30 @@ class User {
     const result = await pool.query(query, values);
     return result.rows[0];
   }
+
+  static async saveResetToken(email, token, expiry) {
+    const result = await pool.query(
+      'UPDATE users SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3 RETURNING user_id, email',
+      [token, expiry, email]
+    );
+    return result.rows[0];
+  }
+
+  static async findByResetToken(token) {
+    const result = await pool.query(
+      'SELECT user_id, email, reset_token_expiry FROM users WHERE reset_token = $1 AND reset_token_expiry > NOW()',
+      [token]
+    );
+    return result.rows[0];
+  }
+
+  static async updatePassword(userId, newPasswordHash) {
+    const result = await pool.query(
+      'UPDATE users SET password_hash = $1, reset_token = NULL, reset_token_expiry = NULL WHERE user_id = $2 RETURNING user_id',
+      [newPasswordHash, userId]
+    );
+    return result.rows[0];
+  }
 }
 
 export default User;
