@@ -8,8 +8,8 @@ jest.unstable_mockModule('pg', () => {
     return { default: { Pool: jest.fn(() => mPool) }, Pool: jest.fn(() => mPool) };
 });
 
-const pool = (await import('../../database/index.js')).default;
-const userController = await import('../../controller/user/userController.js');
+const pool = (await import('../database/index.js')).default;
+const userController = await import('../controller/user/userController.js');
 
 jest.spyOn(pool, 'query');
 
