@@ -53,6 +53,7 @@ describe('User Controller', () => {
         });
 
         it('should handle internal server error', async () => {
+            const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
             pool.query.mockRejectedValueOnce(new Error('DB Error'));
 
             await userController.getDashboardStats(req, res);
@@ -62,6 +63,7 @@ describe('User Controller', () => {
                 success: false,
                 message: 'Internal server error'
             }));
+            consoleSpy.mockRestore();
         });
     });
 

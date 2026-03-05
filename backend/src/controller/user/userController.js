@@ -238,3 +238,33 @@ export const unblockUser = async (req, res) => {
     });
   }
 };
+
+// ==========================================
+// USER SELF-MANAGEMENT
+// ==========================================
+
+// Delete specific user's own account
+export const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const deletedUser = await User.delete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Account deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+};

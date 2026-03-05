@@ -5,9 +5,7 @@ import { registerSchema, loginSchema, updateProfileSchema, forgotPasswordSchema,
 import User from '../../models/User.js';
 import { sendPasswordResetEmail } from '../../utils/emailService.js';
 
-/* ======================================
-   REGISTER USER
-====================================== */
+
 export const register = async (req, res) => {
   try {
     const parsed = registerSchema.safeParse(req.body);
@@ -78,9 +76,7 @@ export const register = async (req, res) => {
   }
 };
 
-/* ======================================
-   LOGIN USER
-====================================== */
+
 export const login = async (req, res) => {
   try {
     const parsed = loginSchema.safeParse(req.body);
@@ -102,11 +98,9 @@ export const login = async (req, res) => {
       });
     }
 
-    // AUTO-PROMOTE HARDCODED ADMIN FOR DEMO/USER REQUEST
     if (user.email === 'admin@gmail.com' && user.role !== 'admin') {
-      console.log('👑 Auto-promoting admin@gmail.com to admin role');
       await User.updateRole(user.user_id, 'admin');
-      user.role = 'admin'; // Update local object for token generation
+      user.role = 'admin';
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -155,9 +149,7 @@ export const login = async (req, res) => {
   }
 };
 
-/* ======================================
-   GET CURRENT USER
-====================================== */
+
 export const getCurrentUser = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -193,9 +185,7 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
-/* ======================================
-   GET USER PROFILE - FOR PROFILE PAGE
-====================================== */
+
 export const getUserProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -231,9 +221,7 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
-/* ======================================
-   UPDATE USER PROFILE - WITH PHONE & LOCATION
-====================================== */
+
 export const updateUserProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -246,7 +234,6 @@ export const updateUserProfile = async (req, res) => {
       });
     }
 
-    // Call User model to handle dynamic query creation
     const user = await User.updateProfile(userId, parsed.data);
 
     if (!user) {
@@ -280,9 +267,7 @@ export const updateUserProfile = async (req, res) => {
   }
 };
 
-/* ======================================
-   FORGOT PASSWORD
-====================================== */
+
 export const forgotPassword = async (req, res) => {
   try {
     const parsed = forgotPasswordSchema.safeParse(req.body);
@@ -298,22 +283,19 @@ export const forgotPassword = async (req, res) => {
     const user = await User.findByEmail(email);
 
     if (!user) {
-      // Do not reveal if email exists or not
       return res.status(200).json({
         success: true,
         message: 'If the email exists, a password reset link has been sent.'
       });
     }
 
-    // Generate token and expiry (1 hour)
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const expiry = new Date(Date.now() + 3600000); // 1 hour
+    const expiry = new Date(Date.now() + 3600000);
 
     await User.saveResetToken(user.email, resetToken, expiry);
 
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
-    // Send Email
     const emailSent = await sendPasswordResetEmail(user.email, resetUrl);
 
     if (!emailSent) {
@@ -337,9 +319,7 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-/* ======================================
-   RESET PASSWORD
-====================================== */
+
 export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;

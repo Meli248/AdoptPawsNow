@@ -135,6 +135,14 @@ class User {
     );
     return result.rows[0];
   }
+
+  static async delete(userId) {
+    const result = await pool.query(
+      'DELETE FROM users WHERE user_id = $1 RETURNING user_id',
+      [userId]
+    );
+    return result.rows[0];
+  }
 }
 
 export default User;

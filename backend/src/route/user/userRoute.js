@@ -7,7 +7,8 @@ import {
   deletePetPost,
   getAllUsers,
   blockUser,
-  unblockUser
+  unblockUser,
+  deleteAccount
 } from '../../controller/user/userController.js';
 import {
   addFavorite,
@@ -18,29 +19,20 @@ import authenticateToken from '../../middleware/token-middleware.js';
 
 const router = express.Router();
 
-// All routes are protected
 router.use(authenticateToken);
 
-// ==========================
-// ADMIN ROUTES
-// ==========================
 router.get('/', getAllUsers);
 router.put('/:id/block', blockUser);
 router.put('/:id/unblock', unblockUser);
 
-// ==========================
-// USER DASHBOARD ROUTES
-// ==========================
-// Dashboard routes
 router.get('/dashboard/stats', getDashboardStats);
 router.get('/posts', getUserPosts);
+router.delete('/me', deleteAccount);
 
-// Pet management routes
 router.post('/pets', createPetPost);
 router.put('/pets/:id', updatePetPost);
 router.delete('/pets/:id', deletePetPost);
 
-// Favorites routes
 router.post('/favorites', addFavorite);
 router.delete('/favorites/:petId', removeFavorite);
 router.get('/favorites', getUserFavorites);

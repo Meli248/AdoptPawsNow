@@ -4,7 +4,6 @@ import authenticateToken from '../middleware/token-middleware.js';
 
 const router = express.Router();
 
-// Upload single image
 router.post('/image', authenticateToken, upload.single('image'), (req, res) => {
   try {
     if (!req.file) {

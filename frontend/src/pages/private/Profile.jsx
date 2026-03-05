@@ -1,10 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import {
   Mail, MapPin, Calendar, Edit2, Phone, Save, X, Dog, Heart,
   AlertTriangle, Clock, User, Hash, FileText, Palette, Activity, Layout
 } from 'lucide-react';
 import '../../css/Profile.css';
+
+const profileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  phone: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), {
+    message: 'Phone number must be exactly 10 digits.'
+  }),
+  location: z.string().optional()
+});
+
+const editPostSchema = z.object({
+  petName: z.string().min(1, 'Pet name is required'),
+  petType: z.enum(['dog', 'cat', 'bird', 'other']).optional(),
+  species: z.enum(['dog', 'cat', 'bird', 'other']).optional(),
+  breed: z.string().optional(),
+  age: z.string().optional(),
+  gender: z.string().optional(),
+  reason: z.string().optional(),
+  size: z.string().optional(),
+  color: z.string().optional(),
+  status: z.string().optional(),
+  description: z.string().optional(),
+  vaccinated: z.boolean().optional(),
+  neutered: z.boolean().optional(),
+  contact_name: z.string().min(1, 'Contact Name is required'),
+  contact_email: z.string().email('Invalid email address').min(1, 'Contact Email is required'),
+  contact_phone: z.string().min(10, 'Phone must be at least 10 digits').max(15, 'Phone cannot be more than 15 digits'),
+  location: z.string().optional()
+});
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -22,8 +53,29 @@ const Profile = () => {
     location: '',
     joinedDate: ''
   });
-  const [editedData, setEditedData] = useState({ ...userData });
-  const [editFormData, setEditFormData] = useState({});
+
+  const {
+    register: registerProfile,
+    handleSubmit: handleProfileSubmit,
+    formState: { errors: profileErrors },
+    reset: resetProfileForm
+  } = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: '',
+      phone: '',
+      location: ''
+    }
+  });
+  const {
+    register: registerEditPost,
+    handleSubmit: handleEditPostSubmit,
+    formState: { errors: editPostErrors },
+    reset: resetEditPostForm,
+    setValue: setEditPostValue
+  } = useForm({
+    resolver: zodResolver(editPostSchema)
+  });
   const [stats, setStats] = useState({
     totalPosts: 0,
     adopted: 0,
@@ -100,7 +152,11 @@ const Profile = () => {
             : 'Recently'
         };
         setUserData(profileData);
-        setEditedData(profileData);
+        resetProfileForm({
+          name: profileData.name,
+          phone: profileData.phone,
+          location: profileData.location
+        });
 
         localStorage.setItem('user_name', profileData.name);
         localStorage.setItem('user', profileData.name);
@@ -129,7 +185,11 @@ const Profile = () => {
         joinedDate: 'Recently'
       };
       setUserData(fallbackData);
-      setEditedData(fallbackData);
+      resetProfileForm({
+        name: fallbackData.name,
+        phone: fallbackData.phone,
+        location: fallbackData.location
+      });
     }
   };
 
@@ -289,24 +349,17 @@ const Profile = () => {
   };
 
   const handleEditToggle = () => {
-    if (isEditing) {
-      setEditedData({ ...userData });
+    if (!isEditing) {
+      resetProfileForm({
+        name: userData.name,
+        phone: userData.phone,
+        location: userData.location
+      });
     }
     setIsEditing(!isEditing);
   };
 
-  const handleInputChange = (field, value) => {
-    setEditedData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveProfile = async () => {
-    // Phone validation: exactly 10 digits
-    const phoneRegex = /^\d{10}$/;
-    if (editedData.phone && !phoneRegex.test(editedData.phone)) {
-      alert('Phone number must be exactly 10 digits.');
-      return;
-    }
-
+  const onProfileSubmit = async (data) => {
     try {
       const token = localStorage.getItem('access_token');
       if (!token) {
@@ -321,17 +374,18 @@ const Profile = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name: editedData.name,
-          phone: editedData.phone,
-          location: editedData.location
+          name: data.name,
+          phone: data.phone,
+          location: data.location
         })
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setUserData(editedData);
-        localStorage.setItem('user_name', editedData.name);
-        localStorage.setItem('user', editedData.name);
+        const responseData = await response.json();
+        const updatedData = { ...userData, name: data.name, phone: data.phone, location: data.location };
+        setUserData(updatedData);
+        localStorage.setItem('user_name', data.name);
+        localStorage.setItem('user', data.name);
         setIsEditing(false);
         alert('Profile updated successfully!');
       } else {
@@ -347,7 +401,7 @@ const Profile = () => {
   const handleEditPost = (post) => {
     setEditingPost(post);
     if (post.postType === 'post') {
-      setEditFormData({
+      resetEditPostForm({
         petName: post.petName || '',
         petType: post.petType?.toLowerCase() || 'dog',
         breed: post.breed || '',
@@ -360,7 +414,7 @@ const Profile = () => {
         location: post.location || ''
       });
     } else {
-      setEditFormData({
+      resetEditPostForm({
         petName: post.petName || '',
         species: post.petType?.toLowerCase() || 'dog',
         breed: post.breed || '',
@@ -380,11 +434,7 @@ const Profile = () => {
     setShowEditModal(true);
   };
 
-  const handleEditFormChange = (field, value) => {
-    setEditFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSaveEdit = async () => {
+  const onEditPostSubmit = async (data) => {
     try {
       const token = localStorage.getItem('access_token');
       let endpoint;
@@ -393,34 +443,34 @@ const Profile = () => {
       if (editingPost.postType === 'post') {
         endpoint = `${import.meta.env.VITE_API_URL}/post/${editingPost.id}`;
         updateData = {
-          pet_name: editFormData.petName,
-          pet_type: editFormData.petType,
-          breed: editFormData.breed,
-          age: editFormData.age,
-          gender: editFormData.gender,
-          reason: editFormData.reason,
-          contact_name: editFormData.contact_name,
-          contact_email: editFormData.contact_email,
-          contact_phone: editFormData.contact_phone,
-          location: editFormData.location
+          pet_name: data.petName,
+          pet_type: data.petType,
+          breed: data.breed,
+          age: data.age,
+          gender: data.gender,
+          reason: data.reason,
+          contact_name: data.contact_name,
+          contact_email: data.contact_email,
+          contact_phone: data.contact_phone,
+          location: data.location
         };
       } else {
         endpoint = `${import.meta.env.VITE_API_URL}/pets/${editingPost.id}`;
         updateData = {
-          name: editFormData.petName,
-          species: editFormData.species,
-          breed: editFormData.breed,
-          age: editFormData.age,
-          gender: editFormData.gender,
-          size: editFormData.size,
-          color: editFormData.color,
-          status: editFormData.status,
-          description: editFormData.description,
-          vaccinated: editFormData.vaccinated,
-          neutered: editFormData.neutered,
-          contact_name: editFormData.contact_name,
-          contact_email: editFormData.contact_email,
-          contact_phone: editFormData.contact_phone
+          name: data.petName,
+          species: data.species,
+          breed: data.breed,
+          age: data.age,
+          gender: data.gender,
+          size: data.size,
+          color: data.color,
+          status: data.status,
+          description: data.description,
+          vaccinated: data.vaccinated,
+          neutered: data.neutered,
+          contact_name: data.contact_name,
+          contact_email: data.contact_email,
+          contact_phone: data.contact_phone
         };
       }
 
@@ -439,8 +489,8 @@ const Profile = () => {
         setEditingPost(null);
         fetchUserPosts();
       } else {
-        const data = await response.json();
-        alert(data.message || 'Failed to update post');
+        const responseData = await response.json();
+        alert(responseData.message || 'Failed to update post');
       }
     } catch (error) {
       console.error('Error updating post:', error);
@@ -485,6 +535,40 @@ const Profile = () => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleAccountDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete your account?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      if (!token) return;
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        alert('Your account has been successfully deleted.');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('user_email');
+        localStorage.removeItem('user_role');
+        window.dispatchEvent(new Event('storage'));
+        navigate('/home');
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to delete account');
+      }
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      alert('An expected error occurred while deleting your account.');
+    }
   };
 
   if (profileLoading) {
@@ -539,142 +623,144 @@ const Profile = () => {
           <div className="section-header-dashboard">
             <h2 className="section-title-dashboard">Profile Information</h2>
             {!isEditing ? (
-              <button className="btn btn-secondary" onClick={handleEditToggle}>
-                <Edit2 size={18} />
-                Edit Profile
-              </button>
-            ) : (
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                <button className="btn btn-primary btn-icon-save" onClick={handleSaveProfile} style={{ width: '120px', minWidth: '120px', justifyContent: 'center', margin: 0 }}>
-                  <Save size={18} />
-                  Save
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button className="btn-icon-edit" onClick={handleEditToggle} style={{ width: 'auto' }}>
+                  <Edit2 size={18} />
+                  Edit Profile
                 </button>
-                <button className="btn btn-secondary btn-icon-cancel" onClick={handleEditToggle} style={{ width: '120px', minWidth: '120px', justifyContent: 'center', margin: 0 }}>
-                  <X size={18} />
-                  Cancel
+                <button
+                  className="btn-icon-delete"
+                  onClick={handleAccountDelete}
+                  style={{ width: 'auto' }}
+                >
+                  <AlertTriangle size={18} />
+                  Delete Account
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
 
           <div className="profile-card">
-            <div className="profile-basic-info-section">
-              {!isEditing ? (
+            {isEditing ? (
+              <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
+                <div className="profile-basic-info-section">
+                  <div style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}>
+                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <User size={18} />
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      {...registerProfile('name')}
+                      className={`form-input ${profileErrors.name ? 'error' : ''}`}
+                      placeholder="Your name"
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        border: profileErrors.name ? '2px solid red' : '2px solid #e9ecef',
+                        borderRadius: '12px',
+                        fontSize: '0.95rem',
+                        transition: 'all 0.3s ease',
+                        fontFamily: 'inherit'
+                      }}
+                    />
+                    {profileErrors.name && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{profileErrors.name.message}</span>}
+                  </div>
+                </div>
+
+                <div className="profile-details-grid">
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <Mail size={20} />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Email</span>
+                      <span className="profile-detail-value">
+                        {userData.name ? `${userData.name.toLowerCase().replace(/\s+/g, '')}@gmail.com` : (userData.email || 'Not provided')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <Phone size={20} />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Phone</span>
+                      <input
+                        type="tel"
+                        {...registerProfile('phone')}
+                        className={`form-input ${profileErrors.phone ? 'error' : ''}`}
+                        placeholder="Your 10-digit phone number"
+                        maxLength={10}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: profileErrors.phone ? '2px solid red' : '2px solid #e9ecef',
+                          borderRadius: '12px',
+                          fontSize: '0.9rem',
+                          transition: 'all 0.3s ease',
+                          marginTop: '4px'
+                        }}
+                      />
+                      {profileErrors.phone && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{profileErrors.phone.message}</span>}
+                    </div>
+                  </div>
+
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <MapPin size={20} />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Location</span>
+                      <input
+                        type="text"
+                        {...registerProfile('location')}
+                        className="form-input"
+                        placeholder="Your location"
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          border: '2px solid #e9ecef',
+                          borderRadius: '12px',
+                          fontSize: '0.9rem',
+                          transition: 'all 0.3s ease',
+                          marginTop: '4px'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="profile-detail-item">
+                    <div className="profile-detail-icon">
+                      <Calendar size={20} />
+                    </div>
+                    <div className="profile-detail-content">
+                      <span className="profile-detail-label">Member Since</span>
+                      <span className="profile-detail-value">{userData.joinedDate}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center', marginTop: '30px' }}>
+                  <button type="submit" className="btn btn-primary btn-icon-save" style={{ width: '120px', minWidth: '120px', justifyContent: 'center', margin: 0 }}>
+                    <Save size={18} />
+                    Save
+                  </button>
+                  <button type="button" className="btn btn-secondary btn-icon-cancel" onClick={handleEditToggle} style={{ width: '120px', minWidth: '120px', justifyContent: 'center', margin: 0 }}>
+                    <X size={18} />
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="profile-basic-info-section">
                 <>
                   <h3 className="profile-name">{userData.name || 'User'}</h3>
                   <p className="profile-role">Pet Enthusiast</p>
                 </>
-              ) : (
-                <div style={{ width: '100%', maxWidth: '400px', margin: '0 auto' }}>
-                  <label className="form-label">
-                    <User size={18} />
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editedData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="form-input"
-                    placeholder="Your name"
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '2px solid #e9ecef',
-                      borderRadius: '12px',
-                      fontSize: '0.95rem',
-                      transition: 'all 0.3s ease',
-                      fontFamily: 'inherit'
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="profile-details-grid">
-              <div className="profile-detail-item">
-                <div className="profile-detail-icon">
-                  <Mail size={20} />
-                </div>
-                <div className="profile-detail-content">
-                  <span className="profile-detail-label">Email</span>
-                  <span className="profile-detail-value">
-                    {userData.name ? `${userData.name.toLowerCase().replace(/\s+/g, '')}@gmail.com` : (userData.email || 'Not provided')}
-                  </span>
-                </div>
               </div>
-
-              <div className="profile-detail-item">
-                <div className="profile-detail-icon">
-                  <Phone size={20} />
-                </div>
-                <div className="profile-detail-content">
-                  <span className="profile-detail-label">Phone</span>
-                  {!isEditing ? (
-                    <span className="profile-detail-value">{userData.phone || 'Not provided'}</span>
-                  ) : (
-                    <input
-                      type="tel"
-                      value={editedData.phone}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 10);
-                        handleInputChange('phone', val);
-                      }}
-                      className="form-input"
-                      placeholder="Your 10-digit phone number"
-                      maxLength={10}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '2px solid #e9ecef',
-                        borderRadius: '12px',
-                        fontSize: '0.9rem',
-                        transition: 'all 0.3s ease',
-                        marginTop: '4px'
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="profile-detail-item">
-                <div className="profile-detail-icon">
-                  <MapPin size={20} />
-                </div>
-                <div className="profile-detail-content">
-                  <span className="profile-detail-label">Location</span>
-                  {!isEditing ? (
-                    <span className="profile-detail-value">{userData.location || 'Not provided'}</span>
-                  ) : (
-                    <input
-                      type="text"
-                      value={editedData.location}
-                      onChange={(e) => handleInputChange('location', e.target.value)}
-                      className="form-input"
-                      placeholder="Your location"
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '2px solid #e9ecef',
-                        borderRadius: '12px',
-                        fontSize: '0.9rem',
-                        transition: 'all 0.3s ease',
-                        marginTop: '4px'
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              <div className="profile-detail-item">
-                <div className="profile-detail-icon">
-                  <Calendar size={20} />
-                </div>
-                <div className="profile-detail-content">
-                  <span className="profile-detail-label">Member Since</span>
-                  <span className="profile-detail-value">{userData.joinedDate}</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -827,7 +913,7 @@ const Profile = () => {
               </button>
             </div>
 
-            <div className="create-post-form">
+            <form className="create-post-form" onSubmit={handleEditPostSubmit(onEditPostSubmit)}>
               <div className="form-group">
                 <label className="form-label">
                   <User size={18} />
@@ -835,11 +921,11 @@ const Profile = () => {
                 </label>
                 <input
                   type="text"
-                  className="form-input"
-                  value={editFormData.petName}
-                  onChange={(e) => handleEditFormChange('petName', e.target.value)}
+                  className={`form-input ${editPostErrors.petName ? 'error' : ''}`}
+                  {...registerEditPost('petName')}
                   placeholder="Pet name"
                 />
+                {editPostErrors.petName && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{editPostErrors.petName.message}</span>}
               </div>
 
               <div className="form-row">
@@ -850,8 +936,7 @@ const Profile = () => {
                   </label>
                   <select
                     className="form-input"
-                    value={editingPost.postType === 'post' ? editFormData.petType : editFormData.species}
-                    onChange={(e) => handleEditFormChange(editingPost.postType === 'post' ? 'petType' : 'species', e.target.value)}
+                    {...registerEditPost(editingPost.postType === 'post' ? 'petType' : 'species')}
                   >
                     <option value="dog">Dog</option>
                     <option value="cat">Cat</option>
@@ -868,8 +953,7 @@ const Profile = () => {
                   <input
                     type="text"
                     className="form-input"
-                    value={editFormData.breed}
-                    onChange={(e) => handleEditFormChange('breed', e.target.value)}
+                    {...registerEditPost('breed')}
                     placeholder="Breed"
                   />
                 </div>
@@ -884,8 +968,7 @@ const Profile = () => {
                   <input
                     type="text"
                     className="form-input"
-                    value={editFormData.age}
-                    onChange={(e) => handleEditFormChange('age', e.target.value)}
+                    {...registerEditPost('age')}
                     placeholder="e.g., 2 years"
                   />
                 </div>
@@ -897,8 +980,7 @@ const Profile = () => {
                   </label>
                   <select
                     className="form-input"
-                    value={editFormData.gender}
-                    onChange={(e) => handleEditFormChange('gender', e.target.value)}
+                    {...registerEditPost('gender')}
                   >
                     <option value="">Select</option>
                     <option value="male">Male</option>
@@ -918,8 +1000,7 @@ const Profile = () => {
                       </label>
                       <select
                         className="form-input"
-                        value={editFormData.size}
-                        onChange={(e) => handleEditFormChange('size', e.target.value)}
+                        {...registerEditPost('size')}
                       >
                         <option value="small">Small</option>
                         <option value="medium">Medium</option>
@@ -935,8 +1016,7 @@ const Profile = () => {
                       <input
                         type="text"
                         className="form-input"
-                        value={editFormData.color}
-                        onChange={(e) => handleEditFormChange('color', e.target.value)}
+                        {...registerEditPost('color')}
                         placeholder="Color"
                       />
                     </div>
@@ -949,8 +1029,7 @@ const Profile = () => {
                     </label>
                     <select
                       className="form-input"
-                      value={editFormData.status}
-                      onChange={(e) => handleEditFormChange('status', e.target.value)}
+                      {...registerEditPost('status')}
                     >
                       <option value="available">Available</option>
                       <option value="adopted">Adopted</option>
@@ -965,8 +1044,7 @@ const Profile = () => {
                     </label>
                     <textarea
                       className="form-textarea"
-                      value={editFormData.description}
-                      onChange={(e) => handleEditFormChange('description', e.target.value)}
+                      {...registerEditPost('description')}
                       placeholder="Description"
                       rows="3"
                     />
@@ -977,8 +1055,7 @@ const Profile = () => {
                       <label className="checkbox-label">
                         <input
                           type="checkbox"
-                          checked={editFormData.vaccinated}
-                          onChange={(e) => handleEditFormChange('vaccinated', e.target.checked)}
+                          {...registerEditPost('vaccinated')}
                         />
                         <span>Vaccinated</span>
                       </label>
@@ -988,8 +1065,7 @@ const Profile = () => {
                       <label className="checkbox-label">
                         <input
                           type="checkbox"
-                          checked={editFormData.neutered}
-                          onChange={(e) => handleEditFormChange('neutered', e.target.checked)}
+                          {...registerEditPost('neutered')}
                         />
                         <span>Neutered/Spayed</span>
                       </label>
@@ -1003,11 +1079,11 @@ const Profile = () => {
                     </label>
                     <input
                       type="text"
-                      className="form-input"
-                      value={editFormData.contact_name}
-                      onChange={(e) => handleEditFormChange('contact_name', e.target.value)}
+                      className={`form-input ${editPostErrors.contact_name ? 'error' : ''}`}
+                      {...registerEditPost('contact_name')}
                       placeholder="Contact name"
                     />
+                    {editPostErrors.contact_name && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{editPostErrors.contact_name.message}</span>}
                   </div>
 
                   <div className="form-row">
@@ -1018,11 +1094,11 @@ const Profile = () => {
                       </label>
                       <input
                         type="email"
-                        className="form-input"
-                        value={editFormData.contact_email}
-                        onChange={(e) => handleEditFormChange('contact_email', e.target.value)}
+                        className={`form-input ${editPostErrors.contact_email ? 'error' : ''}`}
+                        {...registerEditPost('contact_email')}
                         placeholder="Contact email"
                       />
+                      {editPostErrors.contact_email && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{editPostErrors.contact_email.message}</span>}
                     </div>
                   </div>
                 </>
@@ -1038,8 +1114,7 @@ const Profile = () => {
                     <input
                       type="text"
                       className="form-input"
-                      value={editFormData.location}
-                      onChange={(e) => handleEditFormChange('location', e.target.value)}
+                      {...registerEditPost('location')}
                       placeholder="City, State"
                     />
                   </div>
@@ -1050,8 +1125,7 @@ const Profile = () => {
                     </label>
                     <textarea
                       className="form-textarea"
-                      value={editFormData.reason}
-                      onChange={(e) => handleEditFormChange('reason', e.target.value)}
+                      {...registerEditPost('reason')}
                       rows="3"
                       placeholder="Reason..."
                     />
@@ -1059,28 +1133,28 @@ const Profile = () => {
                   <div className="form-group">
                     <label className="form-label">
                       <User size={18} />
-                      Contact Name
+                      Contact Name *
                     </label>
                     <input
                       type="text"
-                      className="form-input"
-                      value={editFormData.contact_name}
-                      onChange={(e) => handleEditFormChange('contact_name', e.target.value)}
+                      className={`form-input ${editPostErrors.contact_name ? 'error' : ''}`}
+                      {...registerEditPost('contact_name')}
                       placeholder="Contact name"
                     />
+                    {editPostErrors.contact_name && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{editPostErrors.contact_name.message}</span>}
                   </div>
                   <div className="form-group">
                     <label className="form-label">
                       <Mail size={18} />
-                      Contact Email
+                      Contact Email *
                     </label>
                     <input
                       type="email"
-                      className="form-input"
-                      value={editFormData.contact_email}
-                      onChange={(e) => handleEditFormChange('contact_email', e.target.value)}
+                      className={`form-input ${editPostErrors.contact_email ? 'error' : ''}`}
+                      {...registerEditPost('contact_email')}
                       placeholder="Contact email"
                     />
+                    {editPostErrors.contact_email && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{editPostErrors.contact_email.message}</span>}
                   </div>
                 </>
               )}
@@ -1088,22 +1162,21 @@ const Profile = () => {
               <div className="form-group">
                 <label className="form-label">
                   <Phone size={18} />
-                  Contact Phone
+                  Contact Phone *
                 </label>
                 <input
                   type="tel"
-                  className="form-input"
-                  value={editFormData.contact_phone}
-                  onChange={(e) => handleEditFormChange('contact_phone', e.target.value)}
+                  className={`form-input ${editPostErrors.contact_phone ? 'error' : ''}`}
+                  {...registerEditPost('contact_phone')}
                   placeholder="Contact phone"
                 />
+                {editPostErrors.contact_phone && <span className="error-msg" style={{ color: 'red', fontSize: '13px' }}>{editPostErrors.contact_phone.message}</span>}
               </div>
 
               <div className="form-actions" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1.5rem' }}>
                 <button
-                  type="button"
+                  type="submit"
                   className="btn btn-primary"
-                  onClick={handleSaveEdit}
                 >
                   <Save size={18} /> Save Changes
                 </button>
@@ -1115,7 +1188,7 @@ const Profile = () => {
                   Cancel
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}
