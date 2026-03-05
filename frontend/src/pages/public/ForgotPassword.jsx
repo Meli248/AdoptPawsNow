@@ -62,6 +62,7 @@ const ForgotPassword = () => {
                             <input
                                 type="email"
                                 className="form-input"
+                                autoComplete="email"
                                 {...register('email')}
                                 placeholder="Enter your email"
                             />

@@ -652,6 +652,7 @@ const Profile = () => {
                     <input
                       type="text"
                       {...registerProfile('name')}
+                      autoComplete="name"
                       className={`form-input ${profileErrors.name ? 'error' : ''}`}
                       placeholder="Your name"
                       style={{
@@ -676,7 +677,7 @@ const Profile = () => {
                     <div className="profile-detail-content">
                       <span className="profile-detail-label">Email</span>
                       <span className="profile-detail-value">
-                        {userData.name ? `${userData.name.toLowerCase().replace(/\s+/g, '')}@gmail.com` : (userData.email || 'Not provided')}
+                        {userData.email || 'Not provided'}
                       </span>
                     </div>
                   </div>
@@ -690,6 +691,7 @@ const Profile = () => {
                       <input
                         type="tel"
                         {...registerProfile('phone')}
+                        autoComplete="tel"
                         className={`form-input ${profileErrors.phone ? 'error' : ''}`}
                         placeholder="Your 10-digit phone number"
                         maxLength={10}
@@ -716,6 +718,7 @@ const Profile = () => {
                       <input
                         type="text"
                         {...registerProfile('location')}
+                        autoComplete="street-address"
                         className="form-input"
                         placeholder="Your location"
                         style={{
@@ -755,10 +758,58 @@ const Profile = () => {
               </form>
             ) : (
               <div className="profile-basic-info-section">
-                <>
+                <div style={{ width: '100%' }}>
                   <h3 className="profile-name">{userData.name || 'User'}</h3>
                   <p className="profile-role">Pet Enthusiast</p>
-                </>
+                  
+                  <div className="profile-details-grid" style={{ marginTop: '30px' }}>
+                    <div className="profile-detail-item">
+                      <div className="profile-detail-icon">
+                        <Mail size={20} />
+                      </div>
+                      <div className="profile-detail-content">
+                        <span className="profile-detail-label">Email</span>
+                        <span className="profile-detail-value">
+                          {userData.email || 'Not provided'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="profile-detail-item">
+                      <div className="profile-detail-icon">
+                        <Phone size={20} />
+                      </div>
+                      <div className="profile-detail-content">
+                        <span className="profile-detail-label">Phone</span>
+                        <span className="profile-detail-value">
+                          {userData.phone || 'Not provided'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="profile-detail-item">
+                      <div className="profile-detail-icon">
+                        <MapPin size={20} />
+                      </div>
+                      <div className="profile-detail-content">
+                        <span className="profile-detail-label">Location</span>
+                        <span className="profile-detail-value">
+                          {userData.location || 'Not provided'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="profile-detail-item">
+                      <div className="profile-detail-icon">
+                        <Calendar size={20} />
+                      </div>
+                      <div className="profile-detail-content">
+                        <span className="profile-detail-label">Member Since</span>
+                        <span className="profile-detail-value">{userData.joinedDate}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1138,6 +1189,7 @@ const Profile = () => {
                     <input
                       type="text"
                       className={`form-input ${editPostErrors.contact_name ? 'error' : ''}`}
+                      autoComplete="name"
                       {...registerEditPost('contact_name')}
                       placeholder="Contact name"
                     />
@@ -1151,6 +1203,7 @@ const Profile = () => {
                     <input
                       type="email"
                       className={`form-input ${editPostErrors.contact_email ? 'error' : ''}`}
+                      autoComplete="email"
                       {...registerEditPost('contact_email')}
                       placeholder="Contact email"
                     />
@@ -1167,6 +1220,7 @@ const Profile = () => {
                 <input
                   type="tel"
                   className={`form-input ${editPostErrors.contact_phone ? 'error' : ''}`}
+                  autoComplete="tel"
                   {...registerEditPost('contact_phone')}
                   placeholder="Contact phone"
                 />

@@ -39,8 +39,7 @@ const Login = () => {
         });
 
         // Redirect based on role
-        if (result.data.user.role === 'admin' || result.data.user.email === 'admin@gmail.com') {
-          console.log('Redirecting to Admin Dashboard');
+        if (result.data.user.role === 'admin') {
           navigate('/admin/dashboard');
         } else {
           navigate('/home');
@@ -72,6 +71,7 @@ const Login = () => {
               <input
                 type="email"
                 className="form-input"
+                autoComplete="email"
                 {...register('email')}
                 placeholder="Enter your email"
               />
@@ -87,6 +87,7 @@ const Login = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className="form-input"
+                  autoComplete="current-password"
                   {...register('password')}
                   placeholder="Enter your password"
                 />

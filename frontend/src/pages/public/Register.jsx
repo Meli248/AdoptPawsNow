@@ -63,6 +63,7 @@ const Register = () => {
               <input 
                 type="text" 
                 className={`form-input ${errors.fullName ? 'error' : ''}`} 
+                autoComplete="name"
                 {...register('fullName')} 
                 placeholder="Enter your full name"
               />
@@ -77,6 +78,7 @@ const Register = () => {
               <input 
                 type="email" 
                 className={`form-input ${errors.email ? 'error' : ''}`} 
+                autoComplete="email"
                 {...register('email')} 
                 placeholder="Enter your email"
               />
@@ -91,7 +93,8 @@ const Register = () => {
               <div className="password-input-wrapper">
                 <input 
                   type={showPassword ? 'text' : 'password'} 
-                  className="form-input" 
+                  className="form-input"
+                  autoComplete="new-password"
                   {...register('password')} 
                   placeholder="Enter your password"
                 />
@@ -114,7 +117,8 @@ const Register = () => {
               <div className="password-input-wrapper">
                 <input 
                   type={showConfirmPassword ? 'text' : 'password'} 
-                  className="form-input" 
+                  className="form-input"
+                  autoComplete="new-password"
                   {...register('confirmPassword')} 
                   placeholder="Confirm your password"
                 />

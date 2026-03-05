@@ -65,6 +65,7 @@ const ResetPassword = () => {
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     className="form-input"
+                                    autoComplete="new-password"
                                     {...register('password')}
                                     placeholder="Enter new password"
                                 />
@@ -88,6 +89,7 @@ const ResetPassword = () => {
                                 <input
                                     type={showConfirmPassword ? 'text' : 'password'}
                                     className="form-input"
+                                    autoComplete="new-password"
                                     {...register('confirmPassword')}
                                     placeholder="Confirm new password"
                                 />
